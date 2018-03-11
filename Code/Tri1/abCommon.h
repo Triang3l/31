@@ -5,6 +5,10 @@
  * Common top-level definitions - platform, most general-purpose macros.
  */
 
+#include <stdbool.h>
+#include <stdint.h> // uint32_t...
+#include <string.h> // memcpy, memmove, memset.
+
 // CPU architecture.
 
 #if defined(_M_AMD64) || defined(__x86_64__)
@@ -48,6 +52,16 @@
 #define abPlatform_Debug 1
 #endif
 
+// Alignment - abAligned must be placed after the struct keyword.
+
+#if defined(abPlatform_Compiler_MSVC)
+#define abAligned(alignment) __declspec(align(alignment))
+#elif defined(abPlatform_Compiler_GNU)
+#define abAligned(alignment) __attribute__((aligned(alignment)))
+#else
+#error No abAligned known for the current compiler.
+#endif
+
 // Force inlining.
 
 #if defined(abPlatform_Compiler_MSVC)
@@ -67,8 +81,5 @@
 #include <alloca.h>
 #define abStackAlloc alloca
 #endif
-
-#include <stdint.h> // uint32_t...
-#include <string.h> // memcpy, memmove, memset.
 
 #endif
