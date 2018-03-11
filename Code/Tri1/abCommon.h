@@ -68,4 +68,7 @@
 #define abStackAlloc alloca
 #endif
 
+#include <stdint.h> // uint32_t...
+#include <string.h> // memcpy, memmove, memset.
+
 #endif
