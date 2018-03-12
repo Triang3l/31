@@ -38,4 +38,36 @@ typedef int32x4_t abVec4s32;
 extern abVec4u32 abVec4_SignMask;
 extern abVec4u32 abVec4_AbsMask;
 
+#if defined(abPlatform_CPU_x86)
+#define abVec4_Load _mm_load_ps
+#define abVec4_Store _mm_store_ps
+#define abVec4_LoadUnaligned _mm_loadu_ps
+#define abVec4_StoreUnaligned _mm_storeu_ps
+#define abVec4_LoadX4 _mm_set1_ps
+
+#define abVec4_Add _mm_add_ps
+#define abVec4_Subtract _mm_sub_ps
+#define abVec4_Negate(v) abVec4_Subtract(abVec4_LoadX4(0.0f), (v))
+#define abVec4_Multiply _mm_mul_ps
+
+#elif defined(abPlatform_CPU_Arm)
+#if defined(abPlatform_Compiler_MSVC)
+#define abVec4_Load(p) vld1q_f32_ex((p), 128)
+#define abVec4_Store(p, v) vst1q_f32_ex((p), (v), 128)
+#elif defined(abPlatform_Compiler_GNU)
+#define abVec4_Load(p) vld1q_f32((const float *) __builtin_assume_aligned((p), 16))
+#define abVec4_Store(p, v) vst1q_f32((float *) __builtin_assume_aligned((p), 16), (v))
+#else
+#error No explicitly aligned vld1q and vst1q known for the current compiler.
+#endif
+#define abVec4_LoadUnaligned vld1q_f32
+#define abVec4_StoreUnaligned vst1q_f32
+#define abVec4_LoadX4 vdupq_n_f32
+
+#define abVec4_Add vaddq_f32
+#define abVec4_Subtract vsubq_f32
+#define abVec4_Negate vnegq_f32
+#define abVec4_Multiply vmulq_f32
+#endif
+
 #endif
