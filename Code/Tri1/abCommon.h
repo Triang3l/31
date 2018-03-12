@@ -1,5 +1,5 @@
-#ifndef abInclude_Common
-#define abInclude_Common
+#ifndef abInclude_abCommon
+#define abInclude_abCommon
 
 /*
  * Common top-level definitions - platform, most general-purpose macros.
