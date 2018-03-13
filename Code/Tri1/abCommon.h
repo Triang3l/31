@@ -3,11 +3,21 @@
 
 /*
  * Common top-level definitions - platform, most general-purpose macros.
+ * If including any engine header files, it's generally assumed that this is included as well.
  */
 
 #include <stdbool.h>
 #include <stdint.h> // uint32_t...
 #include <string.h> // memcpy, memmove, memset.
+
+/*
+ * Currently available build configuration values:
+ *
+ * GPU abstraction layer backend (mutually exclusive):
+ * - abConfig_GPUi_D3D - Direct3D 12.
+ */
+
+#define abNull ((void *) 0)
 
 // CPU architecture.
 
@@ -81,5 +91,11 @@
 #include <alloca.h>
 #define abStackAlloc alloca
 #endif
+
+// Common operations on numbers.
+
+#define abMin(a, b) ((a) < (b) ? (a) : (b))
+#define abMax(a, b) ((a) > (b) ? (a) : (b))
+#define abAlign(value, alignment) (((value) + ((alignment) - 1)) & ~((alignment) - 1))
 
 #endif
