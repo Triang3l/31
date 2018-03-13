@@ -39,6 +39,25 @@ extern ID3D12CommandQueue *abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count];
 #endif
 
 /*********
+ * Fences
+ *********/
+
+typedef struct abGPU_Fence {
+	#if defined(abBuild_GPUi_D3D)
+	abGPU_CmdQueue queue;
+	ID3D12Fence *fence;
+	HANDLE completionEvent;
+	uint64_t awaitedValue;
+	#endif
+} abGPU_Fence;
+
+bool abGPU_Fence_Init(abGPU_Fence *fence, abGPU_CmdQueue queue);
+void abGPU_Fence_Destroy(abGPU_Fence *fence);
+void abGPU_Fence_Enqueue(abGPU_Fence *fence);
+bool abGPU_Fence_IsCrossed(abGPU_Fence *fence);
+void abGPU_Fence_Await(abGPU_Fence *fence);
+
+/*********
  * Images
  *********/
 
