@@ -1,5 +1,5 @@
 #ifdef abBuild_GPUi_D3D
-#include "../abGPU.h"
+#include "abGPUi_D3D.h"
 
 bool abGPU_Fence_Init(abGPU_Fence *fence, abGPU_CmdQueue queue) {
 	fence->queue = queue;

@@ -1,5 +1,5 @@
 #ifdef abBuild_GPUi_D3D
-#include "../abGPU.h"
+#include "abGPUi_D3D.h"
 
 IDXGIFactory2 *abGPUi_D3D_DXGIFactory = abNull;
 IDXGIAdapter3 *abGPUi_D3D_DXGIAdapterMain = abNull;

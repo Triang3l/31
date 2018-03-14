@@ -131,11 +131,13 @@
   <ItemGroup>
     <ClInclude Include="abCommon.h" />
     <ClInclude Include="abGPU\abGPU.h" />
+    <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
     <ClInclude Include="abMath\abVec4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Fence.c" />
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Image.c" />
     <ClCompile Include="abMath\abVec4.c" />
     <ClCompile Include="abTest.c" />
   </ItemGroup>

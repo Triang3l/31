@@ -28,6 +28,9 @@
     <Filter Include="Source Files\abGPU\abGPUi_D3D">
       <UniqueIdentifier>{194e4e03-b948-43e5-a4fd-416eb09df81d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\abGPU\abGPUi_D3D">
+      <UniqueIdentifier>{9f4bc429-d733-4577-9ef4-82b9ef10d422}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -38,6 +41,9 @@
     </ClInclude>
     <ClInclude Include="abGPU\abGPU.h">
       <Filter>Header Files\abGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h">
+      <Filter>Header Files\abGPU\abGPUi_D3D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -51,6 +57,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Fence.c">
+      <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
+    </ClCompile>
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Image.c">
       <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
     </ClCompile>
   </ItemGroup>

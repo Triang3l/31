@@ -30,14 +30,6 @@ typedef enum abGPU_CmdQueue {
 		abGPU_CmdQueue_Count
 } abGPU_CmdQueue;
 
-// These are for use by implementations only!
-#if defined(abBuild_GPUi_D3D)
-extern IDXGIFactory2 *abGPUi_D3D_DXGIFactory;
-extern IDXGIAdapter3 *abGPUi_D3D_DXGIAdapterMain;
-extern ID3D12Device *abGPUi_D3D_Device;
-extern ID3D12CommandQueue *abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count];
-#endif
-
 /*********
  * Fences
  *********/
@@ -61,6 +53,14 @@ void abGPU_Fence_Await(abGPU_Fence *fence);
  * Images
  *********/
 
+typedef unsigned int abGPU_Image_Type;
+enum {
+	abGPU_Image_Type_Regular = 0,
+	abGPU_Image_Type_Upload = 1, // Only accessible from the CPU - other type bits are ignored.
+	abGPU_Image_Type_Renderable = abGPU_Image_Type_Upload << 1, // Can be a render target.
+	abGPU_Image_Type_Editable = abGPU_Image_Type_Renderable << 1 // Can be edited by shaders.
+};
+
 typedef enum abGPU_Image_Dimensions {
 	abGPU_Image_Dimensions_2D,
 	abGPU_Image_Dimensions_2DArray,
@@ -80,17 +80,53 @@ typedef enum abGPU_Image_Format {
 		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_R8G8B8A8
 } abGPU_Image_Format;
 
+typedef union abGPU_Image_Texel {
+	float color[4];
+	struct {
+		float depth;
+		uint8_t stencil;
+	} ds;
+} abGPU_Image_Texel;
+
 typedef struct abGPU_Image_Private {
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12Resource *resource;
+	DXGI_FORMAT dxgiFormat; // Redundant, but used often.
 	#endif
 } abGPU_Image_Private;
 
+#define abGPU_Image_DimensionsShift 24
 typedef struct abGPU_Image {
-	abGPU_Image_Dimensions dimensions;
+	unsigned int typeAndDimensions; // Below DimensionsShift - type flags, starting from it - dimensions.
 	abGPU_Image_Size size;
+	unsigned int mips;
 	abGPU_Image_Format format;
 	abGPU_Image_Private p;
 } abGPU_Image;
+
+abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image *image) {
+	return (abGPU_Image_Dimensions) (image->typeAndDimensions >> abGPU_Image_DimensionsShift);
+}
+
+typedef enum abGPU_Image_Usage {
+	abGPU_Image_Usage_Texture, // Sampleable in pixel shaders.
+	abGPU_Image_Usage_TextureNonPixelStage, // Sampleable in non-pixel shaders.
+	abGPU_Image_Usage_TextureAnyStage, // Sampleable at all shader stages.
+	abGPU_Image_Usage_RenderTarget,
+	abGPU_Image_Usage_Display, // Display chain image being presented to screen.
+	abGPU_Image_Usage_DepthWrite,
+	abGPU_Image_Usage_DepthTest,
+	abGPU_Image_Usage_DepthTestAndTexture, // For depth testing, but also sampleable in pixel shaders.
+	abGPU_Image_Usage_Edit, // Directly editable in shaders.
+	abGPU_Image_Usage_CopySource,
+	abGPU_Image_Usage_CopyDestination,
+	abGPU_Image_Usage_CopyQueue // Owned by the copy command queue (which doesn't have the concept of usages).
+} abGPU_Image_Usage;
+
+// Usage is ignored for upload buffers. Clear value is null for images that are not render targets.
+bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
+		unsigned int w, unsigned int h, unsigned int d, unsigned int mips,
+		abGPU_Image_Format format, abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
+void abGPU_Image_Destroy(abGPU_Image *image);
 
 #endif
