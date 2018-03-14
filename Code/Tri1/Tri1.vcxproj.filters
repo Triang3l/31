@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\abMath">
+      <UniqueIdentifier>{986f1d36-d975-4b20-82c3-6ca3c9ce86ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\abMath">
+      <UniqueIdentifier>{8084046f-77f5-4ca4-990a-ce7e6810bc25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\abGPU">
+      <UniqueIdentifier>{8e64b352-2d10-47d1-a25b-774738dd9343}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\abGPU">
+      <UniqueIdentifier>{d41b7cf3-b4cf-4e27-a650-35c4f4c38f49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\abGPU\abGPUi_D3D">
+      <UniqueIdentifier>{194e4e03-b948-43e5-a4fd-416eb09df81d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="abCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="abMath\abVec4.h">
+      <Filter>Header Files\abMath</Filter>
+    </ClInclude>
+    <ClInclude Include="abGPU\abGPU.h">
+      <Filter>Header Files\abGPU</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="abMath\abVec4.c">
+      <Filter>Source Files\abMath</Filter>
+    </ClCompile>
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c">
+      <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
+    </ClCompile>
+    <ClCompile Include="abTest.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Fence.c">
+      <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

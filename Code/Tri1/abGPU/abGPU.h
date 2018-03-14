@@ -10,7 +10,7 @@
 #include <dxgi1_4.h>
 #include <d3d12.h>
 #else
-#error No GPU abstraction layer backend (abConfig_GPUi_) selected while configuring the build.
+#error No GPU abstraction layer backend (abBuild_GPUi_) selected while configuring the build.
 #endif
 
 /*
