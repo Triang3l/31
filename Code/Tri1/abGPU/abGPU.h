@@ -1,7 +1,7 @@
 #ifndef abInclude_abGPU
 #define abInclude_abGPU
 
-#include "../abCommon.h"
+#include "../abMath/abBit.h"
 
 #if defined(abBuild_GPUi_D3D)
 #ifndef COBJMACROS
@@ -69,11 +69,6 @@ typedef enum abGPU_Image_Dimensions {
 	abGPU_Image_Dimensions_3D
 } abGPU_Image_Dimensions;
 
-typedef struct abGPU_Image_Size {
-	// Depth is 1 for 2D and cubemaps, Z depth for 3D, and number of layers for arrays.
-	unsigned int w, h, d;
-} abGPU_Image_Size;
-
 typedef enum abGPU_Image_Format {
 		abGPU_Image_Format_RawLDRStart,
 	abGPU_Image_Format_R8G8B8A8 = abGPU_Image_Format_RawLDRStart,
@@ -98,7 +93,8 @@ typedef struct abGPU_Image_Private {
 #define abGPU_Image_DimensionsShift 24
 typedef struct abGPU_Image {
 	unsigned int typeAndDimensions; // Below DimensionsShift - type flags, starting from it - dimensions.
-	abGPU_Image_Size size;
+	// Depth is 1 for 2D and cubemaps, Z depth for 3D, and number of layers for arrays.
+	unsigned int w, h, d;
 	unsigned int mips;
 	abGPU_Image_Format format;
 	abGPU_Image_Private p;
@@ -123,6 +119,18 @@ typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_CopyQueue // Owned by the copy command queue (which doesn't have the concept of usages).
 } abGPU_Image_Usage;
 
+abForceInline unsigned int abGPU_Image_CalculateMipCount(
+		abGPU_Image_Dimensions dimensions, unsigned int w, unsigned int h, unsigned int d) {
+	unsigned int size = abMax(w, h);
+	if (dimensions == abGPU_Image_Dimensions_3D) {
+		size = abMax(size, d);
+	}
+	return abBit_HighestOne32(size + (size == 0)) + 1;
+}
+
+// Implementation functions.
+void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions,
+		/* optional */ unsigned int *wh, /* optional */ unsigned int *d);
 // Usage is ignored for upload buffers. Clear value is null for images that are not render targets.
 bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips,

@@ -45,6 +45,9 @@
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h">
       <Filter>Header Files\abGPU\abGPUi_D3D</Filter>
     </ClInclude>
+    <ClInclude Include="abMath\abBit.h">
+      <Filter>Header Files\abMath</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abMath\abVec4.c">

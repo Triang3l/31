@@ -132,6 +132,7 @@
     <ClInclude Include="abCommon.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
+    <ClInclude Include="abMath\abBit.h" />
     <ClInclude Include="abMath\abVec4.h" />
   </ItemGroup>
   <ItemGroup>
