@@ -103,7 +103,7 @@ static unsigned int abGPUi_D3D_Image_CalculateMemoryUsageForDesc(const D3D12_RES
 	if (desc->Format == DXGI_FORMAT_R24G8_TYPELESS || desc->Format == DXGI_FORMAT_R32G8X24_TYPELESS) {
 		subresourceCount *= 2; // Depth and stencil planes.
 	}
-	ID3D12Device_GetCopyableFootprints(abGPUi_D3D_Device, &desc, 0, subresourceCount,
+	ID3D12Device_GetCopyableFootprints(abGPUi_D3D_Device, desc, 0, subresourceCount,
 			0, abNull, abNull, abNull, &memoryUsage);
 	return (unsigned int) memoryUsage;
 }
@@ -120,7 +120,7 @@ static void abGPUi_D3D_Image_GetDataLayout(const D3D12_RESOURCE_DESC *desc,
 	unsigned int mip, mips = desc->MipLevels;
 	bool isArray = (desc->Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D && desc->DepthOrArraySize > 1);
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprints[D3D12_REQ_MIP_LEVELS + 1];
-	ID3D12Device_GetCopyableFootprints(abGPUi_D3D_Device, &desc, 0, mips + isArray,
+	ID3D12Device_GetCopyableFootprints(abGPUi_D3D_Device, desc, 0, mips + isArray,
 			0, footprints, abNull, abNull, abNull);
 	for (mip = 0; mip < mips; ++mip) {
 		mipOffset[mip] = (unsigned int) footprints[mip].Offset;
@@ -160,8 +160,8 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 	image->mips = mips;
 	image->format = format;
 	image->memoryUsage = abGPUi_D3D_Image_CalculateMemoryUsageForDesc(&desc);
-	image->p.dxgiFormat = desc.Format;
-	abGPUi_D3D_Image_GetDataLayout(&desc, image->p.mipOffset, image->p.mipRowStride, &image->p.layerStride);
+	image->i.dxgiFormat = desc.Format;
+	abGPUi_D3D_Image_GetDataLayout(&desc, image->i.mipOffset, image->i.mipRowStride, &image->i.layerStride);
 
 	{
 		D3D12_HEAP_PROPERTIES heapProperties = { 0 };
@@ -187,12 +187,12 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 		// TODO: Clear value.
 		return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
 				&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, initialStates, abNull,
-				&IID_ID3D12Resource, &image->p.resource)) ? true : false;
+				&IID_ID3D12Resource, &image->i.resource)) ? true : false;
 	}
 }
 
 void abGPU_Image_Destroy(abGPU_Image *image) {
-	ID3D12Resource_Release(image->p.resource);
+	ID3D12Resource_Release(image->i.resource);
 }
 
 #endif

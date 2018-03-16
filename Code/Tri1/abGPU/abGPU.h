@@ -104,7 +104,7 @@ typedef struct abGPU_Image_Private {
 	unsigned int mipRowStride[D3D12_REQ_MIP_LEVELS];
 	unsigned int layerStride; // 0 for non-cubemaps and non-arrays.
 	#endif
-} abGPU_Image_Private;
+} abGPU_Image_Internal;
 
 #define abGPU_Image_DimensionsShift 24
 typedef struct abGPU_Image {
@@ -114,7 +114,7 @@ typedef struct abGPU_Image {
 	unsigned int mips;
 	abGPU_Image_Format format;
 	unsigned int memoryUsage;
-	abGPU_Image_Private p;
+	abGPU_Image_Internal i;
 } abGPU_Image;
 
 abForceInline abGPU_Image_Type abGPU_Image_GetType(const abGPU_Image *image) {
