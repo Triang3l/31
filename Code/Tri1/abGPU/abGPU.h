@@ -72,8 +72,20 @@ typedef enum abGPU_Image_Dimensions {
 typedef enum abGPU_Image_Format {
 		abGPU_Image_Format_RawLDRStart,
 	abGPU_Image_Format_R8G8B8A8 = abGPU_Image_Format_RawLDRStart,
-		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_R8G8B8A8
+		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_R8G8B8A8,
+		abGPU_Image_Format_DepthStart,
+	abGPU_Image_Format_D32 = abGPU_Image_Format_DepthStart,
+		abGPU_Image_Format_DepthStencilStart,
+	abGPU_Image_Format_D24S8 = abGPU_Image_Format_DepthStencilStart,
+		abGPU_Image_Format_DepthStencilEnd = abGPU_Image_Format_D24S8,
+		abGPU_Image_Format_DepthEnd = abGPU_Image_Format_DepthStencilEnd
 } abGPU_Image_Format;
+abForceInline bool abGPU_Image_Format_IsDepth(abGPU_Image_Format format) {
+	return format >= abGPU_Image_Format_DepthStart && format <= abGPU_Image_Format_DepthEnd;
+}
+abForceInline bool abGPU_Image_Format_IsDepthStencil(abGPU_Image_Format format) {
+	return format >= abGPU_Image_Format_DepthStencilStart && format <= abGPU_Image_Format_DepthStencilEnd;
+}
 
 typedef union abGPU_Image_Texel {
 	float color[4];
@@ -87,6 +99,10 @@ typedef struct abGPU_Image_Private {
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12Resource *resource;
 	DXGI_FORMAT dxgiFormat; // Redundant, but used often.
+	// Layouts - stencil plane not counted (but this has no use for depth/stencil images anyway).
+	unsigned int mipOffset[D3D12_REQ_MIP_LEVELS];
+	unsigned int mipRowStride[D3D12_REQ_MIP_LEVELS];
+	unsigned int layerStride; // 0 for non-cubemaps and non-arrays.
 	#endif
 } abGPU_Image_Private;
 
@@ -97,9 +113,13 @@ typedef struct abGPU_Image {
 	unsigned int w, h, d;
 	unsigned int mips;
 	abGPU_Image_Format format;
+	unsigned int memoryUsage;
 	abGPU_Image_Private p;
 } abGPU_Image;
 
+abForceInline abGPU_Image_Type abGPU_Image_GetType(const abGPU_Image *image) {
+	return (abGPU_Image_Type) (image->typeAndDimensions & ((1 << abGPU_Image_DimensionsShift) - 1));
+}
 abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image *image) {
 	return (abGPU_Image_Dimensions) (image->typeAndDimensions >> abGPU_Image_DimensionsShift);
 }
@@ -131,10 +151,12 @@ abForceInline unsigned int abGPU_Image_CalculateMipCount(
 // Implementation functions.
 void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions,
 		/* optional */ unsigned int *wh, /* optional */ unsigned int *d);
+unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
+		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
 // Usage is ignored for upload buffers. Clear value is null for images that are not render targets.
 bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
-		unsigned int w, unsigned int h, unsigned int d, unsigned int mips,
-		abGPU_Image_Format format, abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
+		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
+		abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
 void abGPU_Image_Destroy(abGPU_Image *image);
 
 #endif
