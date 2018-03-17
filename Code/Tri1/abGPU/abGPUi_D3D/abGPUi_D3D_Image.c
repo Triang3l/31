@@ -135,13 +135,14 @@ unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image
 	return abGPUi_D3D_Image_CalculateMemoryUsageForDesc(&desc);
 }
 
-static void abGPUi_D3D_Image_GetDataLayout(const D3D12_RESOURCE_DESC *desc,
+static void abGPUi_D3D_Image_GetDataLayout(const D3D12_RESOURCE_DESC *desc, DXGI_FORMAT *format,
 		unsigned int *mipOffset, unsigned int *mipRowStride, unsigned int *layerStride) {
 	unsigned int mip, mips = desc->MipLevels;
 	bool isArray = (desc->Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D && desc->DepthOrArraySize > 1);
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprints[D3D12_REQ_MIP_LEVELS + 1];
 	ID3D12Device_GetCopyableFootprints(abGPUi_D3D_Device, desc, 0, mips + isArray,
 			0, footprints, abNull, abNull, abNull);
+	*format = footprints[0].Footprint.Format;
 	for (mip = 0; mip < mips; ++mip) {
 		mipOffset[mip] = (unsigned int) footprints[mip].Offset;
 		mipRowStride[mip] = footprints[mip].Footprint.RowPitch;
@@ -172,8 +173,8 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 	image->mips = mips;
 	image->format = format;
 	image->memoryUsage = abGPUi_D3D_Image_CalculateMemoryUsageForDesc(&desc);
-	image->i.dxgiFormat = desc.Format;
-	abGPUi_D3D_Image_GetDataLayout(&desc, image->i.mipOffset, image->i.mipRowStride, &image->i.layerStride);
+	abGPUi_D3D_Image_GetDataLayout(&desc, &image->i.copyFormat,
+			image->i.mipOffset, image->i.mipRowStride, &image->i.layerStride);
 
 	{
 		D3D12_HEAP_PROPERTIES heapProperties = { 0 };

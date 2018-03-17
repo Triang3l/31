@@ -98,8 +98,8 @@ typedef union abGPU_Image_Texel {
 typedef struct abGPU_Image_Private {
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12Resource *resource;
-	DXGI_FORMAT dxgiFormat; // Redundant, but used often.
 	// Layouts - stencil plane not counted (but this has no use for depth/stencil images anyway).
+	DXGI_FORMAT copyFormat;
 	unsigned int mipOffset[D3D12_REQ_MIP_LEVELS];
 	unsigned int mipRowStride[D3D12_REQ_MIP_LEVELS];
 	unsigned int layerStride; // 0 for non-cubemaps and non-arrays.
