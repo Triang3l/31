@@ -138,15 +138,7 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 		type = abGPU_Image_Type_Upload;
 	}
 
-	{
-		unsigned int maxWH, maxD, maxMips;
-		abGPU_Image_GetMaxSize(dimensions, &maxWH, &maxD);
-		w = abClamp(w, 1, maxWH);
-		h = abClamp(h, 1, maxWH);
-		d = abClamp(d, 1, maxD);
-		maxMips = abGPU_Image_CalculateMipCount(dimensions, w, h, d);
-		mips = abClamp(mips, 1, maxMips);
-	}
+	abGPU_Image_ClampSizeToMax(dimensions, &w, &h, &d, &mips);
 
 	abGPUi_D3D_Image_FillTextureDesc(type, dimensions, w, h, d, mips, format, &desc);
 	if (desc.Format == DXGI_FORMAT_UNKNOWN) {

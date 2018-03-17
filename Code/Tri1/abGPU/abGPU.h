@@ -148,7 +148,13 @@ abForceInline unsigned int abGPU_Image_CalculateMipCount(
 	return abBit_HighestOne32(size + (size == 0)) + 1;
 }
 
-// Implementation functions.
+// Clamps to [1, max].
+void abGPU_Image_ClampSizeToMax(abGPU_Image_Dimensions dimensions,
+		unsigned int *w, unsigned int *h, unsigned int *d, /* optional */ unsigned int *mips);
+
+/*
+ * Implementation functions.
+ */
 void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions,
 		/* optional */ unsigned int *wh, /* optional */ unsigned int *d);
 unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
