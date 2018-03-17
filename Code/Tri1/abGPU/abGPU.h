@@ -124,6 +124,12 @@ abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image
 	return (abGPU_Image_Dimensions) (image->typeAndDimensions >> abGPU_Image_DimensionsShift);
 }
 
+typedef unsigned int abGPU_Image_Slice;
+#define abGPU_Image_SliceMake(layer, side, mip) ((abGPU_Image_Slice) (((layer) << 8) | ((side) << 5) | (mip)))
+#define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31))
+#define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5) & 7))
+#define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8))
+
 typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_Texture, // Sampleable in pixel shaders.
 	abGPU_Image_Usage_TextureNonPixelStage, // Sampleable in non-pixel shaders.
@@ -163,6 +169,12 @@ unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image
 bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
+bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image *image, abGPU_Image_Dimensions dimensions,
+		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
+void *abGPU_Image_UploadBegin(abGPU_Image *image, abGPU_Image_Slice slice);
+// Written range can be null, in this case, it is assumed that the whole sub-image was modified.
+void abGPU_Image_UploadEnd(abGPU_Image *image, abGPU_Image_Slice slice,
+		void *context, const unsigned int writtenOffsetAndSize[2]);
 void abGPU_Image_Destroy(abGPU_Image *image);
 
 #endif
