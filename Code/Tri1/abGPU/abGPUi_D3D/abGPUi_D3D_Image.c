@@ -13,6 +13,26 @@ static DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format) 
 	return DXGI_FORMAT_UNKNOWN;
 }
 
+static DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format format) {
+	switch (format) {
+	case abGPU_Image_Format_D32:
+		return DXGI_FORMAT_R32_FLOAT;
+	case abGPU_Image_Format_D24S8:
+		return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	}
+	return abGPUi_D3D_Image_FormatToResource(format);
+}
+
+static DXGI_FORMAT abGPUi_D3D_Image_FormatToDepthStencil(abGPU_Image_Format format) {
+	switch (format) {
+	case abGPU_Image_Format_D32:
+		return DXGI_FORMAT_D32_FLOAT;
+	case abGPU_Image_Format_D24S8:
+		return DXGI_FORMAT_D24_UNORM_S8_UINT;
+	}
+	return abGPUi_D3D_Image_FormatToResource(format);
+}
+
 D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStates(abGPU_Image_Usage usage) {
 	switch (usage) {
 	case abGPU_Image_Usage_Texture:
@@ -158,6 +178,7 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 	{
 		D3D12_HEAP_PROPERTIES heapProperties = { 0 };
 		D3D12_RESOURCE_STATES initialStates;
+		D3D12_CLEAR_VALUE optimizedClearValue, *optimizedClearValuePointer = abNull;
 		if (type & abGPU_Image_Type_Upload) {
 			heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 			desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -175,11 +196,24 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 		} else {
 			heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 			initialStates = abGPUi_D3D_Image_UsageToStates(initialUsage);
+			if (clearValue != abNull) {
+				if (abGPU_Image_Format_IsDepth(format)) {
+					optimizedClearValue.Format = abGPUi_D3D_Image_FormatToDepthStencil(format);
+					optimizedClearValue.DepthStencil.Depth = clearValue->ds.depth;
+					optimizedClearValue.DepthStencil.Stencil = clearValue->ds.stencil;
+				} else {
+					optimizedClearValue.Format = desc.Format;
+					optimizedClearValue.Color[0] = clearValue->color[0];
+					optimizedClearValue.Color[1] = clearValue->color[1];
+					optimizedClearValue.Color[2] = clearValue->color[2];
+					optimizedClearValue.Color[3] = clearValue->color[3];
+				}
+				optimizedClearValuePointer = &optimizedClearValue;
+			}
 		}
-		// TODO: Clear value.
 		return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
-				&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, initialStates, abNull,
-				&IID_ID3D12Resource, &image->i.resource)) ? true : false;
+				&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, initialStates,
+				optimizedClearValuePointer, &IID_ID3D12Resource, &image->i.resource)) ? true : false;
 	}
 }
 
