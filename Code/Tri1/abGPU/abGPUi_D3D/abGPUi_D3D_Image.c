@@ -94,7 +94,7 @@ abForceInline unsigned int abGPUi_D3D_Image_SliceToSubresource(const abGPU_Image
 	if (image->dimensions == abGPU_Image_Dimensions_Cube || image->dimensions == abGPU_Image_Dimensions_CubeArray) {
 		subresource = subresource * 6 + abGPU_Image_SliceSide(slice);
 	}
-	return subresource + abGPU_Image_SliceMip(slice);
+	return subresource * image->mips + abGPU_Image_SliceMip(slice);
 }
 
 void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions, unsigned int *wh, unsigned int *d) {
