@@ -68,11 +68,39 @@ typedef enum abGPU_Image_Dimensions {
 	abGPU_Image_Dimensions_CubeArray,
 	abGPU_Image_Dimensions_3D
 } abGPU_Image_Dimensions;
+abForceInline bool abGPU_Image_DimensionsAre2D(abGPU_Image_Dimensions dimensions) {
+	return dimensions == abGPU_Image_Dimensions_2D || dimensions == abGPU_Image_Dimensions_2DArray;
+}
+abForceInline bool abGPU_Image_DimensionsAreCube(abGPU_Image_Dimensions dimensions) {
+	return dimensions == abGPU_Image_Dimensions_Cube || dimensions == abGPU_Image_Dimensions_CubeArray;
+}
+abForceInline bool abGPU_Image_DimensionsAre3D(abGPU_Image_Dimensions dimensions) {
+	return dimensions == abGPU_Image_Dimensions_3D;
+}
+abForceInline bool abGPU_Image_DimensionsAreArray(abGPU_Image_Dimensions dimensions) {
+	return dimensions == abGPU_Image_Dimensions_2DArray || dimensions == abGPU_Image_Dimensions_CubeArray;
+}
 
 typedef enum abGPU_Image_Format {
 		abGPU_Image_Format_RawLDRStart,
 	abGPU_Image_Format_R8G8B8A8 = abGPU_Image_Format_RawLDRStart,
-		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_R8G8B8A8,
+	abGPU_Image_Format_R8G8B8A8_sRGB,
+	abGPU_Image_Format_R8G8B8A8_Signed,
+		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_R8G8B8A8_Signed,
+
+		abGPU_Image_Format_4x4Start,
+	abGPU_Image_Format_S3TC_A1 = abGPU_Image_Format_4x4Start,
+	abGPU_Image_Format_S3TC_A1_sRGB,
+	abGPU_Image_Format_S3TC_A4,
+	abGPU_Image_Format_S3TC_A4_sRGB,
+	abGPU_Image_Format_S3TC_A8,
+	abGPU_Image_Format_S3TC_A8_sRGB,
+	abGPU_Image_Format_3Dc_X,
+	abGPU_Image_Format_3Dc_X_Signed,
+	abGPU_Image_Format_3Dc_XY,
+	abGPU_Image_Format_3Dc_XY_Signed,
+		abGPU_Image_Format_4x4End = abGPU_Image_Format_3Dc_XY_Signed,
+
 		abGPU_Image_Format_DepthStart,
 	abGPU_Image_Format_D32 = abGPU_Image_Format_DepthStart,
 		abGPU_Image_Format_DepthStencilStart,
@@ -80,12 +108,16 @@ typedef enum abGPU_Image_Format {
 		abGPU_Image_Format_DepthStencilEnd = abGPU_Image_Format_D24S8,
 		abGPU_Image_Format_DepthEnd = abGPU_Image_Format_DepthStencilEnd
 } abGPU_Image_Format;
+abForceInline bool abGPU_Image_Format_Is4x4(abGPU_Image_Format format) {
+	return format >= abGPU_Image_Format_4x4Start && format <= abGPU_Image_Format_4x4End;
+}
 abForceInline bool abGPU_Image_Format_IsDepth(abGPU_Image_Format format) {
 	return format >= abGPU_Image_Format_DepthStart && format <= abGPU_Image_Format_DepthEnd;
 }
 abForceInline bool abGPU_Image_Format_IsDepthStencil(abGPU_Image_Format format) {
 	return format >= abGPU_Image_Format_DepthStencilStart && format <= abGPU_Image_Format_DepthStencilEnd;
 }
+unsigned int abGPU_Image_Format_GetSize(abGPU_Image_Format format); // Block size for compressed formats.
 
 typedef union abGPU_Image_Texel {
 	float color[4];
@@ -120,8 +152,16 @@ typedef struct abGPU_Image {
 abForceInline abGPU_Image_Type abGPU_Image_GetType(const abGPU_Image *image) {
 	return (abGPU_Image_Type) (image->typeAndDimensions & ((1 << abGPU_Image_DimensionsShift) - 1));
 }
+
 abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image *image) {
 	return (abGPU_Image_Dimensions) (image->typeAndDimensions >> abGPU_Image_DimensionsShift);
+}
+
+abForceInline void abGPU_Image_GetMipSize(const abGPU_Image *image, unsigned int mip,
+		unsigned int *w, unsigned int *h, unsigned int *d) {
+	if (w != abNull) *w = abMax(image->w >> mip, 1);
+	if (h != abNull) *h = abMax(image->h >> mip, 1);
+	if (d != abNull) *d = (abGPU_Image_DimensionsAre3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1) : image->d);
 }
 
 typedef unsigned int abGPU_Image_Slice;
@@ -129,6 +169,19 @@ typedef unsigned int abGPU_Image_Slice;
 #define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31))
 #define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5) & 7))
 #define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8))
+inline bool abGPUi_Image_HasSlice(const abGPU_Image *image, abGPU_Image_Slice slice) {
+	abGPU_Image_Dimensions dimensions;
+	if (abGPU_Image_SliceMip(slice) >= image->mips) {
+		return false;
+	}
+	if (abGPU_Image_SliceSide(slice) > (abGPU_Image_DimensionsAreCube(dimensions) ? 5u : 0u)) {
+		return false;
+	}
+	if (abGPU_Image_SliceLayer(slice) >= (abGPU_Image_DimensionsAreArray(dimensions) ? image->d : 1u)) {
+		return false;
+	}
+	return true;
+}
 
 typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_Texture, // Sampleable in pixel shaders.
@@ -148,7 +201,7 @@ typedef enum abGPU_Image_Usage {
 abForceInline unsigned int abGPU_Image_CalculateMipCount(
 		abGPU_Image_Dimensions dimensions, unsigned int w, unsigned int h, unsigned int d) {
 	unsigned int size = abMax(w, h);
-	if (dimensions == abGPU_Image_Dimensions_3D) {
+	if (abGPU_Image_DimensionsAre3D(dimensions)) {
 		size = abMax(size, d);
 	}
 	return abBit_HighestOne32(size + (size == 0)) + 1;
@@ -171,10 +224,17 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 		abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
 bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image *image, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
+// Provides the mapping of the memory for the upload functions, may return null even in case of success.
 void *abGPU_Image_UploadBegin(abGPU_Image *image, abGPU_Image_Slice slice);
+// Strides must be equal to or greater than real sizes and multiples of texel/block size.
+// For 4x4 compressed images, one row is 4 texels tall. 0 strides can be provided for tight packing.
+// Mapping can be null, in this case, UploadBegin and UploadEnd will be called implicitly.
+void abGPU_Image_Upload(abGPU_Image *image, abGPU_Image_Slice slice,
+		unsigned int x, unsigned int y, unsigned int z, unsigned int w, unsigned int h, unsigned int d,
+		unsigned int yStride, unsigned int zStride, void *mapping, const void *data);
 // Written range can be null, in this case, it is assumed that the whole sub-image was modified.
 void abGPU_Image_UploadEnd(abGPU_Image *image, abGPU_Image_Slice slice,
-		void *context, const unsigned int writtenOffsetAndSize[2]);
+		void *mapping, const unsigned int writtenOffsetAndSize[2]);
 void abGPU_Image_Destroy(abGPU_Image *image);
 
 #endif
