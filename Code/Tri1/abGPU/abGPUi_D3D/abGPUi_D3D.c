@@ -7,7 +7,7 @@ ID3D12Device *abGPUi_D3D_Device = abNull;
 ID3D12CommandQueue *abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count] = { 0 };
 
 enum {
-	abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed = 1,
+	abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed = 1u,
 	abGPUi_D3D_Init_Result_AdapterNotFound,
 	abGPUi_D3D_Init_Result_AdapterInterfaceQueryFailed,
 	abGPUi_D3D_Init_Result_DeviceCreationFailed,
@@ -30,13 +30,13 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 		}
 	}
 
-	if (FAILED(CreateDXGIFactory2(debug ? DXGI_CREATE_FACTORY_DEBUG : 0, &IID_IDXGIFactory2, &abGPUi_D3D_DXGIFactory))) {
+	if (FAILED(CreateDXGIFactory2(debug ? DXGI_CREATE_FACTORY_DEBUG : 0u, &IID_IDXGIFactory2, &abGPUi_D3D_DXGIFactory))) {
 		return abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed;
 	}
 
 	{
 		IDXGIAdapter1 *adapter = abNull, *softwareAdapter = abNull;
-		unsigned int adapterIndex = 0;
+		unsigned int adapterIndex = 0u;
 		while (IDXGIFactory2_EnumAdapters1(abGPUi_D3D_DXGIFactory, adapterIndex, &adapter) == S_OK) {
 			if (SUCCEEDED(D3D12CreateDevice((IUnknown *) adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, abNull))) {
 				DXGI_ADAPTER_DESC1 adapterDesc;
@@ -124,7 +124,7 @@ const char *abGPU_Init_ResultToString(abGPU_Init_Result result) {
 void abGPU_Shutdown() {
 	// May be called from Init, so needs to do null checks.
 	unsigned int commandQueueIndex;
-	for (commandQueueIndex = 0; commandQueueIndex < (unsigned) abGPU_CmdQueue_Count; ++commandQueueIndex) {
+	for (commandQueueIndex = 0u; commandQueueIndex < (unsigned int) abGPU_CmdQueue_Count; ++commandQueueIndex) {
 		ID3D12CommandQueue **queue = &abGPUi_D3D_CommandQueues[commandQueueIndex];
 		if (*queue != abNull) {
 			ID3D12CommandQueue_Release(*queue);

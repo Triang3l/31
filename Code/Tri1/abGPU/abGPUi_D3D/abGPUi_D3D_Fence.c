@@ -3,7 +3,7 @@
 
 bool abGPU_Fence_Init(abGPU_Fence *fence, abGPU_CmdQueue queue) {
 	fence->queue = queue;
-	if (FAILED(ID3D12Device_CreateFence(abGPUi_D3D_Device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, &fence->fence))) {
+	if (FAILED(ID3D12Device_CreateFence(abGPUi_D3D_Device, 0ull, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, &fence->fence))) {
 		return false;
 	}
 	fence->completionEvent = CreateEvent(abNull, FALSE, FALSE, abNull);
@@ -11,7 +11,7 @@ bool abGPU_Fence_Init(abGPU_Fence *fence, abGPU_CmdQueue queue) {
 		ID3D12Fence_Release(fence->fence);
 		return false;
 	}
-	fence->awaitedValue = 0;
+	fence->awaitedValue = 0ull;
 	return true;
 }
 

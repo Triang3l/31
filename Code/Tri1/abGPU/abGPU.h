@@ -18,7 +18,7 @@
  */
 
 typedef unsigned int abGPU_Init_Result;
-#define abGPU_Init_Result_Success 0
+#define abGPU_Init_Result_Success 0u
 abGPU_Init_Result abGPU_Init(bool debug);
 // Returns an immutable string. May return null for success or unknown errors.
 const char *abGPU_Init_ResultToString(abGPU_Init_Result result);
@@ -55,10 +55,10 @@ void abGPU_Fence_Await(abGPU_Fence *fence);
 
 typedef unsigned int abGPU_Image_Type;
 enum {
-	abGPU_Image_Type_Regular = 0,
-	abGPU_Image_Type_Upload = 1, // Only accessible from the CPU - other type bits are ignored.
-	abGPU_Image_Type_Renderable = abGPU_Image_Type_Upload << 1, // Can be a render target.
-	abGPU_Image_Type_Editable = abGPU_Image_Type_Renderable << 1 // Can be edited by shaders.
+	abGPU_Image_Type_Regular = 0u,
+	abGPU_Image_Type_Upload = 1u, // Only accessible from the CPU - other type bits are ignored.
+	abGPU_Image_Type_Renderable = abGPU_Image_Type_Upload << 1u, // Can be a render target.
+	abGPU_Image_Type_Editable = abGPU_Image_Type_Renderable << 1u // Can be edited by shaders.
 };
 
 typedef enum abGPU_Image_Dimensions {
@@ -138,7 +138,7 @@ typedef struct abGPU_Image_Private {
 	#endif
 } abGPU_Image_Internal;
 
-#define abGPU_Image_DimensionsShift 24
+#define abGPU_Image_DimensionsShift 24u
 typedef struct abGPU_Image {
 	unsigned int typeAndDimensions; // Below DimensionsShift - type flags, starting from it - dimensions.
 	// Depth is 1 for 2D and cubemaps, Z depth for 3D, and number of layers for arrays.
@@ -150,7 +150,7 @@ typedef struct abGPU_Image {
 } abGPU_Image;
 
 abForceInline abGPU_Image_Type abGPU_Image_GetType(const abGPU_Image *image) {
-	return (abGPU_Image_Type) (image->typeAndDimensions & ((1 << abGPU_Image_DimensionsShift) - 1));
+	return (abGPU_Image_Type) (image->typeAndDimensions & ((1u << abGPU_Image_DimensionsShift) - 1u));
 }
 
 abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image *image) {
@@ -159,16 +159,16 @@ abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image
 
 abForceInline void abGPU_Image_GetMipSize(const abGPU_Image *image, unsigned int mip,
 		unsigned int *w, unsigned int *h, unsigned int *d) {
-	if (w != abNull) *w = abMax(image->w >> mip, 1);
-	if (h != abNull) *h = abMax(image->h >> mip, 1);
-	if (d != abNull) *d = (abGPU_Image_DimensionsAre3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1) : image->d);
+	if (w != abNull) *w = abMax(image->w >> mip, 1u);
+	if (h != abNull) *h = abMax(image->h >> mip, 1u);
+	if (d != abNull) *d = (abGPU_Image_DimensionsAre3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1u) : image->d);
 }
 
 typedef unsigned int abGPU_Image_Slice;
-#define abGPU_Image_SliceMake(layer, side, mip) ((abGPU_Image_Slice) (((layer) << 8) | ((side) << 5) | (mip)))
-#define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31))
-#define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5) & 7))
-#define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8))
+#define abGPU_Image_SliceMake(layer, side, mip) ((abGPU_Image_Slice) (((layer) << 8u) | ((side) << 5u) | (mip)))
+#define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31u))
+#define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5u) & 7u))
+#define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8u))
 inline bool abGPUi_Image_HasSlice(const abGPU_Image *image, abGPU_Image_Slice slice) {
 	abGPU_Image_Dimensions dimensions;
 	if (abGPU_Image_SliceMip(slice) >= image->mips) {
@@ -204,7 +204,7 @@ abForceInline unsigned int abGPU_Image_CalculateMipCount(
 	if (abGPU_Image_DimensionsAre3D(dimensions)) {
 		size = abMax(size, d);
 	}
-	return abBit_HighestOne32(size + (size == 0)) + 1;
+	return abBit_HighestOne32(size + (size == 0u)) + 1u;
 }
 
 // Clamps to [1, max].

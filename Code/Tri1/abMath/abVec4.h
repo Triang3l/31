@@ -12,16 +12,16 @@ typedef __m128 abVec4;
 typedef __m128i abVec4u32;
 typedef __m128i abVec4s32;
 #define abVec4u32_ConstInit(x, y, z, w) { \
-	(x) & 255u, ((x) >> 8) & 255u, ((x) >> 16) & 255u, ((x) >> 24) & 255u, \
-	(y) & 255u, ((y) >> 8) & 255u, ((y) >> 16) & 255u, ((y) >> 24) & 255u, \
-	(z) & 255u, ((z) >> 8) & 255u, ((z) >> 16) & 255u, ((z) >> 24) & 255u, \
-	(w) & 255u, ((w) >> 8) & 255u, ((w) >> 16) & 255u, ((w) >> 24) & 255u \
+	(x) & 255u, ((x) >> 8u) & 255u, ((x) >> 16u) & 255u, ((x) >> 24u) & 255u, \
+	(y) & 255u, ((y) >> 8u) & 255u, ((y) >> 16u) & 255u, ((y) >> 24u) & 255u, \
+	(z) & 255u, ((z) >> 8u) & 255u, ((z) >> 16u) & 255u, ((z) >> 24u) & 255u, \
+	(w) & 255u, ((w) >> 8u) & 255u, ((w) >> 16u) & 255u, ((w) >> 24u) & 255u \
 }
 #define abVec4s32_ConstInit(x, y, z, w) { \
-	(x) & 255, ((x) >> 8) & 255, ((x) >> 16) & 255, ((x) >> 24) & 255, \
-	(y) & 255, ((y) >> 8) & 255, ((y) >> 16) & 255, ((y) >> 24) & 255, \
-	(z) & 255, ((z) >> 8) & 255, ((z) >> 16) & 255, ((z) >> 24) & 255, \
-	(w) & 255, ((w) >> 8) & 255, ((w) >> 16) & 255, ((w) >> 24) & 255 \
+	(x) & 255, ((x) >> 8u) & 255, ((x) >> 16u) & 255, ((x) >> 24u) & 255, \
+	(y) & 255, ((y) >> 8u) & 255, ((y) >> 16u) & 255, ((y) >> 24u) & 255, \
+	(z) & 255, ((z) >> 8u) & 255, ((z) >> 16u) & 255, ((z) >> 24u) & 255, \
+	(w) & 255, ((w) >> 8u) & 255, ((w) >> 16u) & 255, ((w) >> 24u) & 255 \
 }
 
 #elif defined(abPlatform_CPU_Arm)
@@ -57,11 +57,11 @@ abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return _mm_shuffle_ps(v, v, _MM_SHU
 
 #elif defined(abPlatform_CPU_Arm)
 #if defined(abPlatform_Compiler_MSVC)
-#define abVec4_LoadAligned(p) vld1q_f32_ex((p), 128)
-#define abVec4_StoreAligned(p, v) vst1q_f32_ex((p), (v), 128)
+#define abVec4_LoadAligned(p) vld1q_f32_ex((p), 128u)
+#define abVec4_StoreAligned(p, v) vst1q_f32_ex((p), (v), 128u)
 #elif defined(abPlatform_Compiler_GNU)
-#define abVec4_LoadAligned(p) vld1q_f32((const float *) __builtin_assume_aligned((p), 16))
-#define abVec4_StoreAligned(p, v) vst1q_f32((float *) __builtin_assume_aligned((p), 16), (v))
+#define abVec4_LoadAligned(p) vld1q_f32((const float *) __builtin_assume_aligned((p), 16u))
+#define abVec4_StoreAligned(p, v) vst1q_f32((float *) __builtin_assume_aligned((p), 16u), (v))
 #else
 #error No explicitly aligned vld1q and vst1q known for the current compiler.
 #endif
@@ -71,7 +71,7 @@ abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return _mm_shuffle_ps(v, v, _MM_SHU
 #define abVec4_Zero abVec4_LoadX4(0.0f)
 
 #define abVec4_YXWZ vrev64q_f32
-abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return vextq_f32(v, v, 2); }
+abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return vextq_f32(v, v, 2u); }
 
 #define abVec4_Add vaddq_f32
 #define abVec4_Subtract vsubq_f32

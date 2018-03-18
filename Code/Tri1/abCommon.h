@@ -97,6 +97,6 @@
 #define abMin(a, b) ((a) < (b) ? (a) : (b))
 #define abMax(a, b) ((a) > (b) ? (a) : (b))
 #define abClamp(value, low, high) (((value) > (high)) ? (high) : (((value) < (low)) ? (low) : (value)))
-#define abAlign(value, alignment) (((value) + ((alignment) - 1)) & ~((alignment) - 1))
+#define abAlign(value, alignment) (((value) + ((alignment) - 1u)) & ~((alignment) - 1u))
 
 #endif
