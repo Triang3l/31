@@ -83,6 +83,8 @@ D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStates(abGPU_Image_Usage usage) {
 		return D3D12_RESOURCE_STATE_COPY_DEST;
 	case abGPU_Image_Usage_CopyQueue:
 		return D3D12_RESOURCE_STATE_COMMON;
+	case abGPU_Image_Usage_Upload:
+		return D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
 	return D3D12_RESOURCE_STATE_COMMON; // This shouldn't happen!
 }
@@ -189,6 +191,7 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 
 	if (type & abGPU_Image_Type_Upload) {
 		type = abGPU_Image_Type_Upload;
+		initialUsage = abGPU_Image_Usage_Upload;
 	}
 
 	abGPU_Image_ClampSizeToMax(dimensions, &w, &h, &d, &mips);
@@ -210,7 +213,6 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 
 	{
 		D3D12_HEAP_PROPERTIES heapProperties = { 0 };
-		D3D12_RESOURCE_STATES initialStates;
 		D3D12_CLEAR_VALUE optimizedClearValue, *optimizedClearValuePointer = abNull;
 		if (type & abGPU_Image_Type_Upload) {
 			heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -225,10 +227,8 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 			desc.SampleDesc.Quality = 0u;
 			desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 			desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-			initialStates = D3D12_RESOURCE_STATE_GENERIC_READ;
 		} else {
 			heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-			initialStates = abGPUi_D3D_Image_UsageToStates(initialUsage);
 			if (clearValue != abNull) {
 				if (abGPU_Image_Format_IsDepth(format)) {
 					optimizedClearValue.Format = abGPUi_D3D_Image_FormatToDepthStencil(format);
@@ -245,7 +245,7 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 			}
 		}
 		return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
-				&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, initialStates,
+				&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, abGPUi_D3D_Image_UsageToStates(initialUsage),
 				optimizedClearValuePointer, &IID_ID3D12Resource, &image->i.resource)) ? true : false;
 	}
 }

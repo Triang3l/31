@@ -49,6 +49,51 @@ void abGPU_Fence_Enqueue(abGPU_Fence *fence);
 bool abGPU_Fence_IsCrossed(abGPU_Fence *fence);
 void abGPU_Fence_Await(abGPU_Fence *fence);
 
+/**********
+ * Buffers
+ **********/
+
+typedef enum abGPU_Buffer_Access {
+	abGPU_Buffer_Access_GPUInternal,
+	abGPU_Buffer_Access_CPUWritable,
+	abGPU_Buffer_Access_Upload
+} abGPU_Buffer_Access;
+
+typedef struct abGPU_Buffer_Internal {
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12Resource *resource;
+	#endif
+} abGPU_Buffer_Internal;
+
+typedef struct abGPU_Buffer {
+	abGPU_Buffer_Access access;
+	unsigned int size;
+	abGPU_Buffer_Internal i;
+} abGPU_Buffer;
+
+#define abGPU_Buffer_ConstantAlignment 256u
+
+typedef enum abGPU_Buffer_Usage {
+	abGPU_Buffer_Usage_Vertices,
+	abGPU_Buffer_Usage_Constants,
+	abGPU_Buffer_Usage_Indices,
+	abGPU_Buffer_Usage_Structures, // Structured data readable in pixel shaders.
+	abGPU_Buffer_Usage_StructuresNonPixelStage,  // Structured data readable in non-pixel shaders.
+	abGPU_Buffer_Usage_StructuresAnyStage, // Structured data readable at all shader stages.
+	abGPU_Buffer_Usage_Edit, // Directly editable in shaders.
+	abGPU_Buffer_Usage_CopySource,
+	abGPU_Buffer_Usage_CopyDestination,
+	abGPU_Buffer_Usage_CopyQueue, // Owned by the copy command queue (which doesn't have the concept of usages).
+	abGPU_Buffer_Usage_CPUWrite // CPU-writable or upload buffer.
+
+} abGPU_Buffer_Usage;
+
+bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
+		unsigned int size, bool editable, abGPU_Buffer_Usage initialUsage);
+void *abGPU_Buffer_Map();
+void abGPU_Buffer_Unmap(void *mapping);
+void abGPU_Buffer_Destroy(abGPU_Buffer *buffer);
+
 /*********
  * Images
  *********/
@@ -195,7 +240,8 @@ typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_Edit, // Directly editable in shaders.
 	abGPU_Image_Usage_CopySource,
 	abGPU_Image_Usage_CopyDestination,
-	abGPU_Image_Usage_CopyQueue // Owned by the copy command queue (which doesn't have the concept of usages).
+	abGPU_Image_Usage_CopyQueue, // Owned by the copy command queue (which doesn't have the concept of usages).
+	abGPU_Image_Usage_Upload // Upload buffer (can't really switch to or from this usage).
 } abGPU_Image_Usage;
 
 abForceInline unsigned int abGPU_Image_CalculateMipCount(
@@ -218,7 +264,7 @@ void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions,
 		/* optional */ unsigned int *wh, /* optional */ unsigned int *d);
 unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
-// Usage is ignored for upload buffers. Clear value is null for images that are not render targets.
+// Usage must be Upload for upload buffers. Clear value is null for images that are not render targets.
 bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
