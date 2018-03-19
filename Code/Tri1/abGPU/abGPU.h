@@ -90,8 +90,9 @@ typedef enum abGPU_Buffer_Usage {
 
 bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 		unsigned int size, bool editable, abGPU_Buffer_Usage initialUsage);
-void *abGPU_Buffer_Map();
-void abGPU_Buffer_Unmap(void *mapping);
+void *abGPU_Buffer_Map(abGPU_Buffer *buffer);
+// Written range can be null, in this case, it is assumed that the whole buffer was modified.
+void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int writtenOffsetAndSize[2]);
 void abGPU_Buffer_Destroy(abGPU_Buffer *buffer);
 
 /*********

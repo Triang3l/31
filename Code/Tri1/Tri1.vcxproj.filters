@@ -68,5 +68,8 @@
     <ClCompile Include="abGPU\abGPU.c">
       <Filter>Source Files\abGPU</Filter>
     </ClCompile>
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Buffer.c">
+      <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
