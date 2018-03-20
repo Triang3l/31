@@ -216,10 +216,10 @@ typedef unsigned int abGPU_Image_Slice;
 #define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5u) & 7u))
 #define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8u))
 inline bool abGPUi_Image_HasSlice(const abGPU_Image *image, abGPU_Image_Slice slice) {
-	abGPU_Image_Dimensions dimensions;
 	if (abGPU_Image_SliceMip(slice) >= image->mips) {
 		return false;
 	}
+	abGPU_Image_Dimensions dimensions = abGPU_Image_GetDimensions(image);
 	if (abGPU_Image_SliceSide(slice) > (abGPU_Image_DimensionsAreCube(dimensions) ? 5u : 0u)) {
 		return false;
 	}

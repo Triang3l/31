@@ -11,18 +11,18 @@
 typedef __m128 abVec4;
 typedef __m128i abVec4u32;
 typedef __m128i abVec4s32;
+#if defined(abPlatform_Compiler_MSVC)
+#define abVec4u32_ConstInit(x, y, z, w) { .m128i_u32 = { (x), (y), (z), (w) } }
+#define abVec4s32_ConstInit(x, y, z, w) { .m128i_i32 = { (x), (y), (z), (w) } }
+#elif defined(abPlatform_Compiler_GNU)
 #define abVec4u32_ConstInit(x, y, z, w) { \
-	(x) & 255u, ((x) >> 8u) & 255u, ((x) >> 16u) & 255u, ((x) >> 24u) & 255u, \
-	(y) & 255u, ((y) >> 8u) & 255u, ((y) >> 16u) & 255u, ((y) >> 24u) & 255u, \
-	(z) & 255u, ((z) >> 8u) & 255u, ((z) >> 16u) & 255u, ((z) >> 24u) & 255u, \
-	(w) & 255u, ((w) >> 8u) & 255u, ((w) >> 16u) & 255u, ((w) >> 24u) & 255u \
+	(uint64_t) (x) | ((uint64_t) (y) << 32u), \
+	(uint64_t) (z) | ((uint64_t) (w) << 32u) \
 }
-#define abVec4s32_ConstInit(x, y, z, w) { \
-	(x) & 255, ((x) >> 8u) & 255, ((x) >> 16u) & 255, ((x) >> 24u) & 255, \
-	(y) & 255, ((y) >> 8u) & 255, ((y) >> 16u) & 255, ((y) >> 24u) & 255, \
-	(z) & 255, ((z) >> 8u) & 255, ((z) >> 16u) & 255, ((z) >> 24u) & 255, \
-	(w) & 255, ((w) >> 8u) & 255, ((w) >> 16u) & 255, ((w) >> 24u) & 255 \
-}
+#define abVec4s32_ConstInit(x, y, z, w) abVec4u32_ConstInit((uint32_t) (x), (uint32_t) (y), (uint32_t) (z), (uint32_t) (w))
+#else
+#error No abVec4u32 and abVec4s32 static initializer known for the current compiler.
+#endif
 
 #elif defined(abPlatform_CPU_Arm)
 #include <arm_neon.h>

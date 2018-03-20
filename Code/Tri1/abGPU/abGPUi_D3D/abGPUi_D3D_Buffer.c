@@ -30,13 +30,11 @@ D3D12_RESOURCE_STATES abGPUi_D3D_Buffer_UsageToStates(abGPU_Buffer_Usage usage) 
 
 bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 		unsigned int size, bool editable, abGPU_Buffer_Usage initialUsage) {
-	D3D12_RESOURCE_DESC desc;
-	D3D12_HEAP_PROPERTIES heapProperties = { 0 };
-
 	if (size == 0u) {
 		return false;
 	}
 
+	D3D12_RESOURCE_DESC desc;
 	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	desc.Alignment = 0;
 	desc.Width = size;
@@ -49,6 +47,7 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	desc.Flags = editable ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE;
 
+	D3D12_HEAP_PROPERTIES heapProperties = { 0 };
 	if (access == abGPU_Buffer_Access_GPUInternal) {
 		heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 	} else {
@@ -64,18 +63,18 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 }
 
 void *abGPU_Buffer_Map(abGPU_Buffer *buffer) {
-	void *mapping;
 	if (buffer->access == abGPU_Buffer_Access_GPUInternal) {
 		return abNull;
 	}
+	void *mapping;
 	return (SUCCEEDED(ID3D12Resource_Map(buffer->i.resource, 0u, abNull, &mapping)) ? mapping : abNull);
 }
 
 void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int writtenOffsetAndSize[2]) {
-	D3D12_RANGE writtenRange;
 	if (mapping == abNull) {
 		return;
 	}
+	D3D12_RANGE writtenRange;
 	if (writtenOffsetAndSize != abNull) {
 		writtenRange.Begin = writtenOffsetAndSize[0u];
 		writtenRange.End = writtenOffsetAndSize[0u] + writtenOffsetAndSize[1u];
