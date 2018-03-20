@@ -16,10 +16,10 @@ typedef __m128i abVec4s32;
 #define abVec4s32_ConstInit(x, y, z, w) { .m128i_i32 = { (x), (y), (z), (w) } }
 #elif defined(abPlatform_Compiler_GNU)
 #define abVec4u32_ConstInit(x, y, z, w) { \
-	(uint64_t) (x) | ((uint64_t) (y) << 32u), \
-	(uint64_t) (z) | ((uint64_t) (w) << 32u) \
+	(uint64_t) ((uint32_t) (x)) | ((uint64_t) ((uint32_t) (y)) << 32u), \
+	(uint64_t) ((uint32_t) (z)) | ((uint64_t) ((uint32_t) (w)) << 32u) \
 }
-#define abVec4s32_ConstInit(x, y, z, w) abVec4u32_ConstInit((uint32_t) (x), (uint32_t) (y), (uint32_t) (z), (uint32_t) (w))
+#define abVec4s32_ConstInit(x, y, z, w) abVec4u32_ConstInit(x, y, z, w)
 #else
 #error No abVec4u32 and abVec4s32 static initializer known for the current compiler.
 #endif
