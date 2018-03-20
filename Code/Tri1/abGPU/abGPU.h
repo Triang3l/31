@@ -294,6 +294,7 @@ typedef enum abGPU_ShaderStage {
 	abGPU_ShaderStage_Compute
 } abGPU_ShaderStage;
 
+// abGPU_Input depends on this being 8 bits or less!
 typedef enum abGPU_ShaderStageBits {
 	abGPU_ShaderStageBits_Vertex = 1u << abGPU_ShaderStage_Vertex,
 	abGPU_ShaderStageBits_Pixel = 1u << abGPU_ShaderStage_Pixel,
@@ -330,19 +331,14 @@ typedef enum abGPU_Input_Type {
 	abGPU_Input_Type_EditBufferHandle,
 	abGPU_Input_Type_ImageHandle,
 	abGPU_Input_Type_EditImageHandle,
-	abGPU_Input_Type_SamplerHandle,
-		abGPU_Input_Type_End // Terminator
+	abGPU_Input_Type_SamplerHandle
 } abGPU_Input_Type;
 
-typedef struct abGPU_Input_Parameters_SamplerHandle {
-	uint8_t samplerFirstIndex;
-	uint8_t count;
-} abGPU_Input_Parameters_SamplerHandle;
-
 // These must be immutable as long as they are attached to an active input list.
+#define abGPU_Input_SamplerDynamicOnly UINT8_MAX
 typedef struct abGPU_Input {
-	abGPU_Input_Type type;
-	abGPU_ShaderStageBits stages;
+	uint8_t stages;
+	uint8_t type;
 	union {
 		struct { uint8_t constantIndex, count32Bits; } constant;
 		struct { uint8_t constantIndex; } constantBuffer;
@@ -352,7 +348,11 @@ typedef struct abGPU_Input {
 		struct { uint8_t bufferFirstIndex, editFirstIndex, count; } editBufferHandle;
 		struct { uint8_t imageFirstIndex, count; } imageHandle;
 		struct { uint8_t imageFirstIndex, editFirstIndex, count; } editImageHandle;
-		struct { uint8_t samplerFirstIndex, count; } samplerHandle;
+		// Static samplers are an optimization that may be unsupported, not a full replacement for binding.
+		// staticIndex is an index in the array of static samplers that is passed when the input list is created.
+		// If static samplers are supported and provided, they will override bindings for non-SamplerDynamicOnly inputs.
+		// However, as they may be unsupported by implementations, samplers still must be bound.
+		struct { uint8_t samplerFirstIndex, staticIndex, count; } samplerHandle;
 	} parameters;
 } abGPU_Input;
 
