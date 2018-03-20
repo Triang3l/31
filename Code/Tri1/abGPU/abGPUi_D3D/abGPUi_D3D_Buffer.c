@@ -38,7 +38,7 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 	}
 
 	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	desc.Alignment = 0;
 	desc.Width = size;
 	desc.Height = 1u;
 	desc.DepthOrArraySize = 1u;
@@ -47,7 +47,7 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 	desc.SampleDesc.Count = 1u;
 	desc.SampleDesc.Quality = 0u;
 	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	desc.Flags = editable ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE;
 
 	if (access == abGPU_Buffer_Access_GPUInternal) {
 		heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;

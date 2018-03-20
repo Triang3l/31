@@ -94,7 +94,7 @@ static void abGPUi_D3D_Image_FillTextureDesc(abGPU_Image_Type type, abGPU_Image_
 		abGPU_Image_Format format, D3D12_RESOURCE_DESC *desc) {
 	desc->Dimension = (abGPU_Image_DimensionsAre3D(dimensions) ?
 			D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D);
-	desc->Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	desc->Alignment = 0;
 	desc->Width = w;
 	desc->Height = h;
 	desc->DepthOrArraySize = d;
@@ -217,7 +217,7 @@ bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dim
 		if (type & abGPU_Image_Type_Upload) {
 			heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 			desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-			desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+			desc.Alignment = 0;
 			desc.Width = image->memoryUsage;
 			desc.Height = 1u;
 			desc.DepthOrArraySize = 1u;
