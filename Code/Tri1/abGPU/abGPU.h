@@ -284,4 +284,76 @@ void abGPU_Image_UploadEnd(abGPU_Image *image, abGPU_Image_Slice slice,
 		void *mapping, const unsigned int writtenOffsetAndSize[2]);
 void abGPU_Image_Destroy(abGPU_Image *image);
 
+/****************
+ * Shader stages
+ ****************/
+
+typedef enum abGPU_ShaderStage {
+	abGPU_ShaderStage_Vertex,
+	abGPU_ShaderStage_Pixel,
+	abGPU_ShaderStage_Compute
+} abGPU_ShaderStage;
+
+typedef enum abGPU_ShaderStageBits {
+	abGPU_ShaderStageBits_Vertex = 1u << abGPU_ShaderStage_Vertex,
+	abGPU_ShaderStageBits_Pixel = 1u << abGPU_ShaderStage_Pixel,
+	abGPU_ShaderStageBits_Compute = 1u << abGPU_ShaderStage_Compute
+} abGPU_ShaderStageBits;
+
+/****************
+ * Shader inputs
+ ****************/
+
+// Strategy for binding of small amounts of constant data (below 4 KB, generally less than 256 bytes).
+typedef enum abGPU_Input_UniformStrategy {
+	abGPU_Input_UniformStrategy_RawData, // Send the data directly through the command list.
+	abGPU_Input_UniformStrategy_BufferAndOffset // Bind a buffer directly, without a handle.
+};
+
+// abGPU_Input_StructureBuffersAreImages is 1 if structure buffers use t# indices, 0 if they use b#.
+// abGPU_Input_SeparateEditIndices is 1 if editable buffers and images use u# indices, 0 if they use b# and t#.
+#if defined(abBuild_GPUi_D3D)
+#define abGPU_Input_PreferredUniformStrategy abGPU_Input_UniformStrategy_BufferAndOffset
+#define abGPU_Input_StructureBuffersAreImages 1
+#define abGPU_Input_SeparateEditIndices 1
+#else
+#error No shader input preferences defined for the target GPU API.
+#endif
+
+typedef enum abGPU_Input_Type {
+		abGPU_Input_Type_Skip,
+	abGPU_Input_Type_Constant, // Small data passed directly through command list.
+	abGPU_Input_Type_ConstantBuffer, // Buffer and offset bound directly.
+	abGPU_Input_Type_ConstantBufferHandle, // Buffer bound via a handle.
+	abGPU_Input_Type_Uniform, // One of the constant input types, depending on the strategy.
+	abGPU_Input_Type_StructureBufferHandle,
+	abGPU_Input_Type_EditBufferHandle,
+	abGPU_Input_Type_ImageHandle,
+	abGPU_Input_Type_EditImageHandle,
+	abGPU_Input_Type_SamplerHandle,
+		abGPU_Input_Type_End // Terminator
+} abGPU_Input_Type;
+
+typedef struct abGPU_Input_Parameters_SamplerHandle {
+	uint8_t samplerFirstIndex;
+	uint8_t count;
+} abGPU_Input_Parameters_SamplerHandle;
+
+// These must be immutable as long as they are attached to an active input list.
+typedef struct abGPU_Input {
+	abGPU_Input_Type type;
+	abGPU_ShaderStageBits stages;
+	union {
+		struct { uint8_t constantIndex, count32Bits; } constant;
+		struct { uint8_t constantIndex; } constantBuffer;
+		struct { uint8_t bufferFirstIndex, count; } constantBufferHandle;
+		struct { uint8_t constantIndex; } uniform;
+		struct { uint8_t bufferFirstIndex, imageFirstIndex, count; } structureBufferHandle;
+		struct { uint8_t bufferFirstIndex, editFirstIndex, count; } editBufferHandle;
+		struct { uint8_t imageFirstIndex, count; } imageHandle;
+		struct { uint8_t imageFirstIndex, editFirstIndex, count; } editImageHandle;
+		struct { uint8_t samplerFirstIndex, count; } samplerHandle;
+	} parameters;
+} abGPU_Input;
+
 #endif
