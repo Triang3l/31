@@ -59,7 +59,7 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 	buffer->size = size;
 	return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
 			&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, abGPUi_D3D_Buffer_UsageToStates(initialUsage),
-			abNull, &IID_ID3D12Resource, &buffer->i.resource)) ? true : false;
+			abNull, &IID_ID3D12Resource, &buffer->i_resource)) ? true : false;
 }
 
 void *abGPU_Buffer_Map(abGPU_Buffer *buffer) {
@@ -67,7 +67,7 @@ void *abGPU_Buffer_Map(abGPU_Buffer *buffer) {
 		return abNull;
 	}
 	void *mapping;
-	return (SUCCEEDED(ID3D12Resource_Map(buffer->i.resource, 0u, abNull, &mapping)) ? mapping : abNull);
+	return (SUCCEEDED(ID3D12Resource_Map(buffer->i_resource, 0u, abNull, &mapping)) ? mapping : abNull);
 }
 
 void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int writtenOffsetAndSize[2]) {
@@ -79,11 +79,11 @@ void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int 
 		writtenRange.Begin = writtenOffsetAndSize[0u];
 		writtenRange.End = writtenOffsetAndSize[0u] + writtenOffsetAndSize[1u];
 	}
-	ID3D12Resource_Unmap(buffer->i.resource, 0u, writtenOffsetAndSize != abNull ? &writtenRange : abNull);
+	ID3D12Resource_Unmap(buffer->i_resource, 0u, writtenOffsetAndSize != abNull ? &writtenRange : abNull);
 }
 
 void abGPU_Buffer_Destroy(abGPU_Buffer *buffer) {
-	ID3D12Resource_Release(buffer->i.resource);
+	ID3D12Resource_Release(buffer->i_resource);
 }
 
 #endif

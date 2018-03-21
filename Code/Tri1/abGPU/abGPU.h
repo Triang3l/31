@@ -35,11 +35,12 @@ typedef enum abGPU_CmdQueue {
  *********/
 
 typedef struct abGPU_Fence {
-	#if defined(abBuild_GPUi_D3D)
 	abGPU_CmdQueue queue;
-	ID3D12Fence *fence;
-	HANDLE completionEvent;
-	uint64_t awaitedValue;
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12Fence *i_fence;
+	HANDLE i_completionEvent;
+	uint64_t i_awaitedValue;
 	#endif
 } abGPU_Fence;
 
@@ -59,16 +60,13 @@ typedef enum abGPU_Buffer_Access {
 	abGPU_Buffer_Access_Upload
 } abGPU_Buffer_Access;
 
-typedef struct abGPU_Buffer_Internal {
-	#if defined(abBuild_GPUi_D3D)
-	ID3D12Resource *resource;
-	#endif
-} abGPU_Buffer_Internal;
-
 typedef struct abGPU_Buffer {
 	abGPU_Buffer_Access access;
 	unsigned int size;
-	abGPU_Buffer_Internal i;
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12Resource *i_resource;
+	#endif
 } abGPU_Buffer;
 
 #define abGPU_Buffer_ConstantAlignment 256u
@@ -173,17 +171,6 @@ typedef union abGPU_Image_Texel {
 	} ds;
 } abGPU_Image_Texel;
 
-typedef struct abGPU_Image_Private {
-	#if defined(abBuild_GPUi_D3D)
-	ID3D12Resource *resource;
-	// Layouts - stencil plane not counted (but this has no use for depth/stencil images anyway).
-	DXGI_FORMAT copyFormat;
-	unsigned int mipOffset[D3D12_REQ_MIP_LEVELS];
-	unsigned int mipRowStride[D3D12_REQ_MIP_LEVELS];
-	unsigned int layerStride; // 0 for non-cubemaps and non-arrays.
-	#endif
-} abGPU_Image_Internal;
-
 #define abGPU_Image_DimensionsShift 24u
 typedef struct abGPU_Image {
 	unsigned int typeAndDimensions; // Below DimensionsShift - type flags, starting from it - dimensions.
@@ -192,7 +179,15 @@ typedef struct abGPU_Image {
 	unsigned int mips;
 	abGPU_Image_Format format;
 	unsigned int memoryUsage;
-	abGPU_Image_Internal i;
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12Resource *i_resource;
+	// Copyable footprints - stencil plane not counted (but this has no use for depth/stencil images anyway).
+	DXGI_FORMAT i_copyFormat;
+	unsigned int i_mipOffset[D3D12_REQ_MIP_LEVELS];
+	unsigned int i_mipRowStride[D3D12_REQ_MIP_LEVELS];
+	unsigned int i_layerStride; // 0 for non-cubemaps and non-arrays.
+	#endif
 } abGPU_Image;
 
 abForceInline abGPU_Image_Type abGPU_Image_GetType(const abGPU_Image *image) {
@@ -354,6 +349,7 @@ enum {
 
 typedef struct abGPU_SamplerStore {
 	unsigned int samplerCount;
+
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12DescriptorHeap *i_descriptorHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStart;
