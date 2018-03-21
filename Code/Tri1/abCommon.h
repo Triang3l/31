@@ -6,6 +6,7 @@
  * If including any engine header files, it's generally assumed that this is included as well.
  */
 
+#include <float.h> // FLT_MAX...
 #include <stdbool.h>
 #include <stdint.h> // uint32_t...
 #include <string.h> // memcpy, memmove, memset.

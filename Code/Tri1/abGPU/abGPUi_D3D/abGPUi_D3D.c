@@ -96,6 +96,8 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 		return abGPUi_D3D_Init_Result_CopyCommandQueueCreationFailed;
 	}
 
+	abGPUi_D3D_SamplerStore_DescriptorSize = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+
 	return abGPU_Init_Result_Success;
 }
 

@@ -245,6 +245,18 @@ typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_Upload // Upload buffer (can't really switch to or from this usage).
 } abGPU_Image_Usage;
 
+typedef enum abGPU_Image_Comparison {
+	// Basically D3D comparison function minus one.
+	abGPU_Image_Comparison_Less = 1u << 0u,
+	abGPU_Image_Comparison_Equal = 1u << 1u,
+	abGPU_Image_Comparison_Greater = 1u << 2u,
+	abGPU_Image_Comparison_Never = 0,
+	abGPU_Image_Comparison_LessEqual = abGPU_Image_Comparison_Less | abGPU_Image_Comparison_Equal,
+	abGPU_Image_Comparison_NotEqual = abGPU_Image_Comparison_Less | abGPU_Image_Comparison_Greater,
+	abGPU_Image_Comparison_GreaterEqual = abGPU_Image_Comparison_Greater | abGPU_Image_Comparison_Equal,
+	abGPU_Image_Comparison_Always = abGPU_Image_Comparison_Equal | abGPU_Image_Comparison_NotEqual
+} abGPU_Image_Comparison;
+
 abForceInline unsigned int abGPU_Image_CalculateMipCount(
 		abGPU_Image_Dimensions dimensions, unsigned int w, unsigned int h, unsigned int d) {
 	unsigned int size = abMax(w, h);
@@ -300,6 +312,57 @@ typedef enum abGPU_ShaderStageBits {
 	abGPU_ShaderStageBits_Pixel = 1u << abGPU_ShaderStage_Pixel,
 	abGPU_ShaderStageBits_Compute = 1u << abGPU_ShaderStage_Compute
 } abGPU_ShaderStageBits;
+
+/***********
+ * Samplers
+ ***********/
+
+typedef uint16_t abGPU_Sampler;
+enum {
+	// Filtering is either non-anisotropic or anisotropic - the same 3 bits are used for anisotropic power-1 and linear/nearest!
+
+	abGPU_Sampler_FilterAniso = 1u << 0u,
+
+	abGPU_Sampler_FilterLinearMag = 1u << 1u,
+	abGPU_Sampler_FilterLinearMin = 1u << 2u,
+	abGPU_Sampler_FilterLinearMip = 1u << 3u,
+	abGPU_Sampler_FilterLinear = abGPU_Sampler_FilterLinearMag | abGPU_Sampler_FilterLinearMin | abGPU_Sampler_FilterLinearMip,
+
+	abGPU_Sampler_FilterAnisoPowerM1Shift = 1u,
+	abGPU_Sampler_FilterAnisoPowerM1Mask = 3u, // After right shift.
+	abGPU_Sampler_FilterAniso2X = abGPU_Sampler_FilterAniso,
+	abGPU_Sampler_FilterAniso4X = abGPU_Sampler_FilterAniso | (1u << abGPU_Sampler_FilterAnisoPowerM1Shift),
+	abGPU_Sampler_FilterAniso8X = abGPU_Sampler_FilterAniso | (2u << abGPU_Sampler_FilterAnisoPowerM1Shift),
+	abGPU_Sampler_FilterAniso16X = abGPU_Sampler_FilterAniso | (3u << abGPU_Sampler_FilterAnisoPowerM1Shift),
+
+	// Mipmap index can be clamped (for alphatested things) to up to 14 (to 1x1 at 16384x16384).
+	abGPU_Sampler_MipCountShift = 4u,
+	abGPU_Sampler_MipCountMask = 15u,
+	abGPU_Sampler_MipAll = abGPU_Sampler_MipCountMask << abGPU_Sampler_MipCountShift, // Use all mipmaps.
+
+	abGPU_Sampler_RepeatS = 1u << 8u,
+	abGPU_Sampler_RepeatT = 1u << 9u,
+	abGPU_Sampler_RepeatR = 1u << 10u,
+	abGPU_Sampler_RepeatST = abGPU_Sampler_RepeatS | abGPU_Sampler_RepeatT,
+	abGPU_Sampler_Repeat = abGPU_Sampler_RepeatST | abGPU_Sampler_RepeatR,
+
+	abGPU_Sampler_CompareFailShift = 11u,
+	abGPU_Sampler_CompareFailMask = 7u, // After right shift. 3 bits are enough (0 is always), who needs always or never here anyway.
+};
+#define abGPU_Sampler_CompareFail(comparison) ((comparison) << abGPU_Sampler_CompareFailShift)
+#define abGPU_Sampler_ComparePass(comparison) abGPU_Sampler_CompareFail((comparison) ^ abGPU_Sampler_CompareFailMask)
+
+typedef struct abGPU_SamplerStore {
+	unsigned int samplerCount;
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12DescriptorHeap *i_descriptorHeap;
+	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStart;
+	#endif
+} abGPU_SamplerStore;
+
+bool abGPU_SamplerStore_Init(abGPU_SamplerStore *store, unsigned int samplerCount);
+void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int samplerIndex, abGPU_Sampler sampler);
+void abGPU_SamplerStore_Destroy(abGPU_SamplerStore *store);
 
 /****************
  * Shader inputs
