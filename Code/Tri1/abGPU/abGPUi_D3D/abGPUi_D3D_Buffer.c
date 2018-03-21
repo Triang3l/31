@@ -62,6 +62,7 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 		return false;
 	}
 	buffer->i_gpuVirtualAddress = ID3D12Resource_GetGPUVirtualAddress(buffer->i_resource);
+	return true;
 }
 
 void *abGPU_Buffer_Map(abGPU_Buffer *buffer) {

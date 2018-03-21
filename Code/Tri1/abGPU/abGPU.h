@@ -389,7 +389,7 @@ void abGPU_SamplerStore_Destroy(abGPU_SamplerStore *store);
 typedef enum abGPU_Input_UniformStrategy {
 	abGPU_Input_UniformStrategy_RawData, // Send the data directly through the command list.
 	abGPU_Input_UniformStrategy_BufferAndOffset // Bind a buffer directly, without a handle.
-};
+} abGPU_Input_UniformStrategy;
 
 // abGPU_Input_StructureBuffersAreImages is 1 if structure buffers use t# indices, 0 if they use b#.
 // abGPU_Input_SeparateEditIndices is 1 if editable buffers and images use u# indices, 0 if they use b# and t#.
