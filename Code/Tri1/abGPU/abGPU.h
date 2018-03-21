@@ -66,6 +66,7 @@ typedef struct abGPU_Buffer {
 
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12Resource *i_resource;
+	D3D12_GPU_VIRTUAL_ADDRESS i_gpuVirtualAddress;
 	#endif
 } abGPU_Buffer;
 
@@ -291,6 +292,25 @@ void abGPU_Image_UploadEnd(abGPU_Image *image, abGPU_Image_Slice slice,
 		void *mapping, const unsigned int writtenOffsetAndSize[2]);
 void abGPU_Image_Destroy(abGPU_Image *image);
 
+/*********************************
+ * Buffer and image handle stores
+ *********************************/
+
+typedef struct abGPU_HandleStore {
+	unsigned int handleCount;
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12DescriptorHeap *i_descriptorHeap;
+	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE i_gpuDescriptorHandleStart;
+	#endif
+} abGPU_HandleStore;
+
+bool abGPU_HandleStore_Init(abGPU_HandleStore *store, unsigned int handleCount);
+void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore *store, unsigned int handleIndex,
+		const abGPU_Buffer *buffer, unsigned int offset, unsigned int size);
+void abGPU_HandleStore_Destroy(abGPU_HandleStore *store);
+
 /****************
  * Shader stages
  ****************/
@@ -353,6 +373,7 @@ typedef struct abGPU_SamplerStore {
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12DescriptorHeap *i_descriptorHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE i_gpuDescriptorHandleStart;
 	#endif
 } abGPU_SamplerStore;
 

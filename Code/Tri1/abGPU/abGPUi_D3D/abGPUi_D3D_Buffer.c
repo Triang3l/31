@@ -57,9 +57,11 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 
 	buffer->access = access;
 	buffer->size = size;
-	return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
-			&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, abGPUi_D3D_Buffer_UsageToStates(initialUsage),
-			abNull, &IID_ID3D12Resource, &buffer->i_resource)) ? true : false;
+	if (FAILED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device, &heapProperties, D3D12_HEAP_FLAG_NONE,
+			&desc, abGPUi_D3D_Buffer_UsageToStates(initialUsage), abNull, &IID_ID3D12Resource, &buffer->i_resource))) {
+		return false;
+	}
+	buffer->i_gpuVirtualAddress = ID3D12Resource_GetGPUVirtualAddress(buffer->i_resource);
 }
 
 void *abGPU_Buffer_Map(abGPU_Buffer *buffer) {

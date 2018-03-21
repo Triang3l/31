@@ -14,6 +14,7 @@ bool abGPU_SamplerStore_Init(abGPU_SamplerStore *store, unsigned int samplerCoun
 	}
 	store->samplerCount = samplerCount;
 	store->i_cpuDescriptorHandleStart = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
+	store->i_gpuDescriptorHandleStart = ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
 	return true;
 }
 
@@ -21,7 +22,6 @@ void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int sampl
 	if (samplerIndex >= store->samplerCount) {
 		return;
 	}
-
 	D3D12_SAMPLER_DESC desc;
 	unsigned int compareFail = (sampler >> abGPU_Sampler_CompareFailShift) & abGPU_Sampler_CompareFailMask;
 	D3D12_FILTER_REDUCTION_TYPE reduction = (compareFail != 0u ? D3D12_FILTER_REDUCTION_TYPE_COMPARISON : D3D12_FILTER_REDUCTION_TYPE_STANDARD);
@@ -47,10 +47,7 @@ void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int sampl
 	desc.MinLOD = 0.0f;
 	unsigned int maxLOD = (sampler >> abGPU_Sampler_MipCountShift) & abGPU_Sampler_MipCountMask;
 	desc.MaxLOD = (maxLOD != abGPU_Sampler_MipCountMask ? (float) maxLOD : FLT_MAX);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = store->i_cpuDescriptorHandleStart;
-	descriptorHandle.ptr += samplerIndex * abGPUi_D3D_SamplerStore_DescriptorSize;
-	ID3D12Device_CreateSampler(abGPUi_D3D_Device, &desc, descriptorHandle);
+	ID3D12Device_CreateSampler(abGPUi_D3D_Device, &desc, abGPUi_D3D_SamplerStore_GetCPUDescriptorHandle(store, samplerIndex));
 }
 
 void abGPU_SamplerStore_Destroy(abGPU_SamplerStore *store) {
