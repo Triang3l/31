@@ -14,6 +14,7 @@ bool abGPU_SamplerStore_Init(abGPU_SamplerStore *store, unsigned int samplerCoun
 	}
 	store->samplerCount = samplerCount;
 	store->i_cpuDescriptorHandleStart = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
+	return true;
 }
 
 void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int samplerIndex, abGPU_Sampler sampler) {
