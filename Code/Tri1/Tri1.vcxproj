@@ -134,6 +134,7 @@
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
     <ClInclude Include="abMath\abBit.h" />
     <ClInclude Include="abMath\abVec4.h" />
+    <ClInclude Include="abParallel\abParallel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abGPU\abGPU.c" />

@@ -31,6 +31,9 @@
     <Filter Include="Header Files\abGPU\abGPUi_D3D">
       <UniqueIdentifier>{9f4bc429-d733-4577-9ef4-82b9ef10d422}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\abParallel">
+      <UniqueIdentifier>{feb5d25b-4f6f-4ac3-b81e-e59b1b9a97b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -47,6 +50,9 @@
     </ClInclude>
     <ClInclude Include="abMath\abBit.h">
       <Filter>Header Files\abMath</Filter>
+    </ClInclude>
+    <ClInclude Include="abParallel\abParallel.h">
+      <Filter>Header Files\abParallel</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
