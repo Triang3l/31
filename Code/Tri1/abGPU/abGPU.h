@@ -21,7 +21,7 @@ typedef unsigned int abGPU_Init_Result;
 #define abGPU_Init_Result_Success 0u
 abGPU_Init_Result abGPU_Init(bool debug);
 // Returns an immutable string. May return null for success or unknown errors.
-const char *abGPU_Init_ResultToString(abGPU_Init_Result result);
+char const * abGPU_Init_ResultToString(abGPU_Init_Result result);
 void abGPU_Shutdown();
 
 typedef enum abGPU_CmdQueue {
@@ -38,17 +38,17 @@ typedef struct abGPU_Fence {
 	abGPU_CmdQueue queue;
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12Fence *i_fence;
+	ID3D12Fence * i_fence;
 	HANDLE i_completionEvent;
 	uint64_t i_awaitedValue;
 	#endif
 } abGPU_Fence;
 
-bool abGPU_Fence_Init(abGPU_Fence *fence, abGPU_CmdQueue queue);
-void abGPU_Fence_Destroy(abGPU_Fence *fence);
-void abGPU_Fence_Enqueue(abGPU_Fence *fence);
-bool abGPU_Fence_IsCrossed(abGPU_Fence *fence);
-void abGPU_Fence_Await(abGPU_Fence *fence);
+bool abGPU_Fence_Init(abGPU_Fence * fence, abGPU_CmdQueue queue);
+void abGPU_Fence_Destroy(abGPU_Fence * fence);
+void abGPU_Fence_Enqueue(abGPU_Fence * fence);
+bool abGPU_Fence_IsCrossed(abGPU_Fence * fence);
+void abGPU_Fence_Await(abGPU_Fence * fence);
 
 /**********
  * Buffers
@@ -65,7 +65,7 @@ typedef struct abGPU_Buffer {
 	unsigned int size;
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12Resource *i_resource;
+	ID3D12Resource * i_resource;
 	D3D12_GPU_VIRTUAL_ADDRESS i_gpuVirtualAddress;
 	#endif
 } abGPU_Buffer;
@@ -87,12 +87,12 @@ typedef enum abGPU_Buffer_Usage {
 
 } abGPU_Buffer_Usage;
 
-bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
+bool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
 		unsigned int size, bool editable, abGPU_Buffer_Usage initialUsage);
-void *abGPU_Buffer_Map(abGPU_Buffer *buffer);
+void * abGPU_Buffer_Map(abGPU_Buffer * buffer);
 // Written range can be null, in this case, it is assumed that the whole buffer was modified.
-void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int writtenOffsetAndSize[2]);
-void abGPU_Buffer_Destroy(abGPU_Buffer *buffer);
+void abGPU_Buffer_Unmap(abGPU_Buffer * buffer, void * mapping, unsigned int const writtenOffsetAndSize[2]);
+void abGPU_Buffer_Destroy(abGPU_Buffer * buffer);
 
 /*********
  * Images
@@ -182,7 +182,7 @@ typedef struct abGPU_Image {
 	unsigned int memoryUsage;
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12Resource *i_resource;
+	ID3D12Resource * i_resource;
 	// Copyable footprints - stencil plane not counted (but this has no use for depth/stencil images anyway).
 	DXGI_FORMAT i_copyFormat;
 	unsigned int i_mipOffset[D3D12_REQ_MIP_LEVELS];
@@ -191,16 +191,16 @@ typedef struct abGPU_Image {
 	#endif
 } abGPU_Image;
 
-abForceInline abGPU_Image_Type abGPU_Image_GetType(const abGPU_Image *image) {
+abForceInline abGPU_Image_Type abGPU_Image_GetType(abGPU_Image const * image) {
 	return (abGPU_Image_Type) (image->typeAndDimensions & ((1u << abGPU_Image_DimensionsShift) - 1u));
 }
 
-abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(const abGPU_Image *image) {
+abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(abGPU_Image const * image) {
 	return (abGPU_Image_Dimensions) (image->typeAndDimensions >> abGPU_Image_DimensionsShift);
 }
 
-abForceInline void abGPU_Image_GetMipSize(const abGPU_Image *image, unsigned int mip,
-		unsigned int *w, unsigned int *h, unsigned int *d) {
+abForceInline void abGPU_Image_GetMipSize(abGPU_Image const * image, unsigned int mip,
+		unsigned int * w, unsigned int * h, unsigned int * d) {
 	if (w != abNull) *w = abMax(image->w >> mip, 1u);
 	if (h != abNull) *h = abMax(image->h >> mip, 1u);
 	if (d != abNull) *d = (abGPU_Image_DimensionsAre3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1u) : image->d);
@@ -211,7 +211,7 @@ typedef unsigned int abGPU_Image_Slice;
 #define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31u))
 #define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5u) & 7u))
 #define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8u))
-inline bool abGPUi_Image_HasSlice(const abGPU_Image *image, abGPU_Image_Slice slice) {
+inline bool abGPUi_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice) {
 	if (abGPU_Image_SliceMip(slice) >= image->mips) {
 		return false;
 	}
@@ -264,33 +264,33 @@ abForceInline unsigned int abGPU_Image_CalculateMipCount(
 
 // Clamps to [1, max].
 void abGPU_Image_ClampSizeToMax(abGPU_Image_Dimensions dimensions,
-		unsigned int *w, unsigned int *h, unsigned int *d, /* optional */ unsigned int *mips);
+		unsigned int * w, unsigned int * h, unsigned int * d, /* optional */ unsigned int * mips);
 
 /*
  * Implementation functions.
  */
 void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions,
-		/* optional */ unsigned int *wh, /* optional */ unsigned int *d);
+		/* optional */ unsigned int * wh, /* optional */ unsigned int * d);
 unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
 // Usage must be Upload for upload buffers. Clear value is null for images that are not render targets.
-bool abGPU_Image_Init(abGPU_Image *image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
+bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
-		abGPU_Image_Usage initialUsage, const abGPU_Image_Texel *clearValue);
-bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image *image, abGPU_Image_Dimensions dimensions,
+		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue);
+bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
 // Provides the mapping of the memory for the upload functions, may return null even in case of success.
-void *abGPU_Image_UploadBegin(abGPU_Image *image, abGPU_Image_Slice slice);
+void * abGPU_Image_UploadBegin(abGPU_Image * image, abGPU_Image_Slice slice);
 // Strides must be equal to or greater than real sizes and multiples of texel/block size.
 // For 4x4 compressed images, one row is 4 texels tall. 0 strides can be provided for tight packing.
 // Mapping can be null, in this case, UploadBegin and UploadEnd will be called implicitly.
-void abGPU_Image_Upload(abGPU_Image *image, abGPU_Image_Slice slice,
+void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
 		unsigned int x, unsigned int y, unsigned int z, unsigned int w, unsigned int h, unsigned int d,
-		unsigned int yStride, unsigned int zStride, void *mapping, const void *data);
+		unsigned int yStride, unsigned int zStride, void * mapping, void const * data);
 // Written range can be null, in this case, it is assumed that the whole sub-image was modified.
-void abGPU_Image_UploadEnd(abGPU_Image *image, abGPU_Image_Slice slice,
-		void *mapping, const unsigned int writtenOffsetAndSize[2]);
-void abGPU_Image_Destroy(abGPU_Image *image);
+void abGPU_Image_UploadEnd(abGPU_Image * image, abGPU_Image_Slice slice,
+		void * mapping, unsigned int const writtenOffsetAndSize[2]);
+void abGPU_Image_Destroy(abGPU_Image * image);
 
 /*********************************
  * Buffer and image handle stores
@@ -300,16 +300,16 @@ typedef struct abGPU_HandleStore {
 	unsigned int handleCount;
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12DescriptorHeap *i_descriptorHeap;
+	ID3D12DescriptorHeap * i_descriptorHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE i_gpuDescriptorHandleStart;
 	#endif
 } abGPU_HandleStore;
 
-bool abGPU_HandleStore_Init(abGPU_HandleStore *store, unsigned int handleCount);
-void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore *store, unsigned int handleIndex,
-		const abGPU_Buffer *buffer, unsigned int offset, unsigned int size);
-void abGPU_HandleStore_Destroy(abGPU_HandleStore *store);
+bool abGPU_HandleStore_Init(abGPU_HandleStore * store, unsigned int handleCount);
+void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
+		abGPU_Buffer const * buffer, unsigned int offset, unsigned int size);
+void abGPU_HandleStore_Destroy(abGPU_HandleStore * store);
 
 /****************
  * Shader stages
@@ -371,15 +371,15 @@ typedef struct abGPU_SamplerStore {
 	unsigned int samplerCount;
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12DescriptorHeap *i_descriptorHeap;
+	ID3D12DescriptorHeap * i_descriptorHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE i_gpuDescriptorHandleStart;
 	#endif
 } abGPU_SamplerStore;
 
-bool abGPU_SamplerStore_Init(abGPU_SamplerStore *store, unsigned int samplerCount);
-void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int samplerIndex, abGPU_Sampler sampler);
-void abGPU_SamplerStore_Destroy(abGPU_SamplerStore *store);
+bool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, unsigned int samplerCount);
+void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore * store, unsigned int samplerIndex, abGPU_Sampler sampler);
+void abGPU_SamplerStore_Destroy(abGPU_SamplerStore * store);
 
 /****************
  * Shader inputs

@@ -3,7 +3,7 @@
 
 unsigned int abGPUi_D3D_SamplerStore_DescriptorSize;
 
-bool abGPU_SamplerStore_Init(abGPU_SamplerStore *store, unsigned int samplerCount) {
+bool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, unsigned int samplerCount) {
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
 		.NumDescriptors = samplerCount,
@@ -18,7 +18,7 @@ bool abGPU_SamplerStore_Init(abGPU_SamplerStore *store, unsigned int samplerCoun
 	return true;
 }
 
-void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int samplerIndex, abGPU_Sampler sampler) {
+void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore * store, unsigned int samplerIndex, abGPU_Sampler sampler) {
 	if (samplerIndex >= store->samplerCount) {
 		return;
 	}
@@ -50,11 +50,11 @@ void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore *store, unsigned int sampl
 	ID3D12Device_CreateSampler(abGPUi_D3D_Device, &desc, abGPUi_D3D_SamplerStore_GetCPUDescriptorHandle(store, samplerIndex));
 }
 
-void abGPU_SamplerStore_Destroy(abGPU_SamplerStore *store) {
+void abGPU_SamplerStore_Destroy(abGPU_SamplerStore * store) {
 	ID3D12DescriptorHeap_Release(store->i_descriptorHeap);
 }
 
-void abGPUi_D3D_Sampler_WriteStaticSamplerDesc(abGPU_Sampler sampler, D3D12_STATIC_SAMPLER_DESC *desc) {
+void abGPUi_D3D_Sampler_WriteStaticSamplerDesc(abGPU_Sampler sampler, D3D12_STATIC_SAMPLER_DESC * desc) {
 	unsigned int compareFail = (sampler >> abGPU_Sampler_CompareFailShift) & abGPU_Sampler_CompareFailMask;
 	D3D12_FILTER_REDUCTION_TYPE reduction = (compareFail != 0u ? D3D12_FILTER_REDUCTION_TYPE_COMPARISON : D3D12_FILTER_REDUCTION_TYPE_STANDARD);
 	if (sampler & abGPU_Sampler_FilterAniso) {

@@ -1,10 +1,10 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
 
-IDXGIFactory2 *abGPUi_D3D_DXGIFactory = abNull;
-IDXGIAdapter3 *abGPUi_D3D_DXGIAdapterMain = abNull;
-ID3D12Device *abGPUi_D3D_Device = abNull;
-ID3D12CommandQueue *abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count] = { 0 };
+IDXGIFactory2 * abGPUi_D3D_DXGIFactory = abNull;
+IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain = abNull;
+ID3D12Device * abGPUi_D3D_Device = abNull;
+ID3D12CommandQueue * abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count] = { 0 };
 
 enum {
 	abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed = 1u,
@@ -21,7 +21,7 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 	}
 
 	if (debug) {
-		ID3D12Debug *debugInterface;
+		ID3D12Debug * debugInterface;
 		if (SUCCEEDED(D3D12GetDebugInterface(&IID_ID3D12Debug, &debugInterface))) {
 			ID3D12Debug_EnableDebugLayer(debugInterface);
 			ID3D12Debug_Release(debugInterface);
@@ -34,7 +34,7 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 		return abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed;
 	}
 
-	IDXGIAdapter1 *adapter = abNull, *softwareAdapter = abNull;
+	IDXGIAdapter1 * adapter = abNull, * softwareAdapter = abNull;
 	unsigned int adapterIndex = 0u;
 	while (IDXGIFactory2_EnumAdapters1(abGPUi_D3D_DXGIFactory, adapterIndex, &adapter) == S_OK) {
 		if (SUCCEEDED(D3D12CreateDevice((IUnknown *) adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, abNull))) {
@@ -102,7 +102,7 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 	return abGPU_Init_Result_Success;
 }
 
-const char *abGPU_Init_ResultToString(abGPU_Init_Result result) {
+char const * abGPU_Init_ResultToString(abGPU_Init_Result result) {
 	switch (result) {
 	case abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed:
 		return "DXGI factory creation failed.";
@@ -123,7 +123,7 @@ const char *abGPU_Init_ResultToString(abGPU_Init_Result result) {
 void abGPU_Shutdown() {
 	// May be called from Init, so needs to do null checks.
 	for (unsigned int commandQueueIndex = 0u; commandQueueIndex < (unsigned int) abGPU_CmdQueue_Count; ++commandQueueIndex) {
-		ID3D12CommandQueue **queue = &abGPUi_D3D_CommandQueues[commandQueueIndex];
+		ID3D12CommandQueue * * queue = &abGPUi_D3D_CommandQueues[commandQueueIndex];
 		if (*queue != abNull) {
 			ID3D12CommandQueue_Release(*queue);
 			*queue = abNull;

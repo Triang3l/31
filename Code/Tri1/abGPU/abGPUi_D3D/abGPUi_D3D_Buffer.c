@@ -28,7 +28,7 @@ D3D12_RESOURCE_STATES abGPUi_D3D_Buffer_UsageToStates(abGPU_Buffer_Usage usage) 
 	return D3D12_RESOURCE_STATE_COMMON; // This shouldn't happen!
 }
 
-bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
+bool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
 		unsigned int size, bool editable, abGPU_Buffer_Usage initialUsage) {
 	if (size == 0u) {
 		return false;
@@ -65,15 +65,15 @@ bool abGPU_Buffer_Init(abGPU_Buffer *buffer, abGPU_Buffer_Access access,
 	return true;
 }
 
-void *abGPU_Buffer_Map(abGPU_Buffer *buffer) {
+void * abGPU_Buffer_Map(abGPU_Buffer * buffer) {
 	if (buffer->access == abGPU_Buffer_Access_GPUInternal) {
 		return abNull;
 	}
-	void *mapping;
+	void * mapping;
 	return (SUCCEEDED(ID3D12Resource_Map(buffer->i_resource, 0u, abNull, &mapping)) ? mapping : abNull);
 }
 
-void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int writtenOffsetAndSize[2]) {
+void abGPU_Buffer_Unmap(abGPU_Buffer * buffer, void * mapping, unsigned int const writtenOffsetAndSize[2]) {
 	if (mapping == abNull) {
 		return;
 	}
@@ -85,7 +85,7 @@ void abGPU_Buffer_Unmap(abGPU_Buffer *buffer, void *mapping, const unsigned int 
 	ID3D12Resource_Unmap(buffer->i_resource, 0u, writtenOffsetAndSize != abNull ? &writtenRange : abNull);
 }
 
-void abGPU_Buffer_Destroy(abGPU_Buffer *buffer) {
+void abGPU_Buffer_Destroy(abGPU_Buffer * buffer) {
 	ID3D12Resource_Release(buffer->i_resource);
 }
 

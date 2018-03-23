@@ -60,7 +60,7 @@ abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return _mm_shuffle_ps(v, v, _MM_SHU
 #define abVec4_LoadAligned(p) vld1q_f32_ex((p), 128u)
 #define abVec4_StoreAligned(p, v) vst1q_f32_ex((p), (v), 128u)
 #elif defined(abPlatform_Compiler_GNU)
-#define abVec4_LoadAligned(p) vld1q_f32((const float *) __builtin_assume_aligned((p), 16u))
+#define abVec4_LoadAligned(p) vld1q_f32((float const *) __builtin_assume_aligned((p), 16u))
 #define abVec4_StoreAligned(p, v) vst1q_f32((float *) __builtin_assume_aligned((p), 16u), (v))
 #else
 #error No explicitly aligned vld1q and vst1q known for the current compiler.
