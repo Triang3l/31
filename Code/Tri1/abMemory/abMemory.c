@@ -84,7 +84,7 @@ void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, char const * fileName, 
 	void * block = malloc(sizeof(abMemory_Allocation) + 8u + size);
 	#endif
 	if (block == abNull) {
-		abFeedback_Crash("abMemory_DoAlloc", "Failed to allocate %zu for tag %s at %s:%u.", size, tag->name, fileName, fileLine);
+		abFeedback_Crash("abMemory_DoAlloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
 	}
 
 	abMemory_Allocation * allocation;
