@@ -65,7 +65,7 @@ void abMemory_Tag_Destroy(abMemory_Tag * tag) {
 		nextAllocation = allocation->inTagPrevious;
 		#ifndef abPlatform_CPU_64Bit
 		if (allocation->alignmentType == abMemoryi_Allocation_AlignmentType_Got8Aligned) {
-			allocation = (abMemoryi_Allocation *) ((uint8_t *) allocation - 8u);
+			allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
 		}
 		#endif
 		free(allocation);
@@ -99,10 +99,10 @@ void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, char const * fileName, 
 		abFeedback_Crash("abMemory_DoAlloc", "Got a pointer from malloc that is not 8-aligned, this totally shouldn't happen!");
 	}
 	if (((size_t) block & 8u) != 0u) {
-		allocation = (abMemoryi_Allocation *) ((uint8_t *) block + 8u);
+		allocation = (abMemory_Allocation *) ((uint8_t *) block + 8u);
 		allocation->alignmentType = abMemoryi_Allocation_AlignmentType_Got8Aligned;
 	} else {
-		allocation = (abMemoryi_Allocation *) block;
+		allocation = (abMemory_Allocation *) block;
 		allocation->alignmentType = abMemoryi_Allocation_AlignmentType_Got16Aligned;
 	}
 	#endif

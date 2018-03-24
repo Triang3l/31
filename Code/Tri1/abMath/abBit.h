@@ -16,9 +16,16 @@ abForceInline int abBit_LowestOne32(uint32_t value) {
 	return (int) index;
 }
 abForceInline int abBit_LowestOne64(uint64_t value) {
+	#ifdef abPlatform_CPU_64Bit
 	long index = -1;
 	if (value != 0ull) _BitScanForward64((unsigned long *) &index, value);
 	return (int) index;
+	#else
+	unsigned long index;
+	uint32_t part = (uint32_t) value; if (part != 0u) { _BitScanForward(&index, part); return (int) index; }
+	part = (uint32_t) (value >> 32u); if (part != 0u) { _BitScanForward(&index, part); return (int) index + 32; }
+	return -1;
+	#endif
 }
 abForceInline int abBit_HighestOne32(uint32_t value) {
 	long index = -1;
@@ -26,9 +33,16 @@ abForceInline int abBit_HighestOne32(uint32_t value) {
 	return (int) index;
 }
 abForceInline int abBit_HighestOne64(uint64_t value) {
+	#ifdef abPlatform_CPU_64Bit
 	long index = -1;
 	if (value != 0ull) _BitScanReverse64((unsigned long *) &index, value);
 	return (int) index;
+	#else
+	unsigned long index;
+	uint32_t part = (uint32_t) (value >> 32u); if (part != 0u) { _BitScanReverse(&index, part); return (int) index + 32; }
+	part = (uint32_t) value; if (part != 0u) { _BitScanReverse(&index, part); return (int) index; }
+	return -1;
+	#endif
 }
 
 #else

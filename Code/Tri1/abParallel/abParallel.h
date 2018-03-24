@@ -51,13 +51,13 @@ abForceInline void abAtomic_StoreRelaxedU64(uint64_t * location, uint64_t value)
 }
 #else
 abForceInline uint64_t abAtomic_LoadRelaxedU64(uint64_t const * location) {
-	return (uint64_t) InterlockedCompareExchangeNoFence64((LONG volatile *) location, 0ll, 0ll);
+	return (uint64_t) InterlockedCompareExchangeNoFence64((LONGLONG volatile *) location, 0ll, 0ll);
 }
 abForceInline uint64_t abAtomic_LoadAcquireU64(uint64_t const * location) {
 	return (uint64_t) InterlockedCompareExchangeAcquire64((LONGLONG volatile *) location, 0ll, 0ll);
 }
 abForceInline void abAtomic_StoreRelaxedU64(uint64_t * location, uint64_t value) {
-	InterlockedExchangeNoFence64((LONG volatile *) location, (int64_t) value);
+	InterlockedExchangeNoFence64((LONGLONG volatile *) location, (LONGLONG) value);
 }
 #endif
 abForceInline void abAtomic_StoreReleaseU64(uint64_t * location, uint64_t value) {
