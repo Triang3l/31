@@ -1,6 +1,5 @@
 #ifndef abInclude_abParallel
 #define abInclude_abParallel
-
 #include "../abCommon.h"
 
 // Note: acquire is used like "check atomic -> acquire -> read dependencies",

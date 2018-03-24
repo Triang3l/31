@@ -130,13 +130,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h" />
+    <ClInclude Include="abFeedback\abFeedback.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
     <ClInclude Include="abMath\abBit.h" />
     <ClInclude Include="abMath\abVec4.h" />
     <ClInclude Include="abParallel\abParallel.h" />
+    <ClInclude Include="abText\abText.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="abFeedback\abFeedback.c" />
     <ClCompile Include="abGPU\abGPU.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Buffer.c" />
@@ -146,6 +149,7 @@
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Sampler.c" />
     <ClCompile Include="abMath\abVec4.c" />
     <ClCompile Include="abTest.c" />
+    <ClCompile Include="abText\abText.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

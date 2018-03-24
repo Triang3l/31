@@ -3,10 +3,11 @@
 
 /*
  * Common top-level definitions - platform, most general-purpose macros.
- * If including any engine header files, it's generally assumed that this is included as well.
+ * If a header file doesn't include other engine headers, it MUST include abCommon!
  */
 
 #include <float.h> // FLT_MAX...
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h> // uint32_t...
 #include <string.h> // memcpy, memmove, memset.
@@ -57,12 +58,6 @@
 #error Unsupported compiler.
 #endif
 
-// Debugging.
-
-#ifdef _DEBUG
-#define abPlatform_Debug 1
-#endif
-
 // Alignment - abAligned must be placed after the struct keyword.
 
 #if defined(abPlatform_Compiler_MSVC)
@@ -82,6 +77,10 @@
 #else
 #error No abForceInline known for the current compiler.
 #endif
+
+// Static array length.
+
+#define abArrayLength(arr) (sizeof(arr) / (sizeof((arr)[0])))
 
 // Stack allocation.
 
