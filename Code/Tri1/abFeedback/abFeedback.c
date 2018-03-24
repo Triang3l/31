@@ -5,6 +5,7 @@
 /***************************
  * Windows feedback output
  ***************************/
+#include <stdlib.h>
 #include <Windows.h>
 
 void abFeedback_DebugMessageForceV(char const * format, va_list arguments) {
@@ -20,6 +21,8 @@ void abFeedback_CrashV(bool isAssert, char const * functionName, char const * me
 	written += abTextA_CopyInto(isAssert ? " (assertion): " : ": ", message, abArrayLength(message), written);
 	abTextA_FormatV(message + written, abArrayLength(message) - written, messageFormat, messageArguments);
 	MessageBoxA(abNull, message, "Tri1 Fatal Error", MB_OK);
+	abFeedback_Break();
+	_exit(EXIT_FAILURE);
 }
 #else
 #error No abFeedback_CrashV for the target Windows application model.

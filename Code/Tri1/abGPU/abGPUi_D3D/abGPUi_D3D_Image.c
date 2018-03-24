@@ -186,7 +186,7 @@ static void abGPUi_D3D_Image_GetDataLayout(D3D12_RESOURCE_DESC const * desc, DXG
 
 bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
-		abGPU_Image_Usage initialUsage, abGPU_Image_Texel * const clearValue) {
+		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue) {
 	if (type & abGPU_Image_Type_Upload) {
 		type = abGPU_Image_Type_Upload;
 		initialUsage = abGPU_Image_Usage_Upload;

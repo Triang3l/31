@@ -31,7 +31,7 @@ void abFeedback_AssertCrash(char const * functionName, char const * messageForma
 #ifdef abFeedback_DebugBuild
 #define abFeedback_DebugMessage(format, ...) abFeedback_DebugMessageForce((format), __VA_ARGS__)
 #define abFeedback_Assert(condition, functionName, messageFormat, ...) \
-	{ if (!(condition)) abFeedback_Assert_Crash((functionName), (messageFormat), __VA_ARGS__); }
+	{ if (!(condition)) abFeedback_AssertCrash((functionName), (messageFormat), __VA_ARGS__); }
 #else
 #define abFeedback_DebugMessage(format, ...) {}
 #define abFeedback_Assert(condition, functionName, messageFormat, ...) {}

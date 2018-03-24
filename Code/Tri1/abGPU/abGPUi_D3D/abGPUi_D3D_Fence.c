@@ -15,11 +15,6 @@ bool abGPU_Fence_Init(abGPU_Fence * fence, abGPU_CmdQueue queue) {
 	return true;
 }
 
-void abGPU_Fence_Destroy(abGPU_Fence * fence) {
-	ID3D12Fence_Release(fence->i_fence);
-	CloseHandle(fence->i_completionEvent);
-}
-
 void abGPU_Fence_Enqueue(abGPU_Fence * fence) {
 	ID3D12CommandQueue_Signal(abGPUi_D3D_CommandQueues[fence->queue], fence->i_fence, ++fence->i_awaitedValue);
 }
@@ -34,6 +29,11 @@ void abGPU_Fence_Await(abGPU_Fence * fence) {
 	}
 	ID3D12Fence_SetEventOnCompletion(fence->i_fence, fence->i_awaitedValue, fence->i_completionEvent);
 	WaitForSingleObject(fence->i_completionEvent, INFINITE);
+}
+
+void abGPU_Fence_Destroy(abGPU_Fence * fence) {
+	ID3D12Fence_Release(fence->i_fence);
+	CloseHandle(fence->i_completionEvent);
 }
 
 #endif

@@ -77,9 +77,9 @@ abForceInline uint64_t abAtomic_CompareSwapU64(uint64_t * location, uint64_t old
 	return (uint64_t) InterlockedCompareExchange64((LONGLONG volatile *) location, (LONGLONG) newValue, (LONGLONG) oldValue);
 }
 abForceInline uint32_t abAtomic_IncrementU32(uint32_t * location) { return (uint32_t) InterlockedIncrement((LONG volatile *) location); }
-abForceInline uint32_t abAtomic_IncrementU64(uint64_t * location) { return (uint64_t) InterlockedIncrement64((LONGLONG volatile *) location); }
+abForceInline uint64_t abAtomic_IncrementU64(uint64_t * location) { return (uint64_t) InterlockedIncrement64((LONGLONG volatile *) location); }
 abForceInline uint32_t abAtomic_DecrementU32(uint32_t * location) { return (uint32_t) InterlockedDecrement((LONG volatile *) location); }
-abForceInline uint32_t abAtomic_DecrementU64(uint64_t * location) { return (uint64_t) InterlockedDecrement64((LONGLONG volatile *) location); }
+abForceInline uint64_t abAtomic_DecrementU64(uint64_t * location) { return (uint64_t) InterlockedDecrement64((LONGLONG volatile *) location); }
 abForceInline uint32_t abAtomic_AddU32(uint32_t * location, uint32_t value) { return (uint32_t) InterlockedAdd((LONG volatile *) location, (LONG) value); }
 abForceInline uint64_t abAtomic_AddU64(uint64_t * location, uint64_t value) { return (uint64_t) InterlockedAdd64((LONGLONG volatile *) location, (LONGLONG) value); }
 abForceInline uint32_t abAtomic_AndU32(uint32_t * location, uint32_t value) { return (uint32_t) InterlockedAnd((LONG volatile *) location, (LONG) value); }
@@ -94,18 +94,18 @@ abForceInline uint64_t abAtomic_XorU64(uint64_t * location, uint64_t value) { re
 #define abParallel_Pause Sleep
 
 typedef CRITICAL_SECTION abParallel_Mutex;
-#define abParallel_Mutex_Init InitializeCriticalSection
+abForceInline bool abParallel_Mutex_Init(abParallel_Mutex * mutex) { InitializeCriticalSection(mutex); return true; }
 #define abParallel_Mutex_Lock EnterCriticalSection
 #define abParallel_Mutex_Unlock LeaveCriticalSection
 #define abParallel_Mutex_Destroy DeleteCriticalSection
 
 typedef SRWLOCK abParallel_RWLock;
-#define abParallel_RWLock_Init InitializeSRWLock
-#define abParallel_RWLock_Destroy(lock) {}
+abForceInline bool abParallel_RWLock_Init(abParallel_RWLock * lock) { InitializeSRWLock(lock); return true; }
 #define abParallel_RWLock_LockRead AcquireSRWLockShared
 #define abParallel_RWLock_UnlockRead ReleaseSRWLockShared
 #define abParallel_RWLock_LockWrite AcquireSRWLockExclusive
 #define abParallel_RWLock_UnlockWrite ReleaseSRWLockExclusive
+#define abParallel_RWLock_Destroy(lock) {}
 
 typedef CONDITION_VARIABLE abParallel_CondEvent;
 #define abParallel_CondEvent_Init InitializeConditionVariable

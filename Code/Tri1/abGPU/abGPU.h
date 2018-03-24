@@ -45,10 +45,10 @@ typedef struct abGPU_Fence {
 } abGPU_Fence;
 
 bool abGPU_Fence_Init(abGPU_Fence * fence, abGPU_CmdQueue queue);
-void abGPU_Fence_Destroy(abGPU_Fence * fence);
 void abGPU_Fence_Enqueue(abGPU_Fence * fence);
 bool abGPU_Fence_IsCrossed(abGPU_Fence * fence);
 void abGPU_Fence_Await(abGPU_Fence * fence);
+void abGPU_Fence_Destroy(abGPU_Fence * fence);
 
 /**********
  * Buffers
