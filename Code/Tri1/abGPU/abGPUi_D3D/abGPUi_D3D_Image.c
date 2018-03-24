@@ -1,40 +1,28 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
 
-static DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format) {
-	switch (format) {
-	case abGPU_Image_Format_R8G8B8A8:
-		return DXGI_FORMAT_R8G8B8A8_UNORM;
-	case abGPU_Image_Format_R8G8B8A8_sRGB:
-		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	case abGPU_Image_Format_R8G8B8A8_Signed:
-		return DXGI_FORMAT_R8G8B8A8_SNORM;
-	case abGPU_Image_Format_S3TC_A1:
-		return DXGI_FORMAT_BC1_UNORM;
-	case abGPU_Image_Format_S3TC_A1_sRGB:
-		return DXGI_FORMAT_BC1_UNORM_SRGB;
-	case abGPU_Image_Format_S3TC_A4:
-		return DXGI_FORMAT_BC2_UNORM;
-	case abGPU_Image_Format_S3TC_A4_sRGB:
-		return DXGI_FORMAT_BC2_UNORM_SRGB;
-	case abGPU_Image_Format_S3TC_A8:
-		return DXGI_FORMAT_BC3_UNORM;
-	case abGPU_Image_Format_S3TC_A8_sRGB:
-		return DXGI_FORMAT_BC3_UNORM_SRGB;
-	case abGPU_Image_Format_3Dc_X:
-		return DXGI_FORMAT_BC4_UNORM;
-	case abGPU_Image_Format_3Dc_X_Signed:
-		return DXGI_FORMAT_BC4_SNORM;
-	case abGPU_Image_Format_3Dc_XY:
-		return DXGI_FORMAT_BC5_UNORM;
-	case abGPU_Image_Format_3Dc_XY_Signed:
-		return DXGI_FORMAT_BC5_SNORM;
-	case abGPU_Image_Format_D32:
-		return DXGI_FORMAT_R32_TYPELESS;
-	case abGPU_Image_Format_D24S8:
-		return DXGI_FORMAT_R24G8_TYPELESS;
-	}
-	return DXGI_FORMAT_UNKNOWN;
+static DXGI_FORMAT abGPUi_D3D_Image_FormatToResourceMap[abGPU_Image_Format_Count] = {
+	[abGPU_Image_Format_R8G8B8A8] = DXGI_FORMAT_R8G8B8A8_UNORM,
+	[abGPU_Image_Format_R8G8B8A8_sRGB] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+	[abGPU_Image_Format_R8G8B8A8_Signed] = DXGI_FORMAT_R8G8B8A8_SNORM,
+	[abGPU_Image_Format_S3TC_A1] = DXGI_FORMAT_BC1_UNORM,
+	[abGPU_Image_Format_S3TC_A1_sRGB] = DXGI_FORMAT_BC1_UNORM_SRGB,
+	[abGPU_Image_Format_S3TC_A4] = DXGI_FORMAT_BC2_UNORM,
+	[abGPU_Image_Format_S3TC_A4_sRGB] = DXGI_FORMAT_BC2_UNORM_SRGB,
+	[abGPU_Image_Format_S3TC_A8] = DXGI_FORMAT_BC3_UNORM,
+	[abGPU_Image_Format_S3TC_A8_sRGB] = DXGI_FORMAT_BC3_UNORM_SRGB,
+	[abGPU_Image_Format_3Dc_X] = DXGI_FORMAT_BC4_UNORM,
+	[abGPU_Image_Format_3Dc_X_Signed] = DXGI_FORMAT_BC4_SNORM,
+	[abGPU_Image_Format_3Dc_XY] = DXGI_FORMAT_BC5_UNORM,
+	[abGPU_Image_Format_3Dc_XY_Signed] = DXGI_FORMAT_BC5_SNORM,
+	[abGPU_Image_Format_D32] = DXGI_FORMAT_R32_TYPELESS,
+	[abGPU_Image_Format_D24S8] = DXGI_FORMAT_R24G8_TYPELESS
+	// 0 is DXGI_FORMAT_UNKNOWN.
+};
+
+static abForceInline DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format) {
+	return ((unsigned int) format < abArrayLength(abGPUi_D3D_Image_FormatToResourceMap) ?
+			abGPUi_D3D_Image_FormatToResourceMap[format] : DXGI_FORMAT_UNKNOWN);
 }
 
 static DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format format) {
@@ -57,36 +45,26 @@ static DXGI_FORMAT abGPUi_D3D_Image_FormatToDepthStencil(abGPU_Image_Format form
 	return abGPUi_D3D_Image_FormatToResource(format);
 }
 
+static D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStatesMap[abGPU_Image_Usage_Count] = {
+	[abGPU_Image_Usage_Texture] = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+	[abGPU_Image_Usage_TextureNonPixelStage] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+	[abGPU_Image_Usage_TextureAnyStage] = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+	[abGPU_Image_Usage_RenderTarget] = D3D12_RESOURCE_STATE_RENDER_TARGET,
+	[abGPU_Image_Usage_Display] = D3D12_RESOURCE_STATE_PRESENT,
+	[abGPU_Image_Usage_DepthWrite] = D3D12_RESOURCE_STATE_DEPTH_WRITE,
+	[abGPU_Image_Usage_DepthTest] = D3D12_RESOURCE_STATE_DEPTH_READ,
+	[abGPU_Image_Usage_DepthTestAndTexture] = D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+	[abGPU_Image_Usage_Edit] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+	[abGPU_Image_Usage_CopySource] = D3D12_RESOURCE_STATE_COPY_SOURCE,
+	[abGPU_Image_Usage_CopyDestination] = D3D12_RESOURCE_STATE_COPY_DEST,
+	[abGPU_Image_Usage_CopyQueue] = D3D12_RESOURCE_STATE_COMMON,
+	[abGPU_Image_Usage_Upload] = D3D12_RESOURCE_STATE_GENERIC_READ
+	// 0 is D3D12_RESOURCE_STATE_COMMON.
+};
+
 D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStates(abGPU_Image_Usage usage) {
-	switch (usage) {
-	case abGPU_Image_Usage_Texture:
-		return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	case abGPU_Image_Usage_TextureNonPixelStage:
-		return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	case abGPU_Image_Usage_TextureAnyStage:
-		return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	case abGPU_Image_Usage_RenderTarget:
-		return D3D12_RESOURCE_STATE_RENDER_TARGET;
-	case abGPU_Image_Usage_Display:
-		return D3D12_RESOURCE_STATE_PRESENT;
-	case abGPU_Image_Usage_DepthWrite:
-		return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	case abGPU_Image_Usage_DepthTest:
-		return D3D12_RESOURCE_STATE_DEPTH_READ;
-	case abGPU_Image_Usage_DepthTestAndTexture:
-		return D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	case abGPU_Image_Usage_Edit:
-		return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	case abGPU_Image_Usage_CopySource:
-		return D3D12_RESOURCE_STATE_COPY_SOURCE;
-	case abGPU_Image_Usage_CopyDestination:
-		return D3D12_RESOURCE_STATE_COPY_DEST;
-	case abGPU_Image_Usage_CopyQueue:
-		return D3D12_RESOURCE_STATE_COMMON;
-	case abGPU_Image_Usage_Upload:
-		return D3D12_RESOURCE_STATE_GENERIC_READ;
-	}
-	return D3D12_RESOURCE_STATE_COMMON; // This shouldn't happen!
+	return ((unsigned int) usage < abArrayLength(abGPUi_D3D_Image_UsageToStatesMap) ?
+			abGPUi_D3D_Image_UsageToStatesMap[usage] : D3D12_RESOURCE_STATE_COMMON);
 }
 
 static void abGPUi_D3D_Image_FillTextureDesc(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,

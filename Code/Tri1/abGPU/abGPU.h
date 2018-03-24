@@ -83,8 +83,8 @@ typedef enum abGPU_Buffer_Usage {
 	abGPU_Buffer_Usage_CopySource,
 	abGPU_Buffer_Usage_CopyDestination,
 	abGPU_Buffer_Usage_CopyQueue, // Owned by the copy command queue (which doesn't have the concept of usages).
-	abGPU_Buffer_Usage_CPUWrite // CPU-writable or upload buffer.
-
+	abGPU_Buffer_Usage_CPUWrite, // CPU-writable or upload buffer.
+		abGPU_Buffer_Usage_Count
 } abGPU_Buffer_Usage;
 
 bool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
@@ -151,7 +151,9 @@ typedef enum abGPU_Image_Format {
 		abGPU_Image_Format_DepthStencilStart,
 	abGPU_Image_Format_D24S8 = abGPU_Image_Format_DepthStencilStart,
 		abGPU_Image_Format_DepthStencilEnd = abGPU_Image_Format_D24S8,
-		abGPU_Image_Format_DepthEnd = abGPU_Image_Format_DepthStencilEnd
+		abGPU_Image_Format_DepthEnd = abGPU_Image_Format_DepthStencilEnd,
+
+		abGPU_Image_Format_Count
 } abGPU_Image_Format;
 abForceInline bool abGPU_Image_Format_Is4x4(abGPU_Image_Format format) {
 	return format >= abGPU_Image_Format_4x4Start && format <= abGPU_Image_Format_4x4End;
@@ -238,7 +240,8 @@ typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_CopySource,
 	abGPU_Image_Usage_CopyDestination,
 	abGPU_Image_Usage_CopyQueue, // Owned by the copy command queue (which doesn't have the concept of usages).
-	abGPU_Image_Usage_Upload // Upload buffer (can't really switch to or from this usage).
+	abGPU_Image_Usage_Upload, // Upload buffer (can't really switch to or from this usage).
+		abGPU_Image_Usage_Count
 } abGPU_Image_Usage;
 
 typedef enum abGPU_Image_Comparison {

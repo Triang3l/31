@@ -1,31 +1,24 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
 
+static D3D12_RESOURCE_STATES abGPUi_D3D_Buffer_UsageToStatesMap[abGPU_Buffer_Usage_Count] = {
+	[abGPU_Buffer_Usage_Vertices] = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+	[abGPU_Buffer_Usage_Constants] = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+	[abGPU_Buffer_Usage_Indices] = D3D12_RESOURCE_STATE_INDEX_BUFFER,
+	[abGPU_Buffer_Usage_Structures] = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+	[abGPU_Buffer_Usage_StructuresNonPixelStage] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+	[abGPU_Buffer_Usage_StructuresAnyStage] = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+	[abGPU_Buffer_Usage_Edit] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+	[abGPU_Buffer_Usage_CopySource] = D3D12_RESOURCE_STATE_COPY_SOURCE,
+	[abGPU_Buffer_Usage_CopyDestination] = D3D12_RESOURCE_STATE_COPY_DEST,
+	[abGPU_Buffer_Usage_CopyQueue] = D3D12_RESOURCE_STATE_COMMON,
+	[abGPU_Buffer_Usage_CPUWrite] = D3D12_RESOURCE_STATE_GENERIC_READ
+	// 0 is D3D12_RESOURCE_STATE_COMMON.
+};
+
 D3D12_RESOURCE_STATES abGPUi_D3D_Buffer_UsageToStates(abGPU_Buffer_Usage usage) {
-	switch (usage) {
-	case abGPU_Buffer_Usage_Vertices:
-	case abGPU_Buffer_Usage_Constants:
-		return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-	case abGPU_Buffer_Usage_Indices:
-		return D3D12_RESOURCE_STATE_INDEX_BUFFER;
-	case abGPU_Buffer_Usage_Structures:
-		return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	case abGPU_Buffer_Usage_StructuresNonPixelStage:
-		return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	case abGPU_Buffer_Usage_StructuresAnyStage:
-		return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	case abGPU_Buffer_Usage_Edit:
-		return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	case abGPU_Buffer_Usage_CopySource:
-		return D3D12_RESOURCE_STATE_COPY_SOURCE;
-	case abGPU_Buffer_Usage_CopyDestination:
-		return D3D12_RESOURCE_STATE_COPY_DEST;
-	case abGPU_Buffer_Usage_CopyQueue:
-		return D3D12_RESOURCE_STATE_COMMON;
-	case abGPU_Buffer_Usage_CPUWrite:
-		return D3D12_RESOURCE_STATE_GENERIC_READ;
-	}
-	return D3D12_RESOURCE_STATE_COMMON; // This shouldn't happen!
+	return ((unsigned int) usage < abArrayLength(abGPUi_D3D_Buffer_UsageToStatesMap) ?
+			abGPUi_D3D_Buffer_UsageToStatesMap[usage] : D3D12_RESOURCE_STATE_COMMON);
 }
 
 bool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
