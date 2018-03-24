@@ -46,6 +46,12 @@
     <Filter Include="Source Files\abText">
       <UniqueIdentifier>{11f88440-320b-499a-97b2-7fa1be41375f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\abMemory">
+      <UniqueIdentifier>{46fe40e2-adf6-47af-abff-c40f246a541c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\abMemory">
+      <UniqueIdentifier>{9a85c247-d46b-4cf1-b64b-282c18590c20}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -71,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="abFeedback\abFeedback.h">
       <Filter>Header Files\abFeedback</Filter>
+    </ClInclude>
+    <ClInclude Include="abMemory\abMemory.h">
+      <Filter>Header Files\abMemory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +115,9 @@
     </ClCompile>
     <ClCompile Include="abText\abText.c">
       <Filter>Source Files\abText</Filter>
+    </ClCompile>
+    <ClCompile Include="abMemory\abMemory.c">
+      <Filter>Source Files\abMemory</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
