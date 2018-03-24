@@ -38,9 +38,7 @@ abForceInline void abAtomic_StoreReleaseU32(uint32_t * location, uint32_t value)
 	abAtomic_Release();
 	abAtomic_StoreRelaxedU32(location, value);
 }
-
-#ifndef abPlatform_CPU_64Bit
-// Native 64-bit atomics.
+#ifdef abPlatform_CPU_64Bit
 abForceInline uint64_t abAtomic_LoadRelaxedU64(uint64_t const * location) {
 	return *((uint64_t const volatile *) location);
 }
@@ -53,21 +51,44 @@ abForceInline void abAtomic_StoreRelaxedU64(uint64_t * location, uint64_t value)
 	*((uint64_t volatile *) location) = value;
 }
 #else
-// 64-bit atomics emulated with more relaxed versions of interlocked operations.
 abForceInline uint64_t abAtomic_LoadRelaxedU64(uint64_t const * location) {
-	return InterlockedCompareExchangeNoFence64((int64_t volatile *) location, 0ll, 0ll);
+	return (uint64_t) InterlockedCompareExchangeNoFence64((LONG volatile *) location, 0ll, 0ll);
 }
 abForceInline uint64_t abAtomic_LoadAcquireU64(uint64_t const * location) {
-	return InterlockedCompareExchangeAcquire64((int64_t volatile *) location, 0ll, 0ll);
+	return (uint64_t) InterlockedCompareExchangeAcquire64((LONGLONG volatile *) location, 0ll, 0ll);
 }
 abForceInline void abAtomic_StoreRelaxedU64(uint64_t * location, uint64_t value) {
-	InterlockedExchangeNoFence64((int64_t volatile *) location, (int64_t) value);
+	InterlockedExchangeNoFence64((LONG volatile *) location, (int64_t) value);
 }
 #endif
 abForceInline void abAtomic_StoreReleaseU64(uint64_t * location, uint64_t value) {
 	abAtomic_Release();
 	abAtomic_StoreRelaxedU64(location, value);
 }
+abForceInline uint32_t abAtomic_SwapU32(uint32_t * location, uint32_t value) {
+	return (uint32_t) InterlockedExchange((LONG volatile *) location, (LONG) value);
+}
+abForceInline uint64_t abAtomic_SwapU64(uint64_t * location, uint64_t value) {
+	return (uint64_t) InterlockedExchange64((LONGLONG volatile *) location, (LONGLONG) value);
+}
+abForceInline uint32_t abAtomic_CompareSwapU32(uint32_t * location, uint32_t oldValue, uint32_t newValue) {
+	return (uint32_t) InterlockedCompareExchange((LONG volatile *) location, (LONG) newValue, (LONG) oldValue);
+}
+abForceInline uint64_t abAtomic_CompareSwapU64(uint64_t * location, uint64_t oldValue, uint64_t newValue) {
+	return (uint64_t) InterlockedCompareExchange64((LONGLONG volatile *) location, (LONGLONG) newValue, (LONGLONG) oldValue);
+}
+abForceInline uint32_t abAtomic_IncrementU32(uint32_t * location) { return (uint32_t) InterlockedIncrement((LONG volatile *) location); }
+abForceInline uint32_t abAtomic_IncrementU64(uint64_t * location) { return (uint64_t) InterlockedIncrement64((LONGLONG volatile *) location); }
+abForceInline uint32_t abAtomic_DecrementU32(uint32_t * location) { return (uint32_t) InterlockedDecrement((LONG volatile *) location); }
+abForceInline uint32_t abAtomic_DecrementU64(uint64_t * location) { return (uint64_t) InterlockedDecrement64((LONGLONG volatile *) location); }
+abForceInline uint32_t abAtomic_AddU32(uint32_t * location, uint32_t value) { return (uint32_t) InterlockedAdd((LONG volatile *) location, (LONG) value); }
+abForceInline uint64_t abAtomic_AddU64(uint64_t * location, uint64_t value) { return (uint64_t) InterlockedAdd64((LONGLONG volatile *) location, (LONGLONG) value); }
+abForceInline uint32_t abAtomic_AndU32(uint32_t * location, uint32_t value) { return (uint32_t) InterlockedAnd((LONG volatile *) location, (LONG) value); }
+abForceInline uint64_t abAtomic_AndU64(uint64_t * location, uint64_t value) { return (uint64_t) InterlockedAnd64((LONGLONG volatile *) location, (LONGLONG) value); }
+abForceInline uint32_t abAtomic_OrU32(uint32_t * location, uint32_t value) { return (uint32_t) InterlockedOr((LONG volatile *) location, (LONG) value); }
+abForceInline uint64_t abAtomic_OrU64(uint64_t * location, uint64_t value) { return (uint64_t) InterlockedOr64((LONGLONG volatile *) location, (LONGLONG) value); }
+abForceInline uint32_t abAtomic_XorU32(uint32_t * location, uint32_t value) { return (uint32_t) InterlockedXor((LONG volatile *) location, (LONG) value); }
+abForceInline uint64_t abAtomic_XorU64(uint64_t * location, uint64_t value) { return (uint64_t) InterlockedXor64((LONGLONG volatile *) location, (LONGLONG) value); }
 
 #define abParallel_YieldOnCore YieldProcessor
 #define abParallel_YieldOnAllCores() Sleep(0)
@@ -98,6 +119,7 @@ typedef CONDITION_VARIABLE abParallel_CondEvent;
 #error No parallelization API implementation for the target OS.
 #endif
 
+// Versions of atomic operations for different data types.
 abForceInline int32_t abAtomic_LoadRelaxedS32(int32_t const * location) { return (int32_t) abAtomic_LoadRelaxedU32((uint32_t const *) location); }
 abForceInline int64_t abAtomic_LoadRelaxedS64(int64_t const * location) { return (int32_t) abAtomic_LoadRelaxedU64((uint64_t const *) location); }
 abForceInline int32_t abAtomic_LoadAcquireS32(int32_t const * location) { return (int32_t) abAtomic_LoadAcquireU32((uint32_t const *) location); }
@@ -106,16 +128,44 @@ abForceInline void abAtomic_StoreRelaxedS32(int32_t * location, int32_t value) {
 abForceInline void abAtomic_StoreRelaxedS64(int64_t * location, int64_t value) { abAtomic_StoreRelaxedU64((uint64_t *) location, (uint64_t) value); }
 abForceInline void abAtomic_StoreReleaseS32(int32_t * location, int32_t value) { abAtomic_StoreReleaseU32((uint32_t *) location, (uint32_t) value); }
 abForceInline void abAtomic_StoreReleaseS64(int64_t * location, int64_t value) { abAtomic_StoreReleaseU64((uint64_t *) location, (uint64_t) value); }
+abForceInline int32_t abAtomic_SwapS32(int32_t * location, int32_t value) { return (int32_t) abAtomic_SwapU32((uint32_t *) location, (uint32_t) value); }
+abForceInline int64_t abAtomic_SwapS64(int64_t * location, int64_t value) { return (int64_t) abAtomic_SwapU64((uint64_t *) location, (uint64_t) value); }
+abForceInline int32_t abAtomic_CompareSwapS32(int32_t * location, int32_t oldValue, int32_t newValue) {
+	return (int32_t) abAtomic_CompareSwapU32((uint32_t *) location, (uint32_t) oldValue, (uint32_t) newValue);
+}
+abForceInline int64_t abAtomic_CompareSwapS64(int64_t * location, int64_t oldValue, int64_t newValue) {
+	return (int64_t) abAtomic_CompareSwapU64((uint64_t *) location, (uint64_t) oldValue, (uint64_t) newValue);
+}
+abForceInline int32_t abAtomic_IncrementS32(int32_t * location) { return (int32_t) abAtomic_IncrementU32((uint32_t *) location); }
+abForceInline int64_t abAtomic_IncrementS64(int64_t * location) { return (int64_t) abAtomic_IncrementU64((uint64_t *) location); }
+abForceInline int32_t abAtomic_DecrementS32(int32_t * location) { return (int32_t) abAtomic_DecrementU32((uint32_t *) location); }
+abForceInline int64_t abAtomic_DecrementS64(int64_t * location) { return (int64_t) abAtomic_DecrementU64((uint64_t *) location); }
+abForceInline int32_t abAtomic_AddS32(int32_t * location, int32_t value) { return (int32_t) abAtomic_AddU32((uint32_t *) location, (uint32_t) value); }
+abForceInline int64_t abAtomic_AddS64(int64_t * location, int64_t value) { return (int64_t) abAtomic_AddU64((uint64_t *) location, (uint64_t) value); }
+abForceInline int32_t abAtomic_AndS32(int32_t * location, int32_t value) { return (int32_t) abAtomic_AndU32((uint32_t *) location, (uint32_t) value); }
+abForceInline int64_t abAtomic_AndS64(int64_t * location, int64_t value) { return (int64_t) abAtomic_AndU64((uint64_t *) location, (uint64_t) value); }
+abForceInline int32_t abAtomic_OrS32(int32_t * location, int32_t value) { return (int32_t) abAtomic_OrU32((uint32_t *) location, (uint32_t) value); }
+abForceInline int64_t abAtomic_OrS64(int64_t * location, int64_t value) { return (int64_t) abAtomic_OrU64((uint64_t *) location, (uint64_t) value); }
+abForceInline int32_t abAtomic_XorS32(int32_t * location, int32_t value) { return (int32_t) abAtomic_XorU32((uint32_t *) location, (uint32_t) value); }
+abForceInline int64_t abAtomic_XorS64(int64_t * location, int64_t value) { return (int64_t) abAtomic_XorU64((uint64_t *) location, (uint64_t) value); }
 #ifdef abPlatform_CPU_64Bit
 abForceInline void * abAtomic_LoadRelaxedPtr(void * const * location) { return (void *) abAtomic_LoadRelaxedU64((uint64_t const *) location); }
 abForceInline void * abAtomic_LoadAcquirePtr(void * const * location) { return (void *) abAtomic_LoadAcquireU64((uint64_t const *) location); }
 abForceInline void abAtomic_StoreRelaxedPtr(void * * location, void * value) { abAtomic_StoreRelaxedU64((uint64_t *) location, (uint64_t) value); }
 abForceInline void abAtomic_StoreReleasePtr(void * * location, void * value) { abAtomic_StoreReleaseU64((uint64_t *) location, (uint64_t) value); }
+abForceInline void * abAtomic_SwapPtr(void * * location, void * value) { return (void *) abAtomic_SwapU64((uint64_t *) location, (uint64_t) value); }
+abForceInline void * abAtomic_CompareSwapPtr(void * * location, void * oldValue, void * newValue) {
+	return (void *) abAtomic_CompareSwapU64((uint64_t *) location, (uint64_t) oldValue, (uint64_t) newValue);
+}
 #else
 abForceInline void * abAtomic_LoadRelaxedPtr(void * const * location) { return (void *) abAtomic_LoadRelaxedU32((uint32_t const *) location); }
 abForceInline void * abAtomic_LoadAcquirePtr(void * const * location) { return (void *) abAtomic_LoadAcquireU32((uint32_t const *) location); }
 abForceInline void abAtomic_StoreRelaxedPtr(void * * location, void * value) { abAtomic_StoreRelaxedU32((uint32_t *) location, (uint32_t) value); }
 abForceInline void abAtomic_StoreReleasePtr(void * * location, void * value) { abAtomic_StoreReleaseU32((uint32_t *) location, (uint32_t) value); }
+abForceInline void * abAtomic_SwapPtr(void * * location, void * value) { return (void *) abAtomic_SwapU32((uint32_t *) location, (uint32_t) value); }
+abForceInline void * abAtomic_CompareSwapPtr(void * * location, void * oldValue, void * newValue) {
+	return (void *) abAtomic_CompareSwapU32((uint32_t *) location, (uint32_t) oldValue, (uint32_t) newValue);
+}
 #endif
 
 #endif
