@@ -5,7 +5,7 @@
 /*
  * An abstraction for memory allocation, inspired by the Qfusion engine <3
  * Handles allocation failures (by crashing) and 16 byte alignment.
- * Also allows for destruction of all allocations at once by destroying a pool.
+ * Also allows for destruction of all allocations at once by destroying a tag.
  */
 
 void abMemory_Init();
