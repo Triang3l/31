@@ -6,9 +6,6 @@
 abParallel_Mutex abMemory_TagList_Mutex;
 abMemory_Tag * abMemory_TagList_First, * abMemory_TagList_Last;
 
-#define abMemoryi_Allocation_AlignmentType_Got8Aligned 0xab08u
-#define abMemoryi_Allocation_AlignmentType_Got16Aligned 0xab16u
-
 void abMemory_Init() {
 	if (!abParallel_Mutex_Init(&abMemory_TagList_Mutex)) {
 		abFeedback_Crash("abMemory_Init", "Failed to initialize the tag list mutex.");
@@ -63,11 +60,6 @@ void abMemory_Tag_Destroy(abMemory_Tag * tag) {
 	abMemory_Allocation * allocation, * nextAllocation;
 	for (allocation = tag->allocationLast; allocation != abNull; allocation = nextAllocation) {
 		nextAllocation = allocation->inTagPrevious;
-		#ifndef abPlatform_CPU_64Bit
-		if (allocation->alignmentType == abMemoryi_Allocation_AlignmentType_Got8Aligned) {
-			allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
-		}
-		#endif
 		free(allocation);
 	}
 	abParallel_Mutex_Unlock(&tag->mutex);
@@ -77,38 +69,40 @@ void abMemory_Tag_Destroy(abMemory_Tag * tag) {
 }
 
 void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, char const * fileName, unsigned int fileLine) {
+	abMemory_Allocation * allocation;
 	// Malloc gives 16-aligned blocks on 64-bit platforms, 8-aligned on 32-bit.
 	#ifdef abPlatform_CPU_64Bit
-	void * block = malloc(sizeof(abMemory_Allocation) + size);
+	allocation = malloc(sizeof(abMemory_Allocation) + size);
 	#else
-	void * block = malloc(sizeof(abMemory_Allocation) + 8u + size);
+	allocation = malloc(sizeof(abMemory_Allocation) + 8u + size);
 	#endif
-	if (block == abNull) {
+	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoAlloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
 	}
 
-	abMemory_Allocation * allocation;
 	#ifdef abPlatform_CPU_64Bit
-	if (((size_t) block & 15u) != 0u) {
+	if (((size_t) allocation & 15u) != 0u) {
 		abFeedback_Crash("abMemory_DoAlloc", "Got a pointer from malloc that is not 16-aligned, this totally shouldn't happen!");
 	}
-	allocation = (abMemory_Allocation *) block;
-	allocation->alignmentType = abMemoryi_Allocation_AlignmentType_Got16Aligned;
 	#else
-	if (((size_t) block & 7u) != 0u) {
+	if (((size_t) allocation & 7u) != 0u) {
 		abFeedback_Crash("abMemory_DoAlloc", "Got a pointer from malloc that is not 8-aligned, this totally shouldn't happen!");
-	}
-	if (((size_t) block & 8u) != 0u) {
-		allocation = (abMemory_Allocation *) ((uint8_t *) block + 8u);
-		allocation->alignmentType = abMemoryi_Allocation_AlignmentType_Got8Aligned;
-	} else {
-		allocation = (abMemory_Allocation *) block;
-		allocation->alignmentType = abMemoryi_Allocation_AlignmentType_Got16Aligned;
 	}
 	#endif
 	allocation->size = size;
 	allocation->fileName = fileName;
 	allocation->fileLine = (uint16_t) fileLine;
+	allocation->locationMark = abMemory_Allocation_LocationMark_Here;
+
+	void * data = allocation + 1u;
+	#ifndef abPlatform_CPU_64Bit
+	if (((size_t) data & 8u) != 0u) {
+		// Add a padding between the allocation info and the data.
+		((abMemory_Allocation *) ((uint8_t *) allocation + 8u))->locationMark = abMemory_Allocation_LocationMark_Back8Bytes;
+		abFeedback_Break();
+		data = (uint8_t *) data + 8u;
+	}
+	#endif
 
 	allocation->tag = tag;
 	abParallel_Mutex_Lock(&tag->mutex);
@@ -124,7 +118,7 @@ void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, char const * fileName, 
 	tag->totalAllocated += size;
 	abParallel_Mutex_Unlock(&tag->mutex);
 
-	return allocation + 1u;
+	return data;
 }
 
 void abMemory_Free(void * memory) {
@@ -133,19 +127,14 @@ void abMemory_Free(void * memory) {
 	}
 
 	abMemory_Allocation * allocation = ((abMemory_Allocation *) memory - 1u);
-	void * block;
-	switch (allocation->alignmentType) {
-	case abMemoryi_Allocation_AlignmentType_Got16Aligned:
-		block = allocation;
-		break;
 	#ifndef abPlatform_CPU_64Bit
-	case abMemoryi_Allocation_AlignmentType_Got8Aligned:
-		block = (uint8_t *) allocation - 8u;
-		break;
+	if (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes) {
+		// There's alignment padding between the actual allocation info structure and the data.
+		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
+	}
 	#endif
-	default:
+	if (allocation->locationMark != abMemory_Allocation_LocationMark_Here) {
 		abFeedback_Crash("abMemory_Free", "Tried to free memory that wasn't allocated with abMemory_Alloc.");
-		return;
 	}
 
 	abMemory_Tag * tag = allocation->tag;
@@ -165,7 +154,7 @@ void abMemory_Free(void * memory) {
 	}
 	abParallel_Mutex_Unlock(&tag->mutex);
 
-	free(block);
+	free(allocation);
 }
 
 void abMemory_Shutdown() {
