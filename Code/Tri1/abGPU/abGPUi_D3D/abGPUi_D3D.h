@@ -2,6 +2,9 @@
 #define abInclude_abGPU_abGPUi_D3D
 #ifdef abBuild_GPUi_D3D
 #include "../abGPU.h"
+#include "../../abMemory/abMemory.h"
+
+extern abMemory_Tag * abGPUi_D3D_MemoryTag;
 
 extern IDXGIFactory2 * abGPUi_D3D_DXGIFactory;
 extern IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain;

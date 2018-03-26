@@ -314,6 +314,42 @@ void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore * store, unsigned int
 		abGPU_Buffer const * buffer, unsigned int offset, unsigned int size);
 void abGPU_HandleStore_Destroy(abGPU_HandleStore * store);
 
+/***********************
+ * Render target stores
+ ***********************/
+
+typedef struct abGPU_RTStore_RT {
+	abGPU_Image * image;
+	// Layer is array layer for arrays or Z for 3D images.
+	unsigned int layer, side, mip;
+} abGPU_RTStore_RT;
+
+typedef struct abGPU_RTStore {
+	unsigned int countColor;
+	unsigned int countDepthStencil;
+	abGPU_RTStore_RT * renderTargets; // countColor + countDepthStencil render targets.
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12DescriptorHeap * i_descriptorHeapColor;
+	ID3D12DescriptorHeap * i_descriptorHeapDepthStencil;
+	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStartColor;
+	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStartDepthStencil;
+	#endif
+} abGPU_RTStore;
+
+abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetColor(abGPU_RTStore const * store, unsigned int index) {
+	return &store->renderTargets[index];
+}
+abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetDepthStencil(abGPU_RTStore const * store, unsigned int index) {
+	return &store->renderTargets[store->countColor + index];
+}
+
+// Implementation functions.
+bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int index, abGPU_Image * image,
+		unsigned int layer, unsigned int side, unsigned int mip);
+bool abGPU_RTStore_SetDepthStencil(abGPU_RTStore * store, unsigned int index, abGPU_Image * image,
+		unsigned int layer, unsigned int side, unsigned int mip);
+
 /****************
  * Shader stages
  ****************/

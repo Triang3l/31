@@ -1,6 +1,8 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
 
+extern abMemory_Tag * abGPUi_D3D_MemoryTag = abNull;
+
 IDXGIFactory2 * abGPUi_D3D_DXGIFactory = abNull;
 IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain = abNull;
 ID3D12Device * abGPUi_D3D_Device = abNull;
@@ -19,6 +21,8 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 	if (abGPUi_D3D_Device != abNull) {
 		return abGPU_Init_Result_Success;
 	}
+
+	abGPUi_D3D_MemoryTag = abMemory_Tag_Create("GPUi_D3D");
 
 	if (debug) {
 		ID3D12Debug * debugInterface;
@@ -140,6 +144,10 @@ void abGPU_Shutdown() {
 	if (abGPUi_D3D_DXGIFactory != abNull) {
 		IDXGIFactory2_Release(abGPUi_D3D_DXGIFactory);
 		abGPUi_D3D_DXGIFactory = abNull;
+	}
+	if (abGPUi_D3D_MemoryTag != abNull) {
+		abMemory_Tag_Destroy(abGPUi_D3D_MemoryTag);
+		abGPUi_D3D_MemoryTag = abNull;
 	}
 }
 
