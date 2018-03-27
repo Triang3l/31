@@ -93,14 +93,6 @@ static void abGPUi_D3D_Image_FillTextureDesc(abGPU_Image_Type type, abGPU_Image_
 	}
 }
 
-static abForceInline unsigned int abGPUi_D3D_Image_SliceToSubresource(abGPU_Image const * image, abGPU_Image_Slice slice) {
-	unsigned int subresource = abGPU_Image_SliceLayer(slice);
-	if (abGPU_Image_Dimensions_AreCube(abGPU_Image_GetDimensions(image))) {
-		subresource = subresource * 6u + abGPU_Image_SliceSide(slice);
-	}
-	return subresource * image->mips + abGPU_Image_SliceMip(slice);
-}
-
 void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions, unsigned int * wh, unsigned int * d) {
 	unsigned int maxWH = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION, maxD = 1;
 	switch (dimensions) {
