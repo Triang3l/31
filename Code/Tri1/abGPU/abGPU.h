@@ -474,4 +474,23 @@ typedef struct abGPU_Input {
 	} parameters;
 } abGPU_Input;
 
+/****************
+ * Command lists
+ ****************/
+
+typedef struct abGPU_CmdList {
+	abGPU_CmdQueue queue;
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12CommandAllocator *i_allocator;
+	ID3D12GraphicsCommandList *i_list;
+	ID3D12CommandList *i_executeList; // Same object as i_list, but different interface.
+	#endif
+} abGPU_CmdList;
+
+bool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue);
+void abGPU_CmdList_Record(abGPU_CmdList * list);
+void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount);
+void abGPU_CmdList_Destroy(abGPU_CmdList * list);
+
 #endif
