@@ -251,7 +251,7 @@ void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
 		return;
 	}
 
-	unsigned int mip = abGPU_Image_SliceMip(slice), mipW, mipH, mipD;
+	unsigned int mip = abGPU_Image_Slice_Mip(slice), mipW, mipH, mipD;
 	abGPU_Image_GetMipSize(image, mip, &mipW, &mipH, &mipD);
 	x = abMin(x, mipW);
 	w = abMin(w, mipW - x);

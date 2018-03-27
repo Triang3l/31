@@ -45,7 +45,7 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	switch (dimensions) {
 	case abGPU_Image_Dimensions_2D:
 		desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-		desc.Texture2D.MipSlice = abGPU_Image_SliceMip(slice);
+		desc.Texture2D.MipSlice = abGPU_Image_Slice_Mip(slice);
 		desc.Texture2D.PlaneSlice = 0u;
 		break;
 	case abGPU_Image_Dimensions_2DArray:
@@ -54,13 +54,13 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 		{
 			unsigned int arraySlice = 0u;
 			if (abGPU_Image_Dimensions_AreArray(dimensions)) {
-				arraySlice = abGPU_Image_SliceLayer(slice);
+				arraySlice = abGPU_Image_Slice_Layer(slice);
 			}
 			if (abGPU_Image_Dimensions_AreCube(dimensions)) {
-				arraySlice = arraySlice * 6u + abGPU_Image_SliceSide(slice);
+				arraySlice = arraySlice * 6u + abGPU_Image_Slice_Side(slice);
 			}
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-			desc.Texture2DArray.MipSlice = abGPU_Image_SliceMip(slice);
+			desc.Texture2DArray.MipSlice = abGPU_Image_Slice_Mip(slice);
 			desc.Texture2DArray.FirstArraySlice = arraySlice;
 			desc.Texture2DArray.ArraySize = 1u;
 			desc.Texture2DArray.PlaneSlice = 0u;
@@ -68,8 +68,8 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 		break;
 	case abGPU_Image_Dimensions_3D:
 		desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-		desc.Texture3D.MipSlice = abGPU_Image_SliceMip(slice);
-		desc.Texture3D.FirstWSlice = abGPU_Image_SliceLayer(slice);
+		desc.Texture3D.MipSlice = abGPU_Image_Slice_Mip(slice);
+		desc.Texture3D.FirstWSlice = abGPU_Image_Slice_Layer(slice);
 		desc.Texture3D.WSize = 1u;
 		break;
 	default:
@@ -94,7 +94,7 @@ bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	switch (dimensions) {
 	case abGPU_Image_Dimensions_2D:
 		desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		desc.Texture2D.MipSlice = abGPU_Image_SliceMip(slice);
+		desc.Texture2D.MipSlice = abGPU_Image_Slice_Mip(slice);
 		break;
 	case abGPU_Image_Dimensions_2DArray:
 	case abGPU_Image_Dimensions_Cube:
@@ -102,13 +102,13 @@ bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 		{
 			unsigned int arraySlice = 0u;
 			if (abGPU_Image_Dimensions_AreArray(dimensions)) {
-				arraySlice = abGPU_Image_SliceLayer(slice);
+				arraySlice = abGPU_Image_Slice_Layer(slice);
 			}
 			if (abGPU_Image_Dimensions_AreCube(dimensions)) {
-				arraySlice = arraySlice * 6u + abGPU_Image_SliceSide(slice);
+				arraySlice = arraySlice * 6u + abGPU_Image_Slice_Side(slice);
 			}
 			desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-			desc.Texture2DArray.MipSlice = abGPU_Image_SliceMip(slice);
+			desc.Texture2DArray.MipSlice = abGPU_Image_Slice_Mip(slice);
 			desc.Texture2DArray.FirstArraySlice = arraySlice;
 			desc.Texture2DArray.ArraySize = 1u;
 		}

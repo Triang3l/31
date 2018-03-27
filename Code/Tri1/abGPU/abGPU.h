@@ -209,10 +209,10 @@ abForceInline void abGPU_Image_GetMipSize(abGPU_Image const * image, unsigned in
 }
 
 typedef unsigned int abGPU_Image_Slice;
-#define abGPU_Image_SliceMake(layer, side, mip) ((abGPU_Image_Slice) (((layer) << 8u) | ((side) << 5u) | (mip)))
-#define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31u))
-#define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5u) & 7u))
-#define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8u))
+#define abGPU_Image_Slice_Make(layer, side, mip) ((abGPU_Image_Slice) (((layer) << 8u) | ((side) << 5u) | (mip)))
+#define abGPU_Image_Slice_Mip(slice) ((unsigned int) ((slice) & 31u))
+#define abGPU_Image_Slice_Side(slice) ((unsigned int) (((slice) >> 5u) & 7u))
+#define abGPU_Image_Slice_Layer(slice) ((unsigned int) ((slice) >> 8u))
 bool abGPU_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice);
 
 typedef enum abGPU_Image_Usage {

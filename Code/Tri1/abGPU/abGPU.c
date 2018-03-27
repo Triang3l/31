@@ -42,14 +42,14 @@ void abGPU_Image_ClampSizeToMax(abGPU_Image_Dimensions dimensions,
 }
 
 bool abGPU_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice) {
-	if (abGPU_Image_SliceMip(slice) >= image->mips) {
+	if (abGPU_Image_Slice_Mip(slice) >= image->mips) {
 		return false;
 	}
 	abGPU_Image_Dimensions dimensions = abGPU_Image_GetDimensions(image);
-	if (abGPU_Image_SliceSide(slice) > (abGPU_Image_Dimensions_AreCube(dimensions) ? 5u : 0u)) {
+	if (abGPU_Image_Slice_Side(slice) > (abGPU_Image_Dimensions_AreCube(dimensions) ? 5u : 0u)) {
 		return false;
 	}
-	if (abGPU_Image_SliceLayer(slice) >= (abGPU_Image_Dimensions_AreArray(dimensions) ? image->d : 1u)) {
+	if (abGPU_Image_Slice_Layer(slice) >= (abGPU_Image_Dimensions_AreArray(dimensions) ? image->d : 1u)) {
 		return false;
 	}
 	return true;
