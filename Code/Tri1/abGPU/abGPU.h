@@ -113,16 +113,16 @@ typedef enum abGPU_Image_Dimensions {
 	abGPU_Image_Dimensions_CubeArray,
 	abGPU_Image_Dimensions_3D
 } abGPU_Image_Dimensions;
-abForceInline bool abGPU_Image_DimensionsAre2D(abGPU_Image_Dimensions dimensions) {
+abForceInline bool abGPU_Image_Dimensions_Are2D(abGPU_Image_Dimensions dimensions) {
 	return dimensions == abGPU_Image_Dimensions_2D || dimensions == abGPU_Image_Dimensions_2DArray;
 }
-abForceInline bool abGPU_Image_DimensionsAreCube(abGPU_Image_Dimensions dimensions) {
+abForceInline bool abGPU_Image_Dimensions_AreCube(abGPU_Image_Dimensions dimensions) {
 	return dimensions == abGPU_Image_Dimensions_Cube || dimensions == abGPU_Image_Dimensions_CubeArray;
 }
-abForceInline bool abGPU_Image_DimensionsAre3D(abGPU_Image_Dimensions dimensions) {
+abForceInline bool abGPU_Image_Dimensions_Are3D(abGPU_Image_Dimensions dimensions) {
 	return dimensions == abGPU_Image_Dimensions_3D;
 }
-abForceInline bool abGPU_Image_DimensionsAreArray(abGPU_Image_Dimensions dimensions) {
+abForceInline bool abGPU_Image_Dimensions_AreArray(abGPU_Image_Dimensions dimensions) {
 	return dimensions == abGPU_Image_Dimensions_2DArray || dimensions == abGPU_Image_Dimensions_CubeArray;
 }
 
@@ -205,7 +205,7 @@ abForceInline void abGPU_Image_GetMipSize(abGPU_Image const * image, unsigned in
 		unsigned int * w, unsigned int * h, unsigned int * d) {
 	if (w != abNull) *w = abMax(image->w >> mip, 1u);
 	if (h != abNull) *h = abMax(image->h >> mip, 1u);
-	if (d != abNull) *d = (abGPU_Image_DimensionsAre3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1u) : image->d);
+	if (d != abNull) *d = (abGPU_Image_Dimensions_Are3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1u) : image->d);
 }
 
 typedef unsigned int abGPU_Image_Slice;
@@ -218,10 +218,10 @@ inline bool abGPUi_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice s
 		return false;
 	}
 	abGPU_Image_Dimensions dimensions = abGPU_Image_GetDimensions(image);
-	if (abGPU_Image_SliceSide(slice) > (abGPU_Image_DimensionsAreCube(dimensions) ? 5u : 0u)) {
+	if (abGPU_Image_SliceSide(slice) > (abGPU_Image_Dimensions_AreCube(dimensions) ? 5u : 0u)) {
 		return false;
 	}
-	if (abGPU_Image_SliceLayer(slice) >= (abGPU_Image_DimensionsAreArray(dimensions) ? image->d : 1u)) {
+	if (abGPU_Image_SliceLayer(slice) >= (abGPU_Image_Dimensions_AreArray(dimensions) ? image->d : 1u)) {
 		return false;
 	}
 	return true;
@@ -259,7 +259,7 @@ typedef enum abGPU_Image_Comparison {
 abForceInline unsigned int abGPU_Image_CalculateMipCount(
 		abGPU_Image_Dimensions dimensions, unsigned int w, unsigned int h, unsigned int d) {
 	unsigned int size = abMax(w, h);
-	if (abGPU_Image_DimensionsAre3D(dimensions)) {
+	if (abGPU_Image_Dimensions_Are3D(dimensions)) {
 		size = abMax(size, d);
 	}
 	return abBit_HighestOne32(size + (size == 0u)) + 1u;
@@ -325,30 +325,29 @@ typedef struct abGPU_RTStore_RT {
 } abGPU_RTStore_RT;
 
 typedef struct abGPU_RTStore {
-	unsigned int countColor;
-	unsigned int countDepthStencil;
+	unsigned int countColor, countDepth;
 	abGPU_RTStore_RT * renderTargets; // countColor + countDepthStencil render targets.
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12DescriptorHeap * i_descriptorHeapColor;
-	ID3D12DescriptorHeap * i_descriptorHeapDepthStencil;
-	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStartColor;
-	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStartDepthStencil;
+	ID3D12DescriptorHeap * i_descriptorHeapColor, * i_descriptorHeapDepth;
+	D3D12_CPU_DESCRIPTOR_HANDLE i_cpuDescriptorHandleStartColor, i_cpuDescriptorHandleStartDepth;
 	#endif
 } abGPU_RTStore;
 
-abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetColor(abGPU_RTStore const * store, unsigned int index) {
-	return &store->renderTargets[index];
+abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetColor(abGPU_RTStore const * store, unsigned int rtIndex) {
+	return &store->renderTargets[rtIndex];
 }
-abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetDepthStencil(abGPU_RTStore const * store, unsigned int index) {
-	return &store->renderTargets[store->countColor + index];
+abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetDepth(abGPU_RTStore const * store, unsigned int rtIndex) {
+	return &store->renderTargets[store->countColor + rtIndex];
 }
 
 // Implementation functions.
-bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int index, abGPU_Image * image,
+bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepthStencil);
+bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
 		unsigned int layer, unsigned int side, unsigned int mip);
-bool abGPU_RTStore_SetDepthStencil(abGPU_RTStore * store, unsigned int index, abGPU_Image * image,
-		unsigned int layer, unsigned int side, unsigned int mip);
+bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
+		unsigned int layer, unsigned int side, unsigned int mip, bool readOnly);
+void abGPU_RTStore_Destroy(abGPU_RTStore * store);
 
 /****************
  * Shader stages

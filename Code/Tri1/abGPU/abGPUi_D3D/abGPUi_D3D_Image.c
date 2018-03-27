@@ -20,12 +20,12 @@ static DXGI_FORMAT abGPUi_D3D_Image_FormatToResourceMap[abGPU_Image_Format_Count
 	// 0 is DXGI_FORMAT_UNKNOWN.
 };
 
-static abForceInline DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format) {
+DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format) {
 	return ((unsigned int) format < abArrayLength(abGPUi_D3D_Image_FormatToResourceMap) ?
 			abGPUi_D3D_Image_FormatToResourceMap[format] : DXGI_FORMAT_UNKNOWN);
 }
 
-static DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format format) {
+DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format format) {
 	switch (format) {
 	case abGPU_Image_Format_D32:
 		return DXGI_FORMAT_R32_FLOAT;
@@ -35,7 +35,7 @@ static DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format fo
 	return abGPUi_D3D_Image_FormatToResource(format);
 }
 
-static DXGI_FORMAT abGPUi_D3D_Image_FormatToDepthStencil(abGPU_Image_Format format) {
+DXGI_FORMAT abGPUi_D3D_Image_FormatToDepthStencil(abGPU_Image_Format format) {
 	switch (format) {
 	case abGPU_Image_Format_D32:
 		return DXGI_FORMAT_D32_FLOAT;
@@ -70,13 +70,13 @@ D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStates(abGPU_Image_Usage usage) {
 static void abGPUi_D3D_Image_FillTextureDesc(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips,
 		abGPU_Image_Format format, D3D12_RESOURCE_DESC * desc) {
-	desc->Dimension = (abGPU_Image_DimensionsAre3D(dimensions) ?
+	desc->Dimension = (abGPU_Image_Dimensions_Are3D(dimensions) ?
 			D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D);
 	desc->Alignment = 0;
 	desc->Width = w;
 	desc->Height = h;
 	desc->DepthOrArraySize = d;
-	if (abGPU_Image_DimensionsAreCube(dimensions)) {
+	if (abGPU_Image_Dimensions_AreCube(dimensions)) {
 		desc->DepthOrArraySize *= 6u;
 	}
 	desc->MipLevels = mips;
@@ -95,7 +95,7 @@ static void abGPUi_D3D_Image_FillTextureDesc(abGPU_Image_Type type, abGPU_Image_
 
 static abForceInline unsigned int abGPUi_D3D_Image_SliceToSubresource(abGPU_Image const * image, abGPU_Image_Slice slice) {
 	unsigned int subresource = abGPU_Image_SliceLayer(slice);
-	if (abGPU_Image_DimensionsAreCube(abGPU_Image_GetDimensions(image))) {
+	if (abGPU_Image_Dimensions_AreCube(abGPU_Image_GetDimensions(image))) {
 		subresource = subresource * 6u + abGPU_Image_SliceSide(slice);
 	}
 	return subresource * image->mips + abGPU_Image_SliceMip(slice);
@@ -265,7 +265,7 @@ void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
 	w = abMin(w, mipW - x);
 	y = abMin(y, mipH);
 	h = abMin(h, mipH - y);
-	if (abGPU_Image_DimensionsAre3D(abGPU_Image_GetDimensions(image))) {
+	if (abGPU_Image_Dimensions_Are3D(abGPU_Image_GetDimensions(image))) {
 		z = abMin(z, mipD);
 		d = abMin(d, mipD - z);
 	} else {

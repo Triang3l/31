@@ -147,6 +147,7 @@
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Fence.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_HandleStore.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Image.c" />
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_RTStore.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Sampler.c" />
     <ClCompile Include="abMath\abVec4.c" />
     <ClCompile Include="abMemory\abMemory.c" />

@@ -13,6 +13,9 @@ extern ID3D12CommandQueue * abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count];
 
 // Images.
 
+DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format);
+DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format format);
+DXGI_FORMAT abGPUi_D3D_Image_FormatToDepthStencil(abGPU_Image_Format format);
 D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStates(abGPU_Image_Usage usage);
 
 // Buffer and image handles.
@@ -26,6 +29,20 @@ abForceInline D3D12_CPU_DESCRIPTOR_HANDLE abGPUi_D3D_HandleStore_GetCPUDescripto
 abForceInline D3D12_GPU_DESCRIPTOR_HANDLE abGPUi_D3D_HandleStore_GetGPUDescriptorHandle(abGPU_HandleStore const * store, unsigned int handleIndex) {
 	D3D12_GPU_DESCRIPTOR_HANDLE handle = store->i_gpuDescriptorHandleStart;
 	handle.ptr += handleIndex * abGPUi_D3D_HandleStore_DescriptorSize;
+	return handle;
+}
+
+// Render targets.
+
+extern unsigned int abGPUi_D3D_RTStore_DescriptorSizeColor, abGPUi_D3D_RTStore_DescriptorSizeDepth;
+abForceInline D3D12_CPU_DESCRIPTOR_HANDLE abGPUi_D3D_RTStore_GetDescriptorHandleColor(abGPU_RTStore const * store, unsigned int rtIndex) {
+	D3D12_CPU_DESCRIPTOR_HANDLE handle = store->i_cpuDescriptorHandleStartColor;
+	handle.ptr += rtIndex * abGPUi_D3D_RTStore_DescriptorSizeColor;
+	return handle;
+}
+abForceInline D3D12_CPU_DESCRIPTOR_HANDLE abGPUi_D3D_RTStore_GetDescriptorHandleDepth(abGPU_RTStore const * store, unsigned int rtIndex) {
+	D3D12_CPU_DESCRIPTOR_HANDLE handle = store->i_cpuDescriptorHandleStartDepth;
+	handle.ptr += rtIndex * abGPUi_D3D_RTStore_DescriptorSizeDepth;
 	return handle;
 }
 

@@ -101,6 +101,8 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 	}
 
 	abGPUi_D3D_HandleStore_DescriptorSize = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	abGPUi_D3D_RTStore_DescriptorSizeColor = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	abGPUi_D3D_RTStore_DescriptorSizeDepth = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	abGPUi_D3D_SamplerStore_DescriptorSize = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	return abGPU_Init_Result_Success;
