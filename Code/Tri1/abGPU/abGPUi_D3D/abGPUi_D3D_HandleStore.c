@@ -19,7 +19,7 @@ bool abGPU_HandleStore_Init(abGPU_HandleStore * store, unsigned int handleCount)
 }
 
 void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
-		abGPU_Buffer const * buffer, unsigned int offset, unsigned int size) {
+		abGPU_Buffer * buffer, unsigned int offset, unsigned int size) {
 	if (handleIndex >= store->handleCount) {
 		return;
 	}

@@ -40,8 +40,8 @@ void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount)
 		return;
 	}
 	if (listCount == 1u) {
-		ID3D12GraphicsCommandList_Close(lists[0]->i_list);
-		ID3D12CommandQueue_ExecuteCommandLists(abGPUi_D3D_CommandQueues[lists[0]->queue], 1u, &lists[0]->i_executeList);
+		ID3D12GraphicsCommandList_Close(lists[0u]->i_list);
+		ID3D12CommandQueue_ExecuteCommandLists(abGPUi_D3D_CommandQueues[lists[0u]->queue], 1u, &lists[0u]->i_executeList);
 		return;
 	}
 	ID3D12CommandList * * executeLists = abStackAlloc(listCount * abGPU_CmdQueue_Count * sizeof(ID3D12CommandList *));
@@ -76,6 +76,64 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 		heaps[heapCount++] = samplerStore->i_descriptorHeap;
 	}
 	ID3D12GraphicsCommandList_SetDescriptorHeaps(list->i_list, heapCount, heaps);
+}
+
+void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig) {
+	ID3D12GraphicsCommandList * cmdList = list->i_list;
+
+	list->i_drawRTConfig = rtConfig;
+
+	unsigned int colorCount = rtConfig->colorCount;
+	abGPU_RTStore * store = rtConfig->i_rtStore;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE colorDescriptors[abGPU_RT_Count], depthDescriptor = { .ptr = 0u };
+	D3D12_CPU_DESCRIPTOR_HANDLE colorDescriptorStart = store->i_cpuDescriptorHandleStartColor;
+	D3D12_DISCARD_REGION discardRegion = { .NumRects = 0u, .pRects = abNull, .NumSubresources = 1u };
+	for (unsigned int rtIndex = 0u; rtIndex < colorCount; ++rtIndex) {
+		abGPU_RT const * rt = &rtConfig->color[rtIndex];
+		colorDescriptors[rtIndex].ptr = colorDescriptorStart.ptr + rt->indexInStore * abGPUi_D3D_RTStore_DescriptorSizeColor;
+		if ((rt->prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
+			abGPU_RTStore_RT const * storeRT = &store->renderTargets[rt->indexInStore];
+			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice);
+			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image, &discardRegion);
+		}
+	}
+	if (rtConfig->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
+		depthDescriptor.ptr = store->i_cpuDescriptorHandleStartDepth.ptr +
+				rtConfig->depth.indexInStore * abGPUi_D3D_RTStore_DescriptorSizeDepth;
+		abGPU_RTStore_RT const * storeRT = &store->renderTargets[store->countColor + rtConfig->depth.indexInStore];
+		if ((rtConfig->depth.prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
+			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice);
+			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image, &discardRegion);
+		}
+		if ((rtConfig->stencilPrePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
+			discardRegion.FirstSubresource = rtConfig->i_stencilSubresource;
+			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image, &discardRegion);
+		}
+	}
+
+	ID3D12GraphicsCommandList_OMSetRenderTargets(cmdList, colorCount, colorDescriptors, FALSE,
+			depthDescriptor.ptr != 0u ? &depthDescriptor : abNull);
+
+	for (unsigned int rtIndex = 0u; rtIndex < colorCount; ++rtIndex) {
+		abGPU_RT const * rt = &rtConfig->color[rtIndex];
+		if ((rt->prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreClear) {
+			ID3D12GraphicsCommandList_ClearRenderTargetView(cmdList, colorDescriptors[rtIndex], rt->clearValue.color, 0u, abNull);
+		}
+	}
+	if (rtConfig->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
+		D3D12_CLEAR_FLAGS clearFlags = 0u;
+		if ((rtConfig->depth.prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreClear) {
+			clearFlags |= D3D12_CLEAR_FLAG_DEPTH;
+		}
+		if ((rtConfig->stencilPrePostAction & abGPU_RT_PreMask) == abGPU_RT_PreClear) {
+			clearFlags |= D3D12_CLEAR_FLAG_STENCIL;
+		}
+		if (clearFlags != 0u) {
+			ID3D12GraphicsCommandList_ClearDepthStencilView(cmdList, depthDescriptor, clearFlags,
+					rtConfig->depth.clearValue.ds.depth, rtConfig->depth.clearValue.ds.stencil, 0u, abNull);
+		}
+	}
 }
 
 #endif

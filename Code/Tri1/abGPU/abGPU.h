@@ -213,19 +213,7 @@ typedef unsigned int abGPU_Image_Slice;
 #define abGPU_Image_SliceMip(slice) ((unsigned int) ((slice) & 31u))
 #define abGPU_Image_SliceSide(slice) ((unsigned int) (((slice) >> 5u) & 7u))
 #define abGPU_Image_SliceLayer(slice) ((unsigned int) ((slice) >> 8u))
-inline bool abGPUi_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice) {
-	if (abGPU_Image_SliceMip(slice) >= image->mips) {
-		return false;
-	}
-	abGPU_Image_Dimensions dimensions = abGPU_Image_GetDimensions(image);
-	if (abGPU_Image_SliceSide(slice) > (abGPU_Image_Dimensions_AreCube(dimensions) ? 5u : 0u)) {
-		return false;
-	}
-	if (abGPU_Image_SliceLayer(slice) >= (abGPU_Image_Dimensions_AreArray(dimensions) ? image->d : 1u)) {
-		return false;
-	}
-	return true;
-}
+bool abGPU_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice);
 
 typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_Texture, // Sampleable in pixel shaders.
@@ -311,7 +299,7 @@ typedef struct abGPU_HandleStore {
 
 bool abGPU_HandleStore_Init(abGPU_HandleStore * store, unsigned int handleCount);
 void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
-		abGPU_Buffer const * buffer, unsigned int offset, unsigned int size);
+		abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
 void abGPU_HandleStore_Destroy(abGPU_HandleStore * store);
 
 /***********************
@@ -320,8 +308,7 @@ void abGPU_HandleStore_Destroy(abGPU_HandleStore * store);
 
 typedef struct abGPU_RTStore_RT {
 	abGPU_Image * image;
-	// Layer is array layer for arrays or Z for 3D images.
-	unsigned int layer, side, mip;
+	abGPU_Image_Slice slice; // For 3D images, layer is Z.
 } abGPU_RTStore_RT;
 
 typedef struct abGPU_RTStore {
@@ -343,10 +330,9 @@ abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetDepth(abGPU_RTStore const * st
 
 // Implementation functions.
 bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepth);
-bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
-		unsigned int layer, unsigned int side, unsigned int mip);
-bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
-		unsigned int layer, unsigned int side, unsigned int mip, bool readOnly);
+// For 3D color render targets (3D depth render targets are not supported), the array layer is the Z.
+bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice);
+bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, bool readOnly);
 void abGPU_RTStore_Destroy(abGPU_RTStore * store);
 
 /*************************************************************************
@@ -361,7 +347,7 @@ typedef unsigned int abGPU_RT_PrePostAction;
 enum {
 	abGPU_RT_PreDiscard,
 	abGPU_RT_PreClear,
-	abGPU_RT_PreRestore,
+	abGPU_RT_PreLoad,
 		abGPU_RT_PreMask = 3u,
 	abGPU_RT_PostStore = 0u << 2u,
 	abGPU_RT_PostDiscard = 1u << 2u,
@@ -380,20 +366,18 @@ typedef struct abGPU_RTConfig {
 	unsigned int colorCount;
 	abGPU_RT color[abGPU_RT_Count];
 	abGPU_RT depth;
+	abGPU_RT_PrePostAction stencilPrePostAction;
 
 	#if defined(abBuild_GPUi_D3D)
-	abGPU_RTStore *i_rtStore;
+	abGPU_RTStore const * i_rtStore;
+	unsigned int i_stencilSubresource;
 	#endif
 } abGPU_RTConfig;
 
+bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store);
 #if defined(abBuild_GPUi_D3D)
-abForceInline bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore * store) {
-	config->i_rtStore = store;
-	return true;
-}
 #define abGPU_RTConfig_Unregister(config) {}
 #else
-bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore * store);
 void abGPU_RTConfig_Unregister(abGPU_RTConfig * config);
 #endif
 
@@ -530,9 +514,11 @@ typedef struct abGPU_CmdList {
 	abGPU_CmdQueue queue;
 
 	#if defined(abBuild_GPUi_D3D)
-	ID3D12CommandAllocator *i_allocator;
-	ID3D12GraphicsCommandList *i_list;
-	ID3D12CommandList *i_executeList; // Same object as i_list, but different interface.
+	ID3D12CommandAllocator * i_allocator;
+	ID3D12GraphicsCommandList * i_list;
+	ID3D12CommandList * i_executeList; // Same object as i_list, but different interface.
+
+	abGPU_RTConfig const * i_drawRTConfig;
 	#endif
 } abGPU_CmdList;
 
@@ -546,7 +532,7 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 		/* optional */ abGPU_HandleStore * handleStore, /* optional */ abGPU_SamplerStore * samplerStore);
 
 // Drawing.
-void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig * rtConfig);
+void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig);
 void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list);
 
 #endif

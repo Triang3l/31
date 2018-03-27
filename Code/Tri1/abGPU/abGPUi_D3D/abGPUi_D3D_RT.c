@@ -34,10 +34,9 @@ bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned
 	return true;
 }
 
-bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
-		unsigned int layer, unsigned int side, unsigned int mip) {
+bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice) {
 	if (rtIndex >= store->countColor || !(image->typeAndDimensions & abGPU_Image_Type_Renderable) ||
-			abGPU_Image_Format_IsDepth(image->format) || mip >= image->mips) {
+			abGPU_Image_Format_IsDepth(image->format) || !abGPUi_Image_HasSlice(image, slice)) {
 		return false;
 	}
 	D3D12_RENDER_TARGET_VIEW_DESC desc;
@@ -45,9 +44,8 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	abGPU_Image_Dimensions dimensions = abGPU_Image_GetDimensions(image);
 	switch (dimensions) {
 	case abGPU_Image_Dimensions_2D:
-		layer = side = 0u;
 		desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-		desc.Texture2D.MipSlice = mip;
+		desc.Texture2D.MipSlice = abGPU_Image_SliceMip(slice);
 		desc.Texture2D.PlaneSlice = 0u;
 		break;
 	case abGPU_Image_Dimensions_2DArray:
@@ -56,30 +54,22 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 		{
 			unsigned int arraySlice = 0u;
 			if (abGPU_Image_Dimensions_AreArray(dimensions)) {
-				if (layer >= image->d) { return false; }
-				arraySlice = layer;
-			} else {
-				layer = 0u;
+				arraySlice = abGPU_Image_SliceLayer(slice);
 			}
 			if (abGPU_Image_Dimensions_AreCube(dimensions)) {
-				if (side >= 6) { return false; }
-				arraySlice = arraySlice * 6u + side;
-			} else {
-				side = 0u;
+				arraySlice = arraySlice * 6u + abGPU_Image_SliceSide(slice);
 			}
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-			desc.Texture2DArray.MipSlice = mip;
+			desc.Texture2DArray.MipSlice = abGPU_Image_SliceMip(slice);
 			desc.Texture2DArray.FirstArraySlice = arraySlice;
 			desc.Texture2DArray.ArraySize = 1u;
 			desc.Texture2DArray.PlaneSlice = 0u;
 		}
 		break;
 	case abGPU_Image_Dimensions_3D:
-		if (layer >= image->d) { return false; }
-		layer = side = 0u;
 		desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-		desc.Texture3D.MipSlice = mip;
-		desc.Texture3D.FirstWSlice = layer;
+		desc.Texture3D.MipSlice = abGPU_Image_SliceMip(slice);
+		desc.Texture3D.FirstWSlice = abGPU_Image_SliceLayer(slice);
 		desc.Texture3D.WSize = 1u;
 		break;
 	default:
@@ -87,17 +77,14 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	}
 	abGPU_RTStore_RT * rt = &store->renderTargets[rtIndex];
 	rt->image = image;
-	rt->layer = layer;
-	rt->side = side;
-	rt->mip = mip;
+	rt->slice = slice;
 	ID3D12Device_CreateRenderTargetView(abGPUi_D3D_Device, image->i_resource, &desc, abGPUi_D3D_RTStore_GetDescriptorHandleColor(store, rtIndex));
 	return true;
 }
 
-bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
-		unsigned int layer, unsigned int side, unsigned int mip, bool readOnly) {
+bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, bool readOnly) {
 	if (rtIndex >= store->countDepth || !(image->typeAndDimensions & abGPU_Image_Type_Renderable) ||
-			!abGPU_Image_Format_IsDepth(image->format) || mip >= image->mips) {
+			!abGPU_Image_Format_IsDepth(image->format) || !abGPUi_Image_HasSlice(image, slice)) {
 		return false;
 	}
 	D3D12_DEPTH_STENCIL_VIEW_DESC desc;
@@ -106,9 +93,8 @@ bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	abGPU_Image_Dimensions dimensions = abGPU_Image_GetDimensions(image);
 	switch (dimensions) {
 	case abGPU_Image_Dimensions_2D:
-		layer = side = 0u;
 		desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		desc.Texture2D.MipSlice = mip;
+		desc.Texture2D.MipSlice = abGPU_Image_SliceMip(slice);
 		break;
 	case abGPU_Image_Dimensions_2DArray:
 	case abGPU_Image_Dimensions_Cube:
@@ -116,19 +102,13 @@ bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 		{
 			unsigned int arraySlice = 0u;
 			if (abGPU_Image_Dimensions_AreArray(dimensions)) {
-				if (layer >= image->d) { return false; }
-				arraySlice = layer;
-			} else {
-				layer = 0u;
+				arraySlice = abGPU_Image_SliceLayer(slice);
 			}
 			if (abGPU_Image_Dimensions_AreCube(dimensions)) {
-				if (side >= 6) { return false; }
-				arraySlice = arraySlice * 6u + side;
-			} else {
-				side = 0u;
+				arraySlice = arraySlice * 6u + abGPU_Image_SliceSide(slice);
 			}
 			desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-			desc.Texture2DArray.MipSlice = mip;
+			desc.Texture2DArray.MipSlice = abGPU_Image_SliceMip(slice);
 			desc.Texture2DArray.FirstArraySlice = arraySlice;
 			desc.Texture2DArray.ArraySize = 1u;
 		}
@@ -138,9 +118,7 @@ bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	}
 	abGPU_RTStore_RT * rt = &store->renderTargets[store->countColor + rtIndex];
 	rt->image = image;
-	rt->layer = layer;
-	rt->side = side;
-	rt->mip = mip;
+	rt->slice = slice;
 	ID3D12Device_CreateDepthStencilView(abGPUi_D3D_Device, image->i_resource, &desc, abGPUi_D3D_RTStore_GetDescriptorHandleDepth(store, rtIndex));
 	return true;
 }
@@ -152,6 +130,41 @@ void abGPU_RTStore_Destroy(abGPU_RTStore * store) {
 	if (store->countColor != 0u) {
 		ID3D12DescriptorHeap_Release(store->i_descriptorHeapColor);
 	}
+}
+
+bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store) {
+	config->colorCount = abMin(config->colorCount, abGPU_RT_Count);
+	config->i_rtStore = store;
+
+	// Discarding 3D render targets is not supported.
+	for (unsigned int rtIndex = 0; rtIndex < config->colorCount; ++rtIndex) {
+		abGPU_RT * rt = &config->color[rtIndex];
+		if (abGPU_Image_Dimensions_Are3D(abGPU_Image_GetDimensions(store->renderTargets[rt->indexInStore].image))) {
+			abGPU_RT_PrePostAction * action = config->color[rtIndex].prePostAction;
+			if ((*action & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
+				*action = (*action & ~abGPU_RT_PreMask) | abGPU_RT_PreLoad;
+			}
+			if ((*action & abGPU_RT_PostMask) == abGPU_RT_PostDiscard) {
+				*action = (*action & ~abGPU_RT_PostMask) | abGPU_RT_PostStore;
+			}
+		}
+	}
+
+	// Do no action (= do load/store) on stencil if there's no stencil, also pre-calculate stencil subresource for discarding
+	if (config->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
+		abGPU_RTStore_RT const * depthStoreRT = &store->renderTargets[config->depth.indexInStore];
+		abGPU_Image const * depthImage = depthStoreRT->image;
+		if (abGPU_Image_Format_IsDepthStencil(depthImage->format)) {
+			abGPU_Image_Dimensions depthDimensions = abGPU_Image_GetDimensions(depthImage);
+			config->i_stencilSubresource = (abGPU_Image_Dimensions_AreArray(depthDimensions) ? depthImage->d : 1) *
+					(abGPU_Image_Dimensions_AreCube(depthDimensions) ? 6 : 1) * depthImage->mips +
+					abGPUi_D3D_Image_SliceToSubresource(depthImage, depthStoreRT->slice);
+		} else {
+			config->stencilPrePostAction = abGPU_RT_PreLoad | abGPU_RT_PostStore;
+		}
+	}
+
+	return true;
 }
 
 #endif
