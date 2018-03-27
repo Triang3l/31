@@ -326,7 +326,7 @@ typedef struct abGPU_RTStore_RT {
 
 typedef struct abGPU_RTStore {
 	unsigned int countColor, countDepth;
-	abGPU_RTStore_RT * renderTargets; // countColor + countDepthStencil render targets.
+	abGPU_RTStore_RT * renderTargets; // countColor + countDepth render targets.
 
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12DescriptorHeap * i_descriptorHeapColor, * i_descriptorHeapDepth;
@@ -342,12 +342,60 @@ abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetDepth(abGPU_RTStore const * st
 }
 
 // Implementation functions.
-bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepthStencil);
+bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepth);
 bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
 		unsigned int layer, unsigned int side, unsigned int mip);
 bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image,
 		unsigned int layer, unsigned int side, unsigned int mip, bool readOnly);
 void abGPU_RTStore_Destroy(abGPU_RTStore * store);
+
+/*************************************************************************
+ * Render target configurations
+ *
+ * Initialize colorCount, color and depth explicitly, then call Register.
+ *************************************************************************/
+
+#define abGPU_RT_Count 8u
+
+typedef unsigned int abGPU_RT_PrePostAction;
+enum {
+	abGPU_RT_PreDiscard,
+	abGPU_RT_PreClear,
+	abGPU_RT_PreRestore,
+		abGPU_RT_PreMask = 3u,
+	abGPU_RT_PostStore = 0u << 2u,
+	abGPU_RT_PostDiscard = 1u << 2u,
+		abGPU_RT_PostMask = 1u << 2u
+};
+
+typedef struct abGPU_RT {
+	unsigned int indexInStore;
+	abGPU_RT_PrePostAction prePostAction;
+	abGPU_Image_Texel clearValue;
+} abGPU_RT;
+
+#define abGPU_RTConfig_DepthIndexNone 0xffffffffu
+
+typedef struct abGPU_RTConfig {
+	unsigned int colorCount;
+	abGPU_RT color[abGPU_RT_Count];
+	abGPU_RT depth;
+
+	#if defined(abBuild_GPUi_D3D)
+	abGPU_RTStore *i_rtStore;
+	#endif
+} abGPU_RTConfig;
+
+#if defined(abBuild_GPUi_D3D)
+abForceInline bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore * store) {
+	config->i_rtStore = store;
+	return true;
+}
+#define abGPU_RTConfig_Unregister(config) {}
+#else
+bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore * store);
+void abGPU_RTConfig_Unregister(abGPU_RTConfig * config);
+#endif
 
 /****************
  * Shader stages
@@ -492,5 +540,13 @@ bool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue);
 void abGPU_CmdList_Record(abGPU_CmdList * list);
 void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount);
 void abGPU_CmdList_Destroy(abGPU_CmdList * list);
+
+// Setup.
+void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
+		/* optional */ abGPU_HandleStore * handleStore, /* optional */ abGPU_SamplerStore * samplerStore);
+
+// Drawing.
+void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig * rtConfig);
+void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list);
 
 #endif
