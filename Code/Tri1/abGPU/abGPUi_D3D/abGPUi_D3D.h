@@ -18,11 +18,10 @@ DXGI_FORMAT abGPUi_D3D_Image_FormatToShaderResource(abGPU_Image_Format format);
 DXGI_FORMAT abGPUi_D3D_Image_FormatToDepthStencil(abGPU_Image_Format format);
 D3D12_RESOURCE_STATES abGPUi_D3D_Image_UsageToStates(abGPU_Image_Usage usage);
 
-abForceInline unsigned int abGPUi_D3D_Image_SliceToSubresource(abGPU_Image const * image, abGPU_Image_Slice slice) {
+inline unsigned int abGPUi_D3D_Image_SliceToSubresource(abGPU_Image const * image, abGPU_Image_Slice slice, bool stencil) {
 	unsigned int subresource = abGPU_Image_Slice_Layer(slice);
-	if (abGPU_Image_Dimensions_AreCube(abGPU_Image_GetDimensions(image))) {
-		subresource = subresource * 6u + abGPU_Image_Slice_Side(slice);
-	}
+	if (stencil) { subresource += ((image->options & abGPU_Image_Options_Array) ? image->d : 1u); }
+	if (image->options & abGPU_Image_Options_Cube) { subresource = subresource * 6u + abGPU_Image_Slice_Side(slice); }
 	return subresource * image->mips + abGPU_Image_Slice_Mip(slice);
 }
 

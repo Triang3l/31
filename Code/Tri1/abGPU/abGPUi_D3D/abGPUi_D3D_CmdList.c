@@ -84,7 +84,7 @@ void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfi
 	list->i_drawRTConfig = rtConfig;
 
 	unsigned int colorCount = rtConfig->colorCount;
-	abGPU_RTStore * store = rtConfig->i_rtStore;
+	abGPU_RTStore const * store = rtConfig->i_rtStore;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE colorDescriptors[abGPU_RT_Count], depthDescriptor = { .ptr = 0u };
 	D3D12_CPU_DESCRIPTOR_HANDLE colorDescriptorStart = store->i_cpuDescriptorHandleStartColor;
@@ -94,8 +94,8 @@ void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfi
 		colorDescriptors[rtIndex].ptr = colorDescriptorStart.ptr + rt->indexInStore * abGPUi_D3D_RTStore_DescriptorSizeColor;
 		if ((rt->prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
 			abGPU_RTStore_RT const * storeRT = &store->renderTargets[rt->indexInStore];
-			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice);
-			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image, &discardRegion);
+			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
+			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image->i_resource, &discardRegion);
 		}
 	}
 	if (rtConfig->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
@@ -103,12 +103,12 @@ void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfi
 				rtConfig->depth.indexInStore * abGPUi_D3D_RTStore_DescriptorSizeDepth;
 		abGPU_RTStore_RT const * storeRT = &store->renderTargets[store->countColor + rtConfig->depth.indexInStore];
 		if ((rtConfig->depth.prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
-			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice);
-			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image, &discardRegion);
+			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
+			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image->i_resource, &discardRegion);
 		}
 		if ((rtConfig->stencilPrePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
-			discardRegion.FirstSubresource = rtConfig->i_stencilSubresource;
-			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image, &discardRegion);
+			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, true);
+			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image->i_resource, &discardRegion);
 		}
 	}
 

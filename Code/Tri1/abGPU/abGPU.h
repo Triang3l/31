@@ -98,32 +98,22 @@ void abGPU_Buffer_Destroy(abGPU_Buffer * buffer);
  * Images
  *********/
 
-typedef unsigned int abGPU_Image_Type;
+typedef unsigned int abGPU_Image_Options;
 enum {
-	abGPU_Image_Type_Regular = 0u,
-	abGPU_Image_Type_Upload = 1u, // Only accessible from the CPU - other type bits are ignored.
-	abGPU_Image_Type_Renderable = abGPU_Image_Type_Upload << 1u, // Can be a render target.
-	abGPU_Image_Type_Editable = abGPU_Image_Type_Renderable << 1u // Can be edited by shaders.
+		abGPU_Image_Options_None = 0u, // Regular 2D texture.
+	abGPU_Image_Options_Array = 1u, // Has multiple layers (not applicable to 3D).
+	abGPU_Image_Options_Cube = abGPU_Image_Options_Array << 1u, // Has 6 sides (not applicable to 3D).
+	abGPU_Image_Options_3D = abGPU_Image_Options_Cube << 1u, // Has 3 filterable dimensions (can't be an array or a cube).
+		abGPU_Image_Options_DimensionsMask = abGPU_Image_Options_Array | abGPU_Image_Options_Cube | abGPU_Image_Options_3D,
+	abGPU_Image_Options_Renderable = abGPU_Image_Options_3D << 1u, // Can be a render target.
+	abGPU_Image_Options_Editable = abGPU_Image_Options_Renderable << 1u, // Can be edited by shaders.
+	abGPU_Image_Options_Upload = abGPU_Image_Options_Editable << 1u, // Only accessible from the CPU (also can't be renderable or editable).
+		abGPU_Image_Options_PurposeMask = abGPU_Image_Options_Renderable | abGPU_Image_Options_Editable | abGPU_Image_Options_Upload
 };
-
-typedef enum abGPU_Image_Dimensions {
-	abGPU_Image_Dimensions_2D,
-	abGPU_Image_Dimensions_2DArray,
-	abGPU_Image_Dimensions_Cube,
-	abGPU_Image_Dimensions_CubeArray,
-	abGPU_Image_Dimensions_3D
-} abGPU_Image_Dimensions;
-abForceInline bool abGPU_Image_Dimensions_Are2D(abGPU_Image_Dimensions dimensions) {
-	return dimensions == abGPU_Image_Dimensions_2D || dimensions == abGPU_Image_Dimensions_2DArray;
-}
-abForceInline bool abGPU_Image_Dimensions_AreCube(abGPU_Image_Dimensions dimensions) {
-	return dimensions == abGPU_Image_Dimensions_Cube || dimensions == abGPU_Image_Dimensions_CubeArray;
-}
-abForceInline bool abGPU_Image_Dimensions_Are3D(abGPU_Image_Dimensions dimensions) {
-	return dimensions == abGPU_Image_Dimensions_3D;
-}
-abForceInline bool abGPU_Image_Dimensions_AreArray(abGPU_Image_Dimensions dimensions) {
-	return dimensions == abGPU_Image_Dimensions_2DArray || dimensions == abGPU_Image_Dimensions_CubeArray;
+abForceInline abGPU_Image_Options abGPU_Image_Options_Normalize(abGPU_Image_Options options) {
+	if (options & abGPU_Image_Options_3D) { options &= ~(abGPU_Image_Options_Array | abGPU_Image_Options_Cube); }
+	if (options & abGPU_Image_Options_Upload) { options &= ~(abGPU_Image_Options_Renderable | abGPU_Image_Options_Editable); }
+	return options;
 }
 
 typedef enum abGPU_Image_Format {
@@ -174,10 +164,9 @@ typedef union abGPU_Image_Texel {
 	} ds;
 } abGPU_Image_Texel;
 
-#define abGPU_Image_DimensionsShift 24u
 typedef struct abGPU_Image {
-	unsigned int typeAndDimensions; // Below DimensionsShift - type flags, starting from it - dimensions.
-	// Depth is 1 for 2D and cubemaps, Z depth for 3D, and number of layers for arrays.
+	abGPU_Image_Options options;
+	// Depth is 1 for 2D and cubes, Z depth for 3D, and number of layers for arrays.
 	unsigned int w, h, d;
 	unsigned int mips;
 	abGPU_Image_Format format;
@@ -193,19 +182,11 @@ typedef struct abGPU_Image {
 	#endif
 } abGPU_Image;
 
-abForceInline abGPU_Image_Type abGPU_Image_GetType(abGPU_Image const * image) {
-	return (abGPU_Image_Type) (image->typeAndDimensions & ((1u << abGPU_Image_DimensionsShift) - 1u));
-}
-
-abForceInline abGPU_Image_Dimensions abGPU_Image_GetDimensions(abGPU_Image const * image) {
-	return (abGPU_Image_Dimensions) (image->typeAndDimensions >> abGPU_Image_DimensionsShift);
-}
-
 abForceInline void abGPU_Image_GetMipSize(abGPU_Image const * image, unsigned int mip,
 		unsigned int * w, unsigned int * h, unsigned int * d) {
 	if (w != abNull) *w = abMax(image->w >> mip, 1u);
 	if (h != abNull) *h = abMax(image->h >> mip, 1u);
-	if (d != abNull) *d = (abGPU_Image_Dimensions_Are3D(abGPU_Image_GetDimensions(image)) ? abMax(image->d >> mip, 1u) : image->d);
+	if (d != abNull) *d = ((image->options & abGPU_Image_Options_3D) ? abMax(image->d >> mip, 1u) : image->d);
 }
 
 typedef unsigned int abGPU_Image_Slice;
@@ -213,7 +194,12 @@ typedef unsigned int abGPU_Image_Slice;
 #define abGPU_Image_Slice_Mip(slice) ((unsigned int) ((slice) & 31u))
 #define abGPU_Image_Slice_Side(slice) ((unsigned int) (((slice) >> 5u) & 7u))
 #define abGPU_Image_Slice_Layer(slice) ((unsigned int) ((slice) >> 8u))
-bool abGPU_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice);
+inline bool abGPU_Image_HasSlice(abGPU_Image const * image, abGPU_Image_Slice slice) {
+	if (abGPU_Image_Slice_Mip(slice) >= image->mips) { return false; }
+	if (abGPU_Image_Slice_Side(slice) > ((image->options & abGPU_Image_Options_Cube) ? 5u : 0u)) { return false; }
+	if (abGPU_Image_Slice_Layer(slice) >= ((image->options & abGPU_Image_Options_Array) ? image->d : 1u)) { return false; }
+	return true;
+}
 
 typedef enum abGPU_Image_Usage {
 	abGPU_Image_Usage_Texture, // Sampleable in pixel shaders.
@@ -244,31 +230,31 @@ typedef enum abGPU_Image_Comparison {
 	abGPU_Image_Comparison_Always = abGPU_Image_Comparison_Equal | abGPU_Image_Comparison_NotEqual
 } abGPU_Image_Comparison;
 
-abForceInline unsigned int abGPU_Image_CalculateMipCount(
-		abGPU_Image_Dimensions dimensions, unsigned int w, unsigned int h, unsigned int d) {
+abForceInline unsigned int abGPU_Image_CalculateMipCount(abGPU_Image_Options dimensionOptions,
+		unsigned int w, unsigned int h, unsigned int d) {
 	unsigned int size = abMax(w, h);
-	if (abGPU_Image_Dimensions_Are3D(dimensions)) {
+	if (dimensionOptions & abGPU_Image_Options_3D) {
 		size = abMax(size, d);
 	}
 	return abBit_HighestOne32(size + (size == 0u)) + 1u;
 }
 
 // Clamps to [1, max].
-void abGPU_Image_ClampSizeToMax(abGPU_Image_Dimensions dimensions,
+void abGPU_Image_ClampSizeToMax(abGPU_Image_Options dimensionOptions,
 		unsigned int * w, unsigned int * h, unsigned int * d, /* optional */ unsigned int * mips);
 
 /*
  * Implementation functions.
  */
-void abGPU_Image_GetMaxSize(abGPU_Image_Dimensions dimensions,
+void abGPU_Image_GetMaxSize(abGPU_Image_Options dimensionOptions,
 		/* optional */ unsigned int * wh, /* optional */ unsigned int * d);
-unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
+unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
 // Usage must be Upload for upload buffers. Clear value is null for images that are not render targets.
-bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Type type, abGPU_Image_Dimensions dimensions,
+bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue);
-bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Dimensions dimensions,
+bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options dimensionOptions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
 // Provides the mapping of the memory for the upload functions, may return null even in case of success.
 void * abGPU_Image_UploadBegin(abGPU_Image * image, abGPU_Image_Slice slice);
@@ -370,7 +356,6 @@ typedef struct abGPU_RTConfig {
 
 	#if defined(abBuild_GPUi_D3D)
 	abGPU_RTStore const * i_rtStore;
-	unsigned int i_stencilSubresource;
 	#endif
 } abGPU_RTConfig;
 
