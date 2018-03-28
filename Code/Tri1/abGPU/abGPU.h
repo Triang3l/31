@@ -321,11 +321,9 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, bool readOnly);
 void abGPU_RTStore_Destroy(abGPU_RTStore * store);
 
-/*************************************************************************
+/*******************************
  * Render target configurations
- *
- * Initialize colorCount, color and depth explicitly, then call Register.
- *************************************************************************/
+ *******************************/
 
 #define abGPU_RT_Count 8u
 
@@ -460,7 +458,6 @@ typedef enum abGPU_Input_UniformStrategy {
 #endif
 
 typedef enum abGPU_Input_Type {
-		abGPU_Input_Type_Skip,
 	abGPU_Input_Type_Constant, // Small data passed directly through command list.
 	abGPU_Input_Type_ConstantBuffer, // Buffer and offset bound directly.
 	abGPU_Input_Type_ConstantBufferHandle, // Buffer bound via a handle.
@@ -475,13 +472,13 @@ typedef enum abGPU_Input_Type {
 // These must be immutable as long as they are attached to an active input list.
 #define abGPU_Input_SamplerDynamicOnly UINT8_MAX
 typedef struct abGPU_Input {
-	uint8_t stages;
+	uint8_t stages; // abGPU_ShaderStageBits - zero to skip this input.
 	uint8_t type;
 	union {
-		struct { uint8_t constantIndex, count32Bits; } constant;
-		struct { uint8_t constantIndex; } constantBuffer;
+		struct { uint8_t bufferIndex, count32Bits; } constant;
+		struct { uint8_t bufferIndex; } constantBuffer;
 		struct { uint8_t bufferFirstIndex, count; } constantBufferHandle;
-		struct { uint8_t constantIndex; } uniform;
+		struct { uint8_t bufferIndex; } uniform;
 		struct { uint8_t bufferFirstIndex, imageFirstIndex, count; } structureBufferHandle;
 		struct { uint8_t bufferFirstIndex, editFirstIndex, count; } editBufferHandle;
 		struct { uint8_t imageFirstIndex, count; } imageHandle;
@@ -493,6 +490,22 @@ typedef struct abGPU_Input {
 		struct { uint8_t samplerFirstIndex, staticIndex, count; } samplerHandle;
 	} parameters;
 } abGPU_Input;
+
+#define abGPU_InputConfig_MaxInputs 24u // No more than 16 should really be used, but just for more space for static samplers.
+
+typedef struct abGPU_InputConfig {
+	unsigned int inputCount;
+	abGPU_Input inputs[abGPU_InputConfig_MaxInputs];
+	bool noVertexLayout; // Set this to true for compute, and also, as an optimization, if vertices doesn't have attributes.
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12RootSignature * i_rootSignature;
+	uint8_t i_rootParameters[abGPU_InputConfig_MaxInputs]; // UINT8_MAX means it's skipped.
+	#endif
+} abGPU_InputConfig;
+
+bool abGPU_InputConfig_Register(abGPU_InputConfig * config, /* optional */ abGPU_Sampler const * staticSamplers);
+void abGPU_InputConfig_Unregister(abGPU_InputConfig * config);
 
 /****************
  * Command lists

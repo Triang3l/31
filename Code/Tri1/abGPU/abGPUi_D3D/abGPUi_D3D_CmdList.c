@@ -66,8 +66,7 @@ void abGPU_CmdList_Destroy(abGPU_CmdList * list) {
 	ID3D12CommandAllocator_Release(list->i_allocator);
 }
 
-void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
-		abGPU_HandleStore * handleStore, abGPU_SamplerStore * samplerStore) {
+void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list, abGPU_HandleStore * handleStore, abGPU_SamplerStore * samplerStore) {
 	ID3D12DescriptorHeap * heaps[2u];
 	unsigned int heapCount = 0u;
 	if (handleStore != abNull) {
