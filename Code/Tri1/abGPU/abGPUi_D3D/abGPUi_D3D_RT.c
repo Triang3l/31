@@ -111,15 +111,36 @@ void abGPU_RTStore_Destroy(abGPU_RTStore * store) {
 	}
 }
 
+static void abGPUi_D3D_RTConfig_PrePostActionToBits(abGPU_RTConfig * config, abGPU_RT_PrePostAction action, unsigned int shift) {
+	unsigned int bit = 1u << shift;
+	switch (action & abGPU_RT_PreMask) {
+	case abGPU_RT_PreDiscard:
+		config->i_preDiscardBits |= bit;
+		break;
+	case abGPU_RT_PreClear:
+		config->i_preClearBits |= bit;
+		break;
+	}
+	if ((action & abGPU_RT_PostMask) == abGPU_RT_PostDiscard) {
+		config->i_postDiscardBits |= bit;
+	}
+}
+
 bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store) {
 	config->colorCount = abMin(config->colorCount, abGPU_RT_Count);
-	config->i_rtStore = store;
 
-	// Discarding 3D render targets is not supported because D3D12_RECT is 2D.
+	config->i_preDiscardBits = config->i_preClearBits = config->i_postDiscardBits = 0u;
+
 	for (unsigned int rtIndex = 0; rtIndex < config->colorCount; ++rtIndex) {
 		abGPU_RT * rt = &config->color[rtIndex];
-		if (store->renderTargets[rt->indexInStore].image->options & abGPU_Image_Options_3D) {
-			abGPU_RT_PrePostAction * action = &config->color[rtIndex].prePostAction;
+		abGPU_RTStore_RT const * storeRT = &store->renderTargets[rt->indexInStore];
+		config->i_descriptorHandles[rtIndex].ptr = store->i_cpuDescriptorHandleStartColor.ptr +
+				rt->indexInStore * abGPUi_D3D_RTStore_DescriptorSizeColor;
+		config->i_resources[rtIndex] = storeRT->image->i_resource;
+		config->i_subresources[rtIndex] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
+		// Discarding 3D render targets is not supported because D3D12_RECT is 2D.
+		abGPU_RT_PrePostAction * action = &config->color[rtIndex].prePostAction;
+		if (storeRT->image->options & abGPU_Image_Options_3D) {
 			if ((*action & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
 				*action = (*action & ~abGPU_RT_PreMask) | abGPU_RT_PreLoad;
 			}
@@ -127,13 +148,23 @@ bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * stor
 				*action = (*action & ~abGPU_RT_PostMask) | abGPU_RT_PostStore;
 			}
 		}
+		abGPUi_D3D_RTConfig_PrePostActionToBits(config, *action, rtIndex);
 	}
 
-	// Do no action (= do load/store) on stencil if there's no stencil.
 	if (config->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
-		abGPU_RTStore_RT const * depthStoreRT = &store->renderTargets[config->depth.indexInStore];
-		abGPU_Image const * depthImage = depthStoreRT->image;
-		if (!abGPU_Image_Format_IsDepthStencil(depthImage->format)) {
+		abGPU_RTStore_RT const * storeRT = &store->renderTargets[config->depth.indexInStore];
+		config->i_descriptorHandles[abGPU_RT_Count].ptr = store->i_cpuDescriptorHandleStartDepth.ptr +
+				config->depth.indexInStore * abGPUi_D3D_RTStore_DescriptorSizeDepth;
+		config->i_resources[abGPU_RT_Count] = storeRT->image->i_resource;
+		config->i_subresources[abGPU_RT_Count] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
+		abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->depth.prePostAction, abGPU_RT_Count);
+		if (abGPU_Image_Format_IsDepthStencil(storeRT->image->format)) {
+			config->i_descriptorHandles[abGPU_RT_Count + 1] = config->i_descriptorHandles[abGPU_RT_Count];
+			config->i_resources[abGPU_RT_Count + 1] = config->i_resources[abGPU_RT_Count];
+			config->i_subresources[abGPU_RT_Count + 1] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, true);
+			abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->stencilPrePostAction, abGPU_RT_Count + 1);
+		} else {
+			// Do no action (= do load/store) on stencil if there's no stencil.
 			config->stencilPrePostAction = abGPU_RT_PreLoad | abGPU_RT_PostStore;
 		}
 	}

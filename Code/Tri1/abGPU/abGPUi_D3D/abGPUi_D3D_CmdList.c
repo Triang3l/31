@@ -1,5 +1,6 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
+#include "../../abMath/abBit.h"
 
 bool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue) {
 	D3D12_COMMAND_LIST_TYPE type;
@@ -80,59 +81,50 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig) {
 	ID3D12GraphicsCommandList * cmdList = list->i_list;
-
 	list->i_drawRTConfig = rtConfig;
 
-	unsigned int colorCount = rtConfig->colorCount;
-	abGPU_RTStore const * store = rtConfig->i_rtStore;
+	int rtIndex;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE colorDescriptors[abGPU_RT_Count], depthDescriptor = { .ptr = 0u };
-	D3D12_CPU_DESCRIPTOR_HANDLE colorDescriptorStart = store->i_cpuDescriptorHandleStartColor;
 	D3D12_DISCARD_REGION discardRegion = { .NumRects = 0u, .pRects = abNull, .NumSubresources = 1u };
-	for (unsigned int rtIndex = 0u; rtIndex < colorCount; ++rtIndex) {
-		abGPU_RT const * rt = &rtConfig->color[rtIndex];
-		colorDescriptors[rtIndex].ptr = colorDescriptorStart.ptr + rt->indexInStore * abGPUi_D3D_RTStore_DescriptorSizeColor;
-		if ((rt->prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
-			abGPU_RTStore_RT const * storeRT = &store->renderTargets[rt->indexInStore];
-			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
-			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image->i_resource, &discardRegion);
-		}
-	}
-	if (rtConfig->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
-		depthDescriptor.ptr = store->i_cpuDescriptorHandleStartDepth.ptr +
-				rtConfig->depth.indexInStore * abGPUi_D3D_RTStore_DescriptorSizeDepth;
-		abGPU_RTStore_RT const * storeRT = &store->renderTargets[store->countColor + rtConfig->depth.indexInStore];
-		if ((rtConfig->depth.prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
-			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
-			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image->i_resource, &discardRegion);
-		}
-		if ((rtConfig->stencilPrePostAction & abGPU_RT_PreMask) == abGPU_RT_PreDiscard) {
-			discardRegion.FirstSubresource = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, true);
-			ID3D12GraphicsCommandList_DiscardResource(cmdList, storeRT->image->i_resource, &discardRegion);
-		}
+	unsigned int preDiscardBits = rtConfig->i_preDiscardBits;
+	while ((rtIndex = abBit_LowestOne32(preDiscardBits)) >= 0) {
+		preDiscardBits &= ~(1u << rtIndex);
+		discardRegion.FirstSubresource = rtConfig->i_subresources[rtIndex];
+		ID3D12GraphicsCommandList_DiscardResource(cmdList, rtConfig->i_resources[rtIndex], &discardRegion);
 	}
 
-	ID3D12GraphicsCommandList_OMSetRenderTargets(cmdList, colorCount, colorDescriptors, FALSE,
-			depthDescriptor.ptr != 0u ? &depthDescriptor : abNull);
+	ID3D12GraphicsCommandList_OMSetRenderTargets(cmdList, rtConfig->colorCount, rtConfig->i_descriptorHandles, FALSE,
+			(rtConfig->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) ? &rtConfig->i_descriptorHandles[abGPU_RT_Count] : abNull);
 
-	for (unsigned int rtIndex = 0u; rtIndex < colorCount; ++rtIndex) {
-		abGPU_RT const * rt = &rtConfig->color[rtIndex];
-		if ((rt->prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreClear) {
-			ID3D12GraphicsCommandList_ClearRenderTargetView(cmdList, colorDescriptors[rtIndex], rt->clearValue.color, 0u, abNull);
-		}
+	unsigned int preClearColorBits = rtConfig->i_preClearBits & ((1u << abGPU_RT_Count) - 1u);
+	while ((rtIndex = abBit_LowestOne32(preClearColorBits)) >= 0) {
+		preClearColorBits &= ~(1u << rtIndex);
+		ID3D12GraphicsCommandList_ClearRenderTargetView(cmdList, rtConfig->i_descriptorHandles[rtIndex],
+				rtConfig->color[rtIndex].clearValue.color, 0u, abNull);
 	}
-	if (rtConfig->depth.indexInStore != abGPU_RTConfig_DepthIndexNone) {
-		D3D12_CLEAR_FLAGS clearFlags = 0u;
-		if ((rtConfig->depth.prePostAction & abGPU_RT_PreMask) == abGPU_RT_PreClear) {
-			clearFlags |= D3D12_CLEAR_FLAG_DEPTH;
-		}
-		if ((rtConfig->stencilPrePostAction & abGPU_RT_PreMask) == abGPU_RT_PreClear) {
-			clearFlags |= D3D12_CLEAR_FLAG_STENCIL;
-		}
-		if (clearFlags != 0u) {
-			ID3D12GraphicsCommandList_ClearDepthStencilView(cmdList, depthDescriptor, clearFlags,
-					rtConfig->depth.clearValue.ds.depth, rtConfig->depth.clearValue.ds.stencil, 0u, abNull);
-		}
+	D3D12_CLEAR_FLAGS depthStencilClearFlags = 0u;
+	if (rtConfig->i_preClearBits & (1u << abGPU_RT_Count)) {
+		depthStencilClearFlags |= D3D12_CLEAR_FLAG_DEPTH;
+	}
+	if (rtConfig->i_preClearBits & (1u << (abGPU_RT_Count + 1u))) {
+		depthStencilClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
+	}
+	if (depthStencilClearFlags != 0u) {
+		ID3D12GraphicsCommandList_ClearDepthStencilView(cmdList, rtConfig->i_descriptorHandles[abGPU_RT_Count], depthStencilClearFlags,
+				rtConfig->depth.clearValue.ds.depth, rtConfig->depth.clearValue.ds.stencil, 0u, abNull);
+	}
+}
+
+void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list) {
+	ID3D12GraphicsCommandList * cmdList = list->i_list;
+	abGPU_RTConfig const * rtConfig = list->i_drawRTConfig;
+	D3D12_DISCARD_REGION discardRegion = { .NumRects = 0u, .pRects = abNull, .NumSubresources = 1u };
+	unsigned int postDiscardBits = rtConfig->i_preDiscardBits;
+	int rtIndex;
+	while ((rtIndex = abBit_LowestOne32(postDiscardBits)) >= 0) {
+		postDiscardBits &= ~(1u << rtIndex);
+		discardRegion.FirstSubresource = rtConfig->i_subresources[rtIndex];
+		ID3D12GraphicsCommandList_DiscardResource(cmdList, rtConfig->i_resources[rtIndex], &discardRegion);
 	}
 }
 

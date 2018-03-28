@@ -355,7 +355,10 @@ typedef struct abGPU_RTConfig {
 	abGPU_RT_PrePostAction stencilPrePostAction;
 
 	#if defined(abBuild_GPUi_D3D)
-	abGPU_RTStore const * i_rtStore;
+	D3D12_CPU_DESCRIPTOR_HANDLE i_descriptorHandles[abGPU_RT_Count + 2u]; // Depth and stencil (duplicated) at abGPU_RT_Count.
+	ID3D12Resource * i_resources[abGPU_RT_Count + 2u]; // Depth and stencil (duplicated) at abGPU_RT_Count.
+	unsigned int i_subresources[abGPU_RT_Count + 2u]; // Depth and stencil at abGPU_RT_Count.
+	unsigned int i_preDiscardBits, i_preClearBits, i_postDiscardBits; // Depth and stencil at (1...2)<<abGPU_RT_Count.
 	#endif
 } abGPU_RTConfig;
 
