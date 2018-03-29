@@ -374,7 +374,8 @@ void abGPU_RTConfig_Unregister(abGPU_RTConfig * config);
 typedef enum abGPU_ShaderStage {
 	abGPU_ShaderStage_Vertex,
 	abGPU_ShaderStage_Pixel,
-	abGPU_ShaderStage_Compute
+	abGPU_ShaderStage_Compute,
+		abGPU_ShaderStage_Count
 } abGPU_ShaderStage;
 
 // abGPU_Input depends on this being 8 bits or less!
@@ -451,24 +452,39 @@ void abGPU_SamplerStore_Destroy(abGPU_SamplerStore * store);
  * Shader inputs
  ****************/
 
+/*
+ * Uniforms are a special type of shader input.
+ * They are used to send a small amount of frequently changing data (below 4 KB, generally less than 256 bytes).
+ *
+ * An abGPU implementation may choose an optimal uniform binding strategy depending on what the graphics API allows.
+ *
+ * On Metal, set[Stage]Bytes is the preferred way of sending data smaller than 4 KB. But on Direct3D and Vulkan,
+ * root/push constants are used for tiny amounts of data (even a float4 may be too much), so a buffer is needed.
+ *
+ * With D3D's 256 alignment requirement, it may be wasteful to use a new 256-byte page for every draw.
+ * In this case, the buffer bound is one or multiple (like LCM(needed data size, 256)/256 pages) pages,
+ * and one 32-bit constant is used for the index of the per-draw data block within the bound pages.
+ *
+ * However, this has to be handled by the game rendering code, and imposes some requirements on the input configuration.
+ * Depending on abGPU_Input_PreferredUniformStrategy, the game should create or not create buffers for uniforms,
+ * align buffer offsets, send the draw index as a 32-bit constant.
+ * If the shader uses uniforms the two-level way described above on certain APIs,
+ * the number of 32-bit constants should be (abGPU_InputConfig_UniformDrawIndex32BitCount + user 32-bit constant count).
+ * abGPU_InputConfig_UniformDrawIndex32BitCount is 1 or 0 depending on whether two-level uniforms are used.
+ */
+
 // Strategy for binding of small amounts of constant data (below 4 KB, generally less than 256 bytes).
 typedef enum abGPU_Input_UniformStrategy {
 	abGPU_Input_UniformStrategy_RawData, // Send the data directly through the command list.
-	abGPU_Input_UniformStrategy_BufferAndOffset // Bind a buffer directly, without a handle.
+	abGPU_Input_UniformStrategy_256AlignedBuffer // Bind a buffer directly, without a handle, with a 256-aligned offset.
 } abGPU_Input_UniformStrategy;
-
-// abGPU_Input_StructureBuffersAreImages is 1 if structure buffers use t# indices, 0 if they use b#.
-// abGPU_Input_SeparateEditIndices is 1 if editable buffers and images use u# indices, 0 if they use b# and t#.
 #if defined(abBuild_GPUi_D3D)
-#define abGPU_Input_PreferredUniformStrategy abGPU_Input_UniformStrategy_BufferAndOffset
-#define abGPU_Input_StructureBuffersAreImages 1
-#define abGPU_Input_SeparateEditIndices 1
+#define abGPU_Input_PreferredUniformStrategy abGPU_Input_UniformStrategy_256AlignedBuffer
 #else
 #error No shader input preferences defined for the target GPU API.
 #endif
 
 typedef enum abGPU_Input_Type {
-	abGPU_Input_Type_Constant, // Small data passed directly through command list.
 	abGPU_Input_Type_ConstantBuffer, // Buffer and offset bound directly.
 	abGPU_Input_Type_ConstantBufferHandle, // Buffer bound via a handle.
 	abGPU_Input_Type_Uniform, // One of the constant input types, depending on the strategy.
@@ -479,38 +495,72 @@ typedef enum abGPU_Input_Type {
 	abGPU_Input_Type_SamplerHandle
 } abGPU_Input_Type;
 
+/*
+ * Mapping of input types to shader binding points:
+ *
+ * Direct3D:
+ * - Constant buffers and constant buffer handles: b# space0.
+ * - Uniform: b0 space1 for 32-bit constants, b1 space1 for the buffer (both are optional, first in the root signature).
+ * - Structure buffers: t# space1.
+ * - Editable buffers: u# space1.
+ * - Textures: t# space0.
+ * - Editable images: u# space0.
+ * - Samplers: s#, both dynamic and static.
+ *
+ * Metal (potentially) - ordered by likelihood of index not being changed for the same data:
+ * - Buffers: constant (like view parameters), structure, uniform (single), vertex.
+ * - Images: textures, editable.
+ * - Samplers.
+ *
+ * Vulkan (potentially):
+ * - Uniform: push constants, explicit index (globalIndex) for the buffer (both are optional).
+ * - Everything else: explicit indices.
+ */
+
 // These must be immutable as long as they are attached to an active input list.
 #define abGPU_Input_SamplerDynamicOnly UINT8_MAX
 typedef struct abGPU_Input {
 	uint8_t stages; // abGPU_ShaderStageBits - zero to skip this input.
 	uint8_t type;
 	union {
-		struct { uint8_t bufferIndex, count32Bits; } constant;
-		struct { uint8_t bufferIndex; } constantBuffer;
-		struct { uint8_t bufferFirstIndex, count; } constantBufferHandle;
-		struct { uint8_t bufferIndex; } uniform;
-		struct { uint8_t bufferFirstIndex, imageFirstIndex, count; } structureBufferHandle;
-		struct { uint8_t bufferFirstIndex, editFirstIndex, count; } editBufferHandle;
-		struct { uint8_t imageFirstIndex, count; } imageHandle;
-		struct { uint8_t imageFirstIndex, editFirstIndex, count; } editImageHandle;
+		struct { uint8_t constantBufferIndex, globalIndex; } constantBuffer;
+		struct { uint8_t constantBufferFirstIndex, globalIndex, count; } constantBufferHandle;
+		struct { uint8_t structureBufferFirstIndex, globalIndex, count; } structureBufferHandle;
+		struct { uint8_t editBufferFirstIndex, globalIndex, count; } editBufferHandle;
+		struct { uint8_t textureFirstIndex, globalIndex, count; } imageHandle;
+		struct { uint8_t editImageFirstIndex, globalIndex, count; } editImageHandle;
 		// Static samplers are an optimization that may be unsupported, not a full replacement for binding.
-		// staticIndex is an index in the array of static samplers that is passed when the input list is created.
+		// staticSamplerIndex is an index in the array of static samplers that is passed when the input list is created.
 		// If static samplers are supported and provided, they will override bindings for non-SamplerDynamicOnly inputs.
 		// However, as they may be unsupported by implementations, samplers still must be bound.
-		struct { uint8_t samplerFirstIndex, staticIndex, count; } samplerHandle;
+		struct { uint8_t samplerFirstIndex, globalIndex, count, staticSamplerIndex; } samplerHandle;
 	} parameters;
 } abGPU_Input;
 
-#define abGPU_InputConfig_MaxInputs 24u // No more than 16 should really be used, but just for more space for static samplers.
+#define abGPU_InputConfig_MaxInputs 24u // No more than 16 should really be used, including uniforms, but for more space for static samplers.
+
+// abGPU_InputConfig_UniformDrawIndex32BitCount should be added to uniform32BitCount if a draw index within 256-byte blocks is used.
+#if (abGPU_Input_PreferredUniformStrategy == abGPU_Input_UniformStrategy_256AlignedBuffer)
+#define abGPU_InputConfig_UniformDrawIndex32BitCount 1u
+#else
+#define abGPU_InputConfig_UniformDrawIndex32BitCount 0u
+#endif
 
 typedef struct abGPU_InputConfig {
 	unsigned int inputCount;
 	abGPU_Input inputs[abGPU_InputConfig_MaxInputs];
+
+	uint8_t uniformStages;
+	uint8_t uniform32BitCount; // Add abGPU_InputConfig_UniformDrawIndex32BitCount to this if needed.
+	abBool uniformUseBuffer;
+	uint8_t uniformBufferGlobalIndex;
+
 	abBool noVertexLayout; // Set this to true for compute, and also, as an optimization, if vertices doesn't have attributes.
 
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12RootSignature * i_rootSignature;
 	uint8_t i_rootParameters[abGPU_InputConfig_MaxInputs]; // UINT8_MAX means it's skipped.
+	// 32-bit constants and uniform buffer use 0 and 1 root parameter indices (both 0 if there's only one of them).
 	#endif
 } abGPU_InputConfig;
 
