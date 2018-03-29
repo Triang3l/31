@@ -65,7 +65,7 @@ void abMemory_Tag_Destroy(abMemory_Tag * tag) {
 	free(tag); // Because it's created with Create, not Init, and Create does malloc.
 }
 
-void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, bool align16, char const * fileName, unsigned int fileLine) {
+void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, abBool align16, char const * fileName, unsigned int fileLine) {
 	abMemory_Allocation * allocation;
 	// Malloc gives 16-aligned blocks on 64-bit platforms, 8-aligned on 32-bit.
 	#ifdef abPlatform_CPU_64Bit
@@ -113,13 +113,13 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 
 	abMemory_Allocation * allocation = ((abMemory_Allocation *) memory - 1u);
 	#ifndef abPlatform_CPU_64Bit
-	bool wasPadded = (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes);
+	abBool wasPadded = (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes);
 	if (wasPadded) {
 		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
 	}
 	size_t oldSize = allocation->size;
 	#endif
-	bool align16 = (allocation->locationMark == abMemory_Allocation_LocationMark_Here16);
+	abBool align16 = (allocation->locationMark == abMemory_Allocation_LocationMark_Here16);
 	if (!align16 && allocation->locationMark != abMemory_Allocation_LocationMark_Here8) {
 		abFeedback_Crash("abMemory_DoRealloc",
 				"Tried to reallocate memory that wasn't allocated with abMemory_Alloc at %s:%u.", fileName, fileLine);

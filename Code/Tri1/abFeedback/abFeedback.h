@@ -22,7 +22,7 @@
 
 // These are OS-specific.
 void abFeedback_DebugMessageForceV(char const * format, va_list arguments);
-void abFeedback_CrashV(bool isAssert, char const * functionName, char const * messageFormat, va_list messageArguments);
+void abFeedback_CrashV(abBool isAssert, char const * functionName, char const * messageFormat, va_list messageArguments);
 
 // Non-OS-specific.
 void abFeedback_DebugMessageForce(char const * format, ...);

@@ -139,7 +139,7 @@ unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Options options,
 static void abGPUi_D3D_Image_GetDataLayout(D3D12_RESOURCE_DESC const * desc, DXGI_FORMAT * format,
 		unsigned int * mipOffset, unsigned int * mipRowStride, unsigned int * layerStride) {
 	unsigned int mips = desc->MipLevels;
-	bool isArray = (desc->Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D && desc->DepthOrArraySize > 1u);
+	abBool isArray = (desc->Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D && desc->DepthOrArraySize > 1u);
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprints[D3D12_REQ_MIP_LEVELS + 1u];
 	ID3D12Device_GetCopyableFootprints(abGPUi_D3D_Device, desc, 0u, mips + isArray,
 			0ull, footprints, abNull, abNull, abNull);
@@ -151,7 +151,7 @@ static void abGPUi_D3D_Image_GetDataLayout(D3D12_RESOURCE_DESC const * desc, DXG
 	*layerStride = (isArray ? (unsigned int) (footprints[mips].Offset - footprints[0u].Offset) : 0u);
 }
 
-bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
+abBool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue) {
 	options = abGPU_Image_Options_Normalize(options);
@@ -160,7 +160,7 @@ bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
 	D3D12_RESOURCE_DESC desc;
 	abGPUi_D3D_Image_FillTextureDesc(options, w, h, d, mips, format, &desc);
 	if (desc.Format == DXGI_FORMAT_UNKNOWN) {
-		return false;
+		return abFalse;
 	}
 
 	image->options = options;
@@ -207,17 +207,17 @@ bool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
 	}
 	return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
 			&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, abGPUi_D3D_Image_UsageToStates(initialUsage),
-			optimizedClearValuePointer, &IID_ID3D12Resource, &image->i_resource)) ? true : false;
+			optimizedClearValuePointer, &IID_ID3D12Resource, &image->i_resource)) ? abTrue : abFalse;
 }
 
-bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options dimensionOptions,
+abBool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options dimensionOptions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format) {
 	dimensionOptions = abGPU_Image_Options_Normalize((dimensionOptions & abGPU_Image_Options_DimensionsMask) | abGPU_Image_Options_Upload);
 	abGPU_Image_ClampSizeToMax(dimensionOptions, &w, &h, &d, &mips);
 	D3D12_RESOURCE_DESC desc;
 	abGPUi_D3D_Image_FillTextureDesc(dimensionOptions, w, h, d, mips, format, &desc);
 	if (desc.Format == DXGI_FORMAT_UNKNOWN || abGPUi_D3D_Image_CalculateMemoryUsageForDesc(&desc) > image->memoryUsage) {
-		return false;
+		return abFalse;
 	}
 	image->options = dimensionOptions;
 	image->w = w;
@@ -227,7 +227,7 @@ bool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options 
 	image->format = format;
 	abGPUi_D3D_Image_GetDataLayout(&desc, &image->i_copyFormat,
 			image->i_mipOffset, image->i_mipRowStride, &image->i_layerStride);
-	return true;
+	return abTrue;
 }
 
 void * abGPU_Image_UploadBegin(abGPU_Image * image, abGPU_Image_Slice slice) {
@@ -236,7 +236,7 @@ void * abGPU_Image_UploadBegin(abGPU_Image * image, abGPU_Image_Slice slice) {
 	}
 	void * mapping;
 	return SUCCEEDED(ID3D12Resource_Map(image->i_resource,
-			abGPUi_D3D_Image_SliceToSubresource(image, slice, false), abNull, &mapping)) ? mapping : abNull;
+			abGPUi_D3D_Image_SliceToSubresource(image, slice, abFalse), abNull, &mapping)) ? mapping : abNull;
 }
 
 void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
@@ -265,7 +265,7 @@ void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
 
 	unsigned int mappedSubresource;
 	if (mapping == abNull) {
-		mappedSubresource = abGPUi_D3D_Image_SliceToSubresource(image, slice, false);
+		mappedSubresource = abGPUi_D3D_Image_SliceToSubresource(image, slice, abFalse);
 		if (FAILED(ID3D12Resource_Map(image->i_resource, mappedSubresource, abNull, &mapping))) {
 			return;
 		}
@@ -316,7 +316,7 @@ void abGPU_Image_UploadEnd(abGPU_Image * image, abGPU_Image_Slice slice,
 		writtenRange.Begin = writtenOffsetAndSize[0u];
 		writtenRange.End = writtenOffsetAndSize[0u] + writtenOffsetAndSize[1u];
 	}
-	ID3D12Resource_Unmap(image->i_resource, abGPUi_D3D_Image_SliceToSubresource(image, slice, false),
+	ID3D12Resource_Unmap(image->i_resource, abGPUi_D3D_Image_SliceToSubresource(image, slice, abFalse),
 			writtenOffsetAndSize != abNull ? &writtenRange : abNull);
 }
 

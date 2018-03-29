@@ -15,7 +15,7 @@ void abFeedback_DebugMessageForceV(char const * format, va_list arguments) {
 }
 
 #if defined(abPlatform_OS_WindowsDesktop)
-void abFeedback_CrashV(bool isAssert, char const * functionName, char const * messageFormat, va_list messageArguments) {
+void abFeedback_CrashV(abBool isAssert, char const * functionName, char const * messageFormat, va_list messageArguments) {
 	char message[1024u];
 	size_t written = abTextA_Copy(functionName, message, abArrayLength(message));
 	written += abTextA_CopyInto(isAssert ? " (assertion): " : ": ", message, abArrayLength(message), written);
@@ -46,13 +46,13 @@ void abFeedback_DebugMessageForce(char const * format, ...) {
 void abFeedback_Crash(char const * functionName, char const * messageFormat, ...) {
 	va_list messageArguments;
 	va_start(messageArguments, messageFormat);
-	abFeedback_CrashV(false, functionName, messageFormat, messageArguments);
+	abFeedback_CrashV(abFalse, functionName, messageFormat, messageArguments);
 	va_end(messageArguments);
 }
 
 void abFeedback_AssertCrash(char const * functionName, char const * messageFormat, ...) {
 	va_list messageArguments;
 	va_start(messageArguments, messageFormat);
-	abFeedback_CrashV(true, functionName, messageFormat, messageArguments);
+	abFeedback_CrashV(abTrue, functionName, messageFormat, messageArguments);
 	va_end(messageArguments);
 }

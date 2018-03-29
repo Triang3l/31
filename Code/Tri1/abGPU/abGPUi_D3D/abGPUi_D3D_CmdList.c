@@ -2,7 +2,7 @@
 #include "abGPUi_D3D.h"
 #include "../../abMath/abBit.h"
 
-bool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue) {
+abBool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue) {
 	D3D12_COMMAND_LIST_TYPE type;
 	switch (queue) {
 	case abGPU_CmdQueue_Graphics:
@@ -12,23 +12,23 @@ bool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue) {
 		type = D3D12_COMMAND_LIST_TYPE_COPY;
 		break;
 	default:
-		return false;
+		return abFalse;
 	}
 	if (FAILED(ID3D12Device_CreateCommandAllocator(abGPUi_D3D_Device, type, &IID_ID3D12CommandAllocator, &list->i_allocator))) {
-		return false;
+		return abFalse;
 	}
 	if (FAILED(ID3D12Device_CreateCommandList(abGPUi_D3D_Device, 0u, type, list->i_allocator, abNull,
 			&IID_ID3D12GraphicsCommandList, &list->i_list))) {
 		ID3D12CommandAllocator_Release(list->i_allocator);
-		return false;
+		return abFalse;
 	}
 	if (FAILED(ID3D12GraphicsCommandList_QueryInterface(list->i_list, &IID_ID3D12CommandList, &list->i_executeList))) {
 		ID3D12CommandAllocator_Release(list->i_list);
 		ID3D12CommandAllocator_Release(list->i_allocator);
-		return false;
+		return abFalse;
 	}
 	ID3D12GraphicsCommandList_Close(list->i_list); // So it's not opened twice when it's used for the first time.
-	return true;
+	return abTrue;
 }
 
 void abGPU_CmdList_Record(abGPU_CmdList * list) {

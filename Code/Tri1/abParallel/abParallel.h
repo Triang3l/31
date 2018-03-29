@@ -94,13 +94,13 @@ abForceInline uint64_t abAtomic_XorU64(uint64_t * location, uint64_t value) { re
 #define abParallel_Pause Sleep
 
 typedef CRITICAL_SECTION abParallel_Mutex;
-abForceInline bool abParallel_Mutex_Init(abParallel_Mutex * mutex) { InitializeCriticalSection(mutex); return true; }
+abForceInline abBool abParallel_Mutex_Init(abParallel_Mutex * mutex) { InitializeCriticalSection(mutex); return abTrue; }
 #define abParallel_Mutex_Lock EnterCriticalSection
 #define abParallel_Mutex_Unlock LeaveCriticalSection
 #define abParallel_Mutex_Destroy DeleteCriticalSection
 
 typedef SRWLOCK abParallel_RWLock;
-abForceInline bool abParallel_RWLock_Init(abParallel_RWLock * lock) { InitializeSRWLock(lock); return true; }
+abForceInline abBool abParallel_RWLock_Init(abParallel_RWLock * lock) { InitializeSRWLock(lock); return abTrue; }
 #define abParallel_RWLock_LockRead AcquireSRWLockShared
 #define abParallel_RWLock_UnlockRead ReleaseSRWLockShared
 #define abParallel_RWLock_LockWrite AcquireSRWLockExclusive

@@ -17,7 +17,7 @@ enum {
 	abGPUi_D3D_Init_Result_CopyCommandQueueCreationFailed
 };
 
-abGPU_Init_Result abGPU_Init(bool debug) {
+abGPU_Init_Result abGPU_Init(abBool debug) {
 	if (abGPUi_D3D_Device != abNull) {
 		return abGPU_Init_Result_Success;
 	}
@@ -30,7 +30,7 @@ abGPU_Init_Result abGPU_Init(bool debug) {
 			ID3D12Debug_EnableDebugLayer(debugInterface);
 			ID3D12Debug_Release(debugInterface);
 		} else {
-			debug = false;
+			debug = abFalse;
 		}
 	}
 

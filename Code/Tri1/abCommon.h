@@ -8,7 +8,6 @@
 
 #include <float.h> // FLT_MAX...
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdint.h> // uint32_t...
 #include <string.h> // memcpy, memmove, memset.
 
@@ -20,6 +19,10 @@
  */
 
 #define abNull ((void *) 0)
+
+typedef unsigned char abBool; // In case any C++ code needs to interact with C code and for a predictable size.
+#define abTrue ((abBool) 1u)
+#define abFalse ((abBool) 0u)
 
 // CPU architecture.
 

@@ -3,13 +3,13 @@
 
 unsigned int abGPUi_D3D_RTStore_DescriptorSizeColor, abGPUi_D3D_RTStore_DescriptorSizeDepth;
 
-bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepth) {
+abBool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepth) {
 	D3D12_DESCRIPTOR_HEAP_DESC desc = { 0 };
 	if (countColor != 0u) {
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		desc.NumDescriptors = countColor;
 		if (FAILED(ID3D12Device_CreateDescriptorHeap(abGPUi_D3D_Device, &desc, &IID_ID3D12DescriptorHeap, &store->i_descriptorHeapColor))) {
-			return false;
+			return abFalse;
 		}
 		store->i_cpuDescriptorHandleStartColor = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeapColor);
 	} else {
@@ -23,22 +23,22 @@ bool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned
 			if (countColor != 0u) {
 				ID3D12DescriptorHeap_Release(store->i_descriptorHeapColor);
 			}
-			return false;
+			return abFalse;
 		}
 		store->i_cpuDescriptorHandleStartDepth = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeapDepth);
 	} else {
 		store->i_descriptorHeapDepth = abNull;
 		store->i_cpuDescriptorHandleStartDepth.ptr = 0u;
 	}
-	store->renderTargets = abMemory_Alloc(abGPUi_D3D_MemoryTag, (countColor + countDepth) * sizeof(abGPU_RTStore_RT), false);
-	return true;
+	store->renderTargets = abMemory_Alloc(abGPUi_D3D_MemoryTag, (countColor + countDepth) * sizeof(abGPU_RTStore_RT), abFalse);
+	return abTrue;
 }
 
-bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice) {
+abBool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice) {
 	abGPU_Image_Options imageOptions = image->options;
 	if (rtIndex >= store->countColor || !(imageOptions & abGPU_Image_Options_Renderable) ||
 			abGPU_Image_Format_IsDepth(image->format) || !abGPU_Image_HasSlice(image, slice)) {
-		return false;
+		return abFalse;
 	}
 	D3D12_RENDER_TARGET_VIEW_DESC desc;
 	desc.Format = abGPUi_D3D_Image_FormatToResource(image->format);
@@ -68,14 +68,14 @@ bool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	rt->image = image;
 	rt->slice = slice;
 	ID3D12Device_CreateRenderTargetView(abGPUi_D3D_Device, image->i_resource, &desc, abGPUi_D3D_RTStore_GetDescriptorHandleColor(store, rtIndex));
-	return true;
+	return abTrue;
 }
 
-bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, bool readOnly) {
+abBool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, abBool readOnly) {
 	abGPU_Image_Options imageOptions = image->options;
 	if (rtIndex >= store->countDepth || (imageOptions & abGPU_Image_Options_3D) || !(imageOptions & abGPU_Image_Options_Renderable) ||
 			!abGPU_Image_Format_IsDepth(image->format) || !abGPU_Image_HasSlice(image, slice)) {
-		return false;
+		return abFalse;
 	}
 	D3D12_DEPTH_STENCIL_VIEW_DESC desc;
 	desc.Format = abGPUi_D3D_Image_FormatToDepthStencil(image->format);
@@ -99,7 +99,7 @@ bool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_I
 	rt->image = image;
 	rt->slice = slice;
 	ID3D12Device_CreateDepthStencilView(abGPUi_D3D_Device, image->i_resource, &desc, abGPUi_D3D_RTStore_GetDescriptorHandleDepth(store, rtIndex));
-	return true;
+	return abTrue;
 }
 
 void abGPU_RTStore_Destroy(abGPU_RTStore * store) {
@@ -126,7 +126,7 @@ static void abGPUi_D3D_RTConfig_PrePostActionToBits(abGPU_RTConfig * config, abG
 	}
 }
 
-bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store) {
+abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store) {
 	config->colorCount = abMin(config->colorCount, abGPU_RT_Count);
 
 	config->i_preDiscardBits = config->i_preClearBits = config->i_postDiscardBits = 0u;
@@ -137,7 +137,7 @@ bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * stor
 		config->i_descriptorHandles[rtIndex].ptr = store->i_cpuDescriptorHandleStartColor.ptr +
 				rt->indexInStore * abGPUi_D3D_RTStore_DescriptorSizeColor;
 		config->i_resources[rtIndex] = storeRT->image->i_resource;
-		config->i_subresources[rtIndex] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
+		config->i_subresources[rtIndex] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, abFalse);
 		// Discarding 3D render targets is not supported because D3D12_RECT is 2D.
 		abGPU_RT_PrePostAction * action = &config->color[rtIndex].prePostAction;
 		if (storeRT->image->options & abGPU_Image_Options_3D) {
@@ -156,12 +156,12 @@ bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * stor
 		config->i_descriptorHandles[abGPU_RT_Count].ptr = store->i_cpuDescriptorHandleStartDepth.ptr +
 				config->depth.indexInStore * abGPUi_D3D_RTStore_DescriptorSizeDepth;
 		config->i_resources[abGPU_RT_Count] = storeRT->image->i_resource;
-		config->i_subresources[abGPU_RT_Count] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, false);
+		config->i_subresources[abGPU_RT_Count] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, abFalse);
 		abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->depth.prePostAction, abGPU_RT_Count);
 		if (abGPU_Image_Format_IsDepthStencil(storeRT->image->format)) {
 			config->i_descriptorHandles[abGPU_RT_Count + 1] = config->i_descriptorHandles[abGPU_RT_Count];
 			config->i_resources[abGPU_RT_Count + 1] = config->i_resources[abGPU_RT_Count];
-			config->i_subresources[abGPU_RT_Count + 1] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, true);
+			config->i_subresources[abGPU_RT_Count + 1] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, abTrue);
 			abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->stencilPrePostAction, abGPU_RT_Count + 1);
 		} else {
 			// Do no action (= do load/store) on stencil if there's no stencil.
@@ -169,7 +169,7 @@ bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * stor
 		}
 	}
 
-	return true;
+	return abTrue;
 }
 
 #endif

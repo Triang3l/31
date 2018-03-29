@@ -3,19 +3,19 @@
 
 unsigned int abGPUi_D3D_SamplerStore_DescriptorSize;
 
-bool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, unsigned int samplerCount) {
+abBool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, unsigned int samplerCount) {
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
 		.NumDescriptors = samplerCount,
 		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 	};
 	if (FAILED(ID3D12Device_CreateDescriptorHeap(abGPUi_D3D_Device, &desc, &IID_ID3D12DescriptorHeap, &store->i_descriptorHeap))) {
-		return false;
+		return abFalse;
 	}
 	store->samplerCount = samplerCount;
 	store->i_cpuDescriptorHandleStart = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
 	store->i_gpuDescriptorHandleStart = ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
-	return true;
+	return abTrue;
 }
 
 void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore * store, unsigned int samplerIndex, abGPU_Sampler sampler) {

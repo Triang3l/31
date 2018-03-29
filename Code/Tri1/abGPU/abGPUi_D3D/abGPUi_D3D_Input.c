@@ -1,7 +1,7 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
 
-bool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const * staticSamplers) {
+abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const * staticSamplers) {
 	config->inputCount = abMin(config->inputCount, abGPU_InputConfig_MaxInputs);
 	D3D12_ROOT_PARAMETER rootParameters[abGPU_InputConfig_MaxInputs];
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[abGPU_InputConfig_MaxInputs];
@@ -85,7 +85,7 @@ bool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const 
 			}
 			if (input->parameters.samplerHandle.staticIndex != abGPU_Input_SamplerDynamicOnly) {
 				if (staticSamplerCount + input->parameters.samplerHandle.count > abArrayLength(staticSamplerDescs)) {
-					return false;
+					return abFalse;
 				}
 				for (unsigned int staticSamplerIndex = 0u; staticSamplerIndex < input->parameters.samplerHandle.count; ++staticSamplerIndex) {
 					D3D12_STATIC_SAMPLER_DESC * staticSamplerDesc = &staticSamplerDescs[staticSamplerCount++];
@@ -106,7 +106,7 @@ bool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const 
 			descriptorRange->BaseShaderRegister = input->parameters.samplerHandle.samplerFirstIndex;
 			break;
 		default:
-			return false;
+			return abFalse;
 		}
 		config->i_rootParameters[inputIndex] = rootParameterCount++;
 		nextInput:
@@ -120,10 +120,10 @@ bool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const 
 	};
 	ID3D10Blob * blob;
 	if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, abNull))) {
-		return false;
+		return abFalse;
 	}
-	bool succeeded = (SUCCEEDED(ID3D12Device_CreateRootSignature(abGPUi_D3D_Device, 0u, ID3D10Blob_GetBufferPointer(blob),
-			ID3D10Blob_GetBufferSize(blob), &IID_ID3D12RootSignature, &config->i_rootSignature)) ? true : false);
+	abBool succeeded = (SUCCEEDED(ID3D12Device_CreateRootSignature(abGPUi_D3D_Device, 0u, ID3D10Blob_GetBufferPointer(blob),
+			ID3D10Blob_GetBufferSize(blob), &IID_ID3D12RootSignature, &config->i_rootSignature)) ? abTrue : abFalse);
 	ID3D10Blob_Release(blob);
 	return succeeded;
 }
