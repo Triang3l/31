@@ -367,9 +367,9 @@ bool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * stor
 void abGPU_RTConfig_Unregister(abGPU_RTConfig * config);
 #endif
 
-/****************
- * Shader stages
- ****************/
+/**********
+ * Shaders
+ **********/
 
 typedef enum abGPU_ShaderStage {
 	abGPU_ShaderStage_Vertex,
@@ -383,6 +383,16 @@ typedef enum abGPU_ShaderStageBits {
 	abGPU_ShaderStageBits_Pixel = 1u << abGPU_ShaderStage_Pixel,
 	abGPU_ShaderStageBits_Compute = 1u << abGPU_ShaderStage_Compute
 } abGPU_ShaderStageBits;
+
+typedef struct abGPU_ShaderCode {
+	#if defined(abBuild_GPUi_D3D)
+	ID3D10Blob * i_blob;
+	#endif
+} abGPU_ShaderCode;
+
+// Creates a shader library (in D3D, with a single entry point). Doesn't hold a reference to the source.
+bool abGPU_ShaderCode_Init(abGPU_ShaderCode * code, void const * source, size_t sourceLength);
+void abGPU_ShaderCode_Destroy(abGPU_ShaderCode * code);
 
 /***********
  * Samplers
