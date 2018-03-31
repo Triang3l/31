@@ -2,7 +2,9 @@
 #include "abGPUi_D3D.h"
 
 abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const * staticSamplers) {
-	config->inputCount = abMin(config->inputCount, abGPU_InputConfig_MaxInputs);
+	if (config->inputCount > abGPU_InputConfig_MaxInputs || config->vertexAttributeCount > abGPU_VertexData_MaxAttributes) {
+		return abFalse;
+	}
 
 	D3D12_ROOT_PARAMETER rootParameters[abGPU_InputConfig_MaxInputs + 2], * rootParameter;
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[abArrayLength(rootParameters)];
@@ -136,12 +138,56 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler cons
 		nextInput:
 	}
 
+	unsigned int attributeTypesUsed = 0u, vertexBufferHighestIndex = 0u;
+	for (unsigned int attributeIndex = 0u; attributeIndex < config->vertexAttributeCount; ++attributeIndex) {
+		abGPU_VertexData_Attribute const * attribute = &config->vertexAttributes[attributeIndex];
+		if (attribute->type >= abGPU_VertexData_MaxAttributes || attribute->bufferIndex >= abGPU_VertexData_MaxAttributes ||
+				(attributeTypesUsed & (1u << attribute->type))) {
+			return abFalse;
+		}
+		attributeTypesUsed |= 1u << attribute->type; // Don't allow more than 1 attribute of the same type.
+		vertexBufferHighestIndex = abMax(attribute->bufferIndex, vertexBufferHighestIndex);
+		D3D12_INPUT_ELEMENT_DESC * elementDesc = &config->i_vertexElements[attributeIndex];
+		elementDesc->SemanticIndex = 0u;
+		switch (attribute->type) {
+		case abGPU_VertexData_Type_Position: elementDesc->SemanticName = "POSITION"; break;
+		case abGPU_VertexData_Type_Normal: elementDesc->SemanticName = "NORMAL"; break;
+		case abGPU_VertexData_Type_Tangent: elementDesc->SemanticName = "TANGENT"; break;
+		case abGPU_VertexData_Type_BlendIndices: elementDesc->SemanticName = "BLENDINDICES"; break;
+		case abGPU_VertexData_Type_BlendWeights: elementDesc->SemanticName = "BLENDWEIGHTS"; break;
+		case abGPU_VertexData_Type_Color: elementDesc->SemanticName = "COLOR"; break;
+		case abGPU_VertexData_Type_TexCoord: elementDesc->SemanticName = "TEXCOORD"; break;
+		case abGPU_VertexData_Type_TexCoordDetail: elementDesc->SemanticName = "TEXCOORD"; elementDesc->SemanticIndex = 1u; break;
+		default: elementDesc->SemanticName = "CUSTOM"; elementDesc->SemanticIndex = attribute->type - abGPU_VertexData_Type_Custom;
+		}
+		switch (attribute->format) {
+		case abGPU_VertexData_Format_UInt8x4: elementDesc->Format = DXGI_FORMAT_R8G8B8A8_UINT; break;
+		case abGPU_VertexData_Format_UNorm8x4: elementDesc->Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+		case abGPU_VertexData_Format_SNorm8x4: elementDesc->Format = DXGI_FORMAT_R8G8B8A8_SNORM; break;
+		case abGPU_VertexData_Format_SNorm16x2: elementDesc->Format = DXGI_FORMAT_R16G16_SNORM; break;
+		case abGPU_VertexData_Format_Float16x2: elementDesc->Format = DXGI_FORMAT_R16G16_FLOAT; break;
+		case abGPU_VertexData_Format_SNorm16x4: elementDesc->Format = DXGI_FORMAT_R16G16B16A16_SNORM; break;
+		case abGPU_VertexData_Format_Float16x4: elementDesc->Format = DXGI_FORMAT_R16G16B16A16_FLOAT; break;
+		case abGPU_VertexData_Format_Float32x1: elementDesc->Format = DXGI_FORMAT_R32_FLOAT; break;
+		case abGPU_VertexData_Format_Float32x2: elementDesc->Format = DXGI_FORMAT_R32G32_FLOAT; break;
+		case abGPU_VertexData_Format_Float32x3: elementDesc->Format = DXGI_FORMAT_R32G32B32_FLOAT; break;
+		case abGPU_VertexData_Format_Float32x4: elementDesc->Format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+		default: return abFalse;
+		}
+		elementDesc->InputSlot = attribute->bufferIndex;
+		elementDesc->AlignedByteOffset = attribute->offset;
+		elementDesc->InputSlotClass = (attribute->instanceRate != 0u ?
+			D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA : D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA);
+		elementDesc->InstanceDataStepRate = attribute->instanceRate;
+	}
+	config->i_vertexBufferCount = (config->vertexAttributeCount != 0u ? vertexBufferHighestIndex + 1u : 0u);
+
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {
 		.NumParameters = rootParameterCount,
 		.pParameters = rootParameters,
 		.NumStaticSamplers = staticSamplerCount,
 		.pStaticSamplers = staticSamplerDescs,
-		.Flags = (config->noVertexLayout ? D3D12_ROOT_SIGNATURE_FLAG_NONE : D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
+		.Flags = (config->vertexAttributeCount != 0u ? D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT : D3D12_ROOT_SIGNATURE_FLAG_NONE)
 	};
 	ID3D10Blob * blob;
 	if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, abNull))) {

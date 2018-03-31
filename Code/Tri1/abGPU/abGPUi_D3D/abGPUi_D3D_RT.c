@@ -127,7 +127,9 @@ static void abGPUi_D3D_RTConfig_PrePostActionToBits(abGPU_RTConfig * config, abG
 }
 
 abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store) {
-	config->colorCount = abMin(config->colorCount, abGPU_RT_Count);
+	if (config->colorCount > abGPU_RT_Count) {
+		return abFalse;
+	}
 
 	config->i_preDiscardBits = config->i_preClearBits = config->i_postDiscardBits = 0u;
 

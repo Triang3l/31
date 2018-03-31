@@ -396,6 +396,50 @@ abBool abGPU_ShaderCode_Init(abGPU_ShaderCode * code, void const * source, size_
 void abGPU_ShaderCode_Destroy(abGPU_ShaderCode * code);
 
 /***********
+ * Vertices
+ ***********/
+
+#define abGPU_VertexData_MaxAttributes 16u
+
+typedef enum abGPU_VertexData_Type {
+	abGPU_VertexData_Type_Position, // Recommended Float32x3.
+	abGPU_VertexData_Type_Normal, // SNorm16x4.
+	abGPU_VertexData_Type_Tangent, // SNorm16x4. S tangent in XYZ and T tangent (cross) sign in W.
+	abGPU_VertexData_Type_BlendIndices, // UInt8x4.
+	abGPU_VertexData_Type_BlendWeights, // UNorm8x4.
+	abGPU_VertexData_Type_Color, // UNorm8x4.
+	abGPU_VertexData_Type_TexCoord, // Float32x2 generally.
+	abGPU_VertexData_Type_TexCoordDetail, // Float32x2 or Float32x3 generally.
+	abGPU_VertexData_Type_Custom,
+		abGPU_VertexData_Type_CustomCount = abGPU_VertexData_MaxAttributes - abGPU_VertexData_Type_Custom
+} abGPU_VertexData_Type;
+
+typedef enum abGPU_VertexData_Format {
+	abGPU_VertexData_Format_UInt8x4,
+	abGPU_VertexData_Format_UNorm8x4,
+	abGPU_VertexData_Format_SNorm8x4,
+
+	abGPU_VertexData_Format_SNorm16x2,
+	abGPU_VertexData_Format_Float16x2,
+	abGPU_VertexData_Format_SNorm16x4,
+	abGPU_VertexData_Format_Float16x4,
+
+	abGPU_VertexData_Format_Float32x1,
+	abGPU_VertexData_Format_Float32x2,
+	abGPU_VertexData_Format_Float32x3,
+	abGPU_VertexData_Format_Float32x4
+} abGPU_VertexData_Format;
+
+typedef struct abGPU_VertexData_Attribute {
+	uint8_t type; // abGPU_VertexData_Type - only one attribute per type allowed.
+	uint8_t format; // abGPU_VertexData_Format.
+	uint8_t bufferIndex;
+	uint8_t offset;
+	uint8_t stride;
+	uint8_t instanceRate; // 0 for per-vertex, 1 for per-instance, 2 for loading every 2 instances...
+} abGPU_VertexData_Attribute;
+
+/***********
  * Samplers
  ***********/
 
@@ -555,12 +599,15 @@ typedef struct abGPU_InputConfig {
 	abBool uniformUseBuffer;
 	uint8_t uniformBufferGlobalIndex;
 
-	abBool noVertexLayout; // Set this to true for compute, and also, as an optimization, if vertices doesn't have attributes.
+	unsigned int vertexAttributeCount;
+	abGPU_VertexData_Attribute vertexAttributes[abGPU_VertexData_MaxAttributes];
 
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12RootSignature * i_rootSignature;
 	uint8_t i_rootParameters[abGPU_InputConfig_MaxInputs]; // UINT8_MAX means it's skipped.
 	// 32-bit constants and uniform buffer use 0 and 1 root parameter indices (both 0 if there's only one of them).
+	D3D12_INPUT_ELEMENT_DESC i_vertexElements[abGPU_VertexData_MaxAttributes];
+	unsigned int i_vertexBufferCount;
 	#endif
 } abGPU_InputConfig;
 
