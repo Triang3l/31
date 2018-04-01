@@ -117,6 +117,8 @@ abForceInline abGPU_Image_Options abGPU_Image_Options_Normalize(abGPU_Image_Opti
 }
 
 typedef enum abGPU_Image_Format {
+	abGPU_Image_Format_Invalid, // Zero.
+
 		abGPU_Image_Format_RawLDRStart,
 	abGPU_Image_Format_R8G8B8A8 = abGPU_Image_Format_RawLDRStart,
 	abGPU_Image_Format_R8G8B8A8_sRGB,
@@ -618,10 +620,47 @@ void abGPU_InputConfig_Unregister(abGPU_InputConfig * config);
  * Graphics configurations
  **************************/
 
+typedef unsigned int abGPU_DrawConfig_Options;
+enum {
+	abGPU_DrawConfig_Options_16BitVertexIndices = 1u,
+	abGPU_DrawConfig_Options_FrontCW = abGPU_DrawConfig_Options_16BitVertexIndices << 1u,
+	abGPU_DrawConfig_Options_CullBack = abGPU_DrawConfig_Options_FrontCW << 1u, // Either Back or Front!
+	abGPU_DrawConfig_Options_CullFront = abGPU_DrawConfig_Options_CullBack << 1u,
+	abGPU_DrawConfig_Options_Wireframe = abGPU_DrawConfig_Options_CullFront << 1u,
+	abGPU_DrawConfig_Options_DepthClip = abGPU_DrawConfig_Options_Wireframe << 1u,
+	abGPU_DrawConfig_Options_DepthNoTest = abGPU_DrawConfig_Options_DepthClip << 1u,
+	abGPU_DrawConfig_Options_DepthNoWrite = abGPU_DrawConfig_Options_DepthNoTest << 1u,
+	abGPU_DrawConfig_Options_Stencil = abGPU_DrawConfig_Options_DepthNoWrite << 1u,
+	abGPU_DrawConfig_Options_BlendSeparate = abGPU_DrawConfig_Options_Stencil << 1u // Separate blend config for each RT, not RT 0's one.
+};
+
 typedef struct abGPU_DrawConfig_Shader {
 	abGPU_ShaderCode * code; // Null to skip this stage.
 	char const * entryPoint;
 } abGPU_DrawConfig_Shader;
+
+typedef enum abGPU_DrawConfig_TopologyClass {
+	abGPU_DrawConfig_TopologyClass_Triangle, // Zero.
+	abGPU_DrawConfig_TopologyClass_Point,
+	abGPU_DrawConfig_TopologyClass_Line
+} abGPU_DrawConfig_TopologyClass;
+
+typedef enum abGPU_DrawConfig_StencilOperation {
+	abGPU_DrawConfig_StencilOperation_Keep,
+	abGPU_DrawConfig_StencilOperation_Zero,
+	abGPU_DrawConfig_StencilOperation_Replace,
+	abGPU_DrawConfig_StencilOperation_IncrementClamp,
+	abGPU_DrawConfig_StencilOperation_DecrementClamp,
+	abGPU_DrawConfig_StencilOperation_Invert,
+	abGPU_DrawConfig_StencilOperation_IncrementWrap,
+	abGPU_DrawConfig_StencilOperation_DecrementWrap,
+		abGPU_DrawConfig_StencilOperation_Count
+} abGPU_DrawConfig_StencilOperation;
+
+typedef struct abGPU_DrawConfig_StencilSide {
+	abGPU_DrawConfig_StencilOperation pass, passDepthFail, fail;
+	abGPU_Image_Comparison comparison;
+} abGPU_DrawConfig_StencilSide;
 
 typedef enum abGPU_DrawConfig_BlendFactor {
 	abGPU_DrawConfig_BlendFactor_Zero,
@@ -640,7 +679,8 @@ typedef enum abGPU_DrawConfig_BlendFactor {
 	abGPU_DrawConfig_BlendFactor_Src1Color, // Fragment shader output 1.
 	abGPU_DrawConfig_BlendFactor_Src1ColorRev,
 	abGPU_DrawConfig_BlendFactor_Src1Alpha,
-	abGPU_DrawConfig_BlendFactor_Src1AlphaRev
+	abGPU_DrawConfig_BlendFactor_Src1AlphaRev,
+		abGPU_DrawConfig_BlendFactor_Count
 } abGPU_DrawConfig_BlendFactor;
 
 enum {
@@ -657,7 +697,8 @@ typedef enum abGPU_DrawConfig_BlendFactor {
 	abGPU_DrawConfig_BlendOperation_Subtract,
 	abGPU_DrawConfig_BlendOperation_RevSubtract,
 	abGPU_DrawConfig_BlendOperation_Min,
-	abGPU_DrawConfig_BlendOperation_Max
+	abGPU_DrawConfig_BlendOperation_Max,
+		abGPU_DrawConfig_BlendOperation_Count
 } abGPU_DrawConfig_BlendOperation;
 
 typedef enum abGPU_DrawConfig_BitOperation {
@@ -676,6 +717,7 @@ typedef enum abGPU_DrawConfig_BitOperation {
 	abGPU_DrawConfig_BitOperation_AndInv, // d & ~s
 	abGPU_DrawConfig_BitOperation_OrRev, // ~d | s
 	abGPU_DrawConfig_BitOperation_OrInv, // d | ~s
+		abGPU_DrawConfig_BitOperation_Count
 } abGPU_DrawConfig_BitOperation;
 #if defined(abBuild_GPUi_D3D)
 #define abGPU_DrawConfig_BitOperationsSupported 1u
@@ -692,12 +734,22 @@ typedef struct abGPU_DrawConfig_RT {
 } abGPU_DrawConfig_RT;
 
 typedef struct abGPU_DrawConfig {
+	abGPU_DrawConfig_Options options;
+
 	abGPU_DrawConfig_Shader vertexShader, pixelShader;
 
 	abGPU_InputConfig * inputConfig;
 
+	abGPU_DrawConfig_TopologyClass topologyClass;
+
+	abGPU_Image_Format depthFormat; // If not a depth format (or Invalid, which is 0), depth test/write is disabled, same for stencil.
+	int depthBias;
+	float depthSlopeBias;
+	abGPU_Image_Comparison depthComparison;
+	uint8_t stencilReadMask, stencilWriteMask;
+	abGPU_DrawConfig_StencilSide stencilFront, stencilBack;
+
 	abGPU_DrawConfig_RT renderTargets[abGPU_RT_Count];
-	abBool renderTargetSeparateBlend; // If false (default), all RTs will use blending parameters of RT 0.
 
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12PipelineState * i_pipelineState;

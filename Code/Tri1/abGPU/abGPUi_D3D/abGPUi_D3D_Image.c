@@ -2,6 +2,7 @@
 #include "abGPUi_D3D.h"
 
 static DXGI_FORMAT abGPUi_D3D_Image_FormatToResourceMap[abGPU_Image_Format_Count] = {
+	[abGPU_Image_Format_Invalid] = DXGI_FORMAT_UNKNOWN, // 0 to 0.
 	[abGPU_Image_Format_R8G8B8A8] = DXGI_FORMAT_R8G8B8A8_UNORM,
 	[abGPU_Image_Format_R8G8B8A8_sRGB] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
 	[abGPU_Image_Format_R8G8B8A8_Signed] = DXGI_FORMAT_R8G8B8A8_SNORM,
@@ -17,7 +18,6 @@ static DXGI_FORMAT abGPUi_D3D_Image_FormatToResourceMap[abGPU_Image_Format_Count
 	[abGPU_Image_Format_3Dc_XY_Signed] = DXGI_FORMAT_BC5_SNORM,
 	[abGPU_Image_Format_D32] = DXGI_FORMAT_R32_TYPELESS,
 	[abGPU_Image_Format_D24S8] = DXGI_FORMAT_R24G8_TYPELESS
-	// 0 is DXGI_FORMAT_UNKNOWN.
 };
 
 DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format) {
