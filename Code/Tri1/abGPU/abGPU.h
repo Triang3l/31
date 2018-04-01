@@ -614,6 +614,99 @@ typedef struct abGPU_InputConfig {
 abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, /* optional */ abGPU_Sampler const * staticSamplers);
 void abGPU_InputConfig_Unregister(abGPU_InputConfig * config);
 
+/**************************
+ * Graphics configurations
+ **************************/
+
+typedef struct abGPU_DrawConfig_Shader {
+	abGPU_ShaderCode * code; // Null to skip this stage.
+	char const * entryPoint;
+} abGPU_DrawConfig_Shader;
+
+typedef enum abGPU_DrawConfig_BlendFactor {
+	abGPU_DrawConfig_BlendFactor_Zero,
+	abGPU_DrawConfig_BlendFactor_One,
+	abGPU_DrawConfig_BlendFactor_SrcColor,
+	abGPU_DrawConfig_BlendFactor_SrcColorRev, // 1 - source color.
+	abGPU_DrawConfig_BlendFactor_SrcAlpha,
+	abGPU_DrawConfig_BlendFactor_SrcAlphaRev,
+	abGPU_DrawConfig_BlendFactor_SrcAlphaSat,
+	abGPU_DrawConfig_BlendFactor_DestColor,
+	abGPU_DrawConfig_BlendFactor_DestColorRev,
+	abGPU_DrawConfig_BlendFactor_DestAlpha,
+	abGPU_DrawConfig_BlendFactor_DestAlphaRev,
+	abGPU_DrawConfig_BlendFactor_Constant, // Set while drawing.
+	abGPU_DrawConfig_BlendFactor_ConstantRev,
+	abGPU_DrawConfig_BlendFactor_Src1Color, // Fragment shader output 1.
+	abGPU_DrawConfig_BlendFactor_Src1ColorRev,
+	abGPU_DrawConfig_BlendFactor_Src1Alpha,
+	abGPU_DrawConfig_BlendFactor_Src1AlphaRev
+} abGPU_DrawConfig_BlendFactor;
+
+enum {
+	abGPU_DrawConfig_DisableR = 1u << 0u,
+	abGPU_DrawConfig_DisableG = 1u << 1u,
+	abGPU_DrawConfig_DisableB = 1u << 2u,
+	abGPU_DrawConfig_DisableA = 1u << 3u,
+		abGPU_DrawConfig_DisableRGB = 7u,
+		abGPU_DrawConfig_DisableRGBA = 15u
+};
+
+typedef enum abGPU_DrawConfig_BlendFactor {
+	abGPU_DrawConfig_BlendOperation_Add,
+	abGPU_DrawConfig_BlendOperation_Subtract,
+	abGPU_DrawConfig_BlendOperation_RevSubtract,
+	abGPU_DrawConfig_BlendOperation_Min,
+	abGPU_DrawConfig_BlendOperation_Max
+} abGPU_DrawConfig_BlendOperation;
+
+typedef enum abGPU_DrawConfig_BitOperation {
+	abGPU_DrawConfig_BitOperation_Copy, // s - zero, means bit operation is disabled.
+	abGPU_DrawConfig_BitOperation_CopyInv, // ~s
+	abGPU_DrawConfig_BitOperation_SetOne, // 1
+	abGPU_DrawConfig_BitOperation_SetZero, // 0
+	abGPU_DrawConfig_BitOperation_Reverse, // ~d
+	abGPU_DrawConfig_BitOperation_And, // d & s
+	abGPU_DrawConfig_BitOperation_NotAnd, // ~(d & s)
+	abGPU_DrawConfig_BitOperation_Or, // d | s
+	abGPU_DrawConfig_BitOperation_NotOr, // ~(d | s)
+	abGPU_DrawConfig_BitOperation_Xor, // d ^ s
+	abGPU_DrawConfig_BitOperation_Equal, // ~(d ^ s)
+	abGPU_DrawConfig_BitOperation_AndRev, // ~d & s
+	abGPU_DrawConfig_BitOperation_AndInv, // d & ~s
+	abGPU_DrawConfig_BitOperation_OrRev, // ~d | s
+	abGPU_DrawConfig_BitOperation_OrInv, // d | ~s
+} abGPU_DrawConfig_BitOperation;
+#if defined(abBuild_GPUi_D3D)
+#define abGPU_DrawConfig_BitOperationsSupported 1u
+#endif
+
+typedef struct abGPU_DrawConfig_RT {
+	abGPU_Image_Format format;
+	abBool blend;
+	uint8_t blendFactorSrcColor, blendFactorSrcAlpha; // abGPU_DrawConfig_BlendFactor
+	uint8_t blendFactorDestColor, blendFactorDestAlpha; // abGPU_DrawConfig_BlendFactor
+	uint8_t blendOperation; // abGPU_DrawConfig_BlendOperation
+	uint8_t bitOperation; // abGPU_DrawConfig_BitOperation
+	uint8_t disableComponents;
+} abGPU_DrawConfig_RT;
+
+typedef struct abGPU_DrawConfig {
+	abGPU_DrawConfig_Shader vertexShader, pixelShader;
+
+	abGPU_InputConfig * inputConfig;
+
+	abGPU_DrawConfig_RT renderTargets[abGPU_RT_Count];
+	abBool renderTargetSeparateBlend; // If false (default), all RTs will use blending parameters of RT 0.
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12PipelineState * i_pipelineState;
+	#endif
+} abGPU_DrawConfig;
+
+abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config); // May take a significantly long time!
+void abGPU_DrawConfig_Unregister(abGPU_DrawConfig * config);
+
 /****************
  * Command lists
  ****************/

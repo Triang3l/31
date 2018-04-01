@@ -128,7 +128,7 @@
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Input.c">
       <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
     </ClCompile>
-    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_State.c">
+    <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Config.c">
       <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
     </ClCompile>
   </ItemGroup>
