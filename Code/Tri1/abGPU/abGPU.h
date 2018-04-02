@@ -635,7 +635,7 @@ enum {
 };
 
 typedef struct abGPU_DrawConfig_Shader {
-	abGPU_ShaderCode * code; // Null to skip this stage.
+	abGPU_ShaderCode const * code; // Null to skip this stage.
 	char const * entryPoint;
 } abGPU_DrawConfig_Shader;
 
@@ -692,8 +692,8 @@ enum {
 		abGPU_DrawConfig_DisableRGBA = 15u
 };
 
-typedef enum abGPU_DrawConfig_BlendFactor {
-	abGPU_DrawConfig_BlendOperation_Add,
+typedef enum abGPU_DrawConfig_BlendOperation {
+	abGPU_DrawConfig_BlendOperation_Add, // Zero.
 	abGPU_DrawConfig_BlendOperation_Subtract,
 	abGPU_DrawConfig_BlendOperation_RevSubtract,
 	abGPU_DrawConfig_BlendOperation_Min,
@@ -704,8 +704,8 @@ typedef enum abGPU_DrawConfig_BlendFactor {
 typedef enum abGPU_DrawConfig_BitOperation {
 	abGPU_DrawConfig_BitOperation_Copy, // s - zero, means bit operation is disabled.
 	abGPU_DrawConfig_BitOperation_CopyInv, // ~s
-	abGPU_DrawConfig_BitOperation_SetOne, // 1
 	abGPU_DrawConfig_BitOperation_SetZero, // 0
+	abGPU_DrawConfig_BitOperation_SetOne, // 1
 	abGPU_DrawConfig_BitOperation_Reverse, // ~d
 	abGPU_DrawConfig_BitOperation_And, // d & s
 	abGPU_DrawConfig_BitOperation_NotAnd, // ~(d & s)
