@@ -625,13 +625,13 @@ enum {
 	abGPU_DrawConfig_Options_16BitVertexIndices = 1u,
 	abGPU_DrawConfig_Options_FrontCW = abGPU_DrawConfig_Options_16BitVertexIndices << 1u,
 	abGPU_DrawConfig_Options_CullBack = abGPU_DrawConfig_Options_FrontCW << 1u, // Either Back or Front!
-	abGPU_DrawConfig_Options_CullFront = abGPU_DrawConfig_Options_CullBack << 1u,
+	abGPU_DrawConfig_Options_CullFront = abGPU_DrawConfig_Options_CullBack << 1u, // Front has a higher priority because it's more special.
 	abGPU_DrawConfig_Options_Wireframe = abGPU_DrawConfig_Options_CullFront << 1u,
 	abGPU_DrawConfig_Options_DepthClip = abGPU_DrawConfig_Options_Wireframe << 1u,
 	abGPU_DrawConfig_Options_DepthNoTest = abGPU_DrawConfig_Options_DepthClip << 1u,
-	abGPU_DrawConfig_Options_DepthNoWrite = abGPU_DrawConfig_Options_DepthNoTest << 1u,
+	abGPU_DrawConfig_Options_DepthNoWrite = abGPU_DrawConfig_Options_DepthNoTest << 1u, // No depth writing with depth testing disabled either.
 	abGPU_DrawConfig_Options_Stencil = abGPU_DrawConfig_Options_DepthNoWrite << 1u,
-	abGPU_DrawConfig_Options_BlendSeparate = abGPU_DrawConfig_Options_Stencil << 1u // Separate blend config for each RT, not RT 0's one.
+	abGPU_DrawConfig_Options_BlendAndMaskSeparate = abGPU_DrawConfig_Options_Stencil << 1u // Separate blend config for each RT, not RT 0's one.
 };
 
 typedef struct abGPU_DrawConfig_Shader {
@@ -728,9 +728,9 @@ typedef struct abGPU_DrawConfig_RT {
 	abBool blend;
 	uint8_t blendFactorSrcColor, blendFactorSrcAlpha; // abGPU_DrawConfig_BlendFactor
 	uint8_t blendFactorDestColor, blendFactorDestAlpha; // abGPU_DrawConfig_BlendFactor
-	uint8_t blendOperation; // abGPU_DrawConfig_BlendOperation
+	uint8_t blendOperationColor, blendOperationAlpha; // abGPU_DrawConfig_BlendOperation
 	uint8_t bitOperation; // abGPU_DrawConfig_BitOperation
-	uint8_t disableComponents;
+	uint8_t disabledComponentMask;
 } abGPU_DrawConfig_RT;
 
 typedef struct abGPU_DrawConfig {
@@ -744,12 +744,12 @@ typedef struct abGPU_DrawConfig {
 
 	abGPU_Image_Format depthFormat; // If not a depth format (or Invalid, which is 0), depth test/write is disabled, same for stencil.
 	int depthBias;
-	float depthSlopeBias;
+	float depthBiasSlope;
 	abGPU_Image_Comparison depthComparison;
 	uint8_t stencilReadMask, stencilWriteMask;
 	abGPU_DrawConfig_StencilSide stencilFront, stencilBack;
 
-	abGPU_DrawConfig_RT renderTargets[abGPU_RT_Count];
+	abGPU_DrawConfig_RT renderTargets[abGPU_RT_Count]; // Terminated with an invalid format RT.
 
 	#if defined(abBuild_GPUi_D3D)
 	ID3D12PipelineState * i_pipelineState;
