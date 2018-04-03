@@ -133,7 +133,7 @@ abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * st
 
 	config->i_preDiscardBits = config->i_preClearBits = config->i_postDiscardBits = 0u;
 
-	for (unsigned int rtIndex = 0; rtIndex < config->colorCount; ++rtIndex) {
+	for (unsigned int rtIndex = 0u; rtIndex < config->colorCount; ++rtIndex) {
 		abGPU_RT * rt = &config->color[rtIndex];
 		abGPU_RTStore_RT const * storeRT = &store->renderTargets[rt->indexInStore];
 		config->i_descriptorHandles[rtIndex].ptr = store->i_cpuDescriptorHandleStartColor.ptr +
@@ -174,6 +174,56 @@ abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * st
 	return abTrue;
 }
 
+static abBool abGPUi_D3D_DisplayChain_InitImages(abGPU_DisplayChain * chain, abGPU_Image_Format format) {
+	for (unsigned int imageIndex = 0u; imageIndex < chain->imageCount; ++imageIndex) {
+		ID3D12Resource * resource;
+		if (FAILED(IDXGISwapChain3_GetBuffer(chain->i_swapChain, imageIndex, &IID_ID3D12Resource, &resource))) {
+			chain->imageCount = imageIndex;
+			break;
+		}
+		abGPUi_D3D_Image_InitForSwapChainBuffer(&chain->images[imageIndex], resource, format);
+	}
+	return (chain->imageCount != 0u ? abTrue : abFalse);
+}
+
+#if defined(abPlatform_OS_WindowsDesktop)
+abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, HWND hWnd, unsigned int imageCount,
+		abGPU_Image_Format format, unsigned int width, unsigned int height) {
+	imageCount = abClamp(imageCount, 1u, abGPU_DisplayChain_MaxImages);
+	DXGI_SWAP_CHAIN_DESC1 desc = {
+		.Width = width,
+		.Height = height,
+		.Format = abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format_ToLinear(format)),
+		.Stereo = FALSE,
+		.SampleDesc = { .Count = 1u, .Quality = 0u },
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = imageCount,
+		.Scaling = DXGI_SCALING_STRETCH,
+		.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+		.AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+		.Flags = 0u
+	};
+	if (desc.Format == DXGI_FORMAT_UNKNOWN) {
+		return abFalse; // Shouldn't happen.
+	}
+	IDXGISwapChain1 * swapChain1;
+	if (FAILED(IDXGIFactory2_CreateSwapChainForHwnd(abGPUi_D3D_DXGIFactory,
+			abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics], hWnd, &desc, abNull, abNull, &swapChain1))) {
+		return abFalse;
+	}
+	if (FAILED(IDXGISwapChain1_QueryInterface(swapChain1, &IID_IDXGISwapChain3, &chain->i_swapChain))) {
+		IDXGISwapChain1_Release(swapChain1);
+		return abFalse;
+	}
+	chain->imageCount = imageCount;
+	if (!abGPUi_D3D_DisplayChain_InitImages(chain, format)) {
+		IDXGISwapChain3_Release(chain->i_swapChain);
+		return abFalse;
+	}
+	return abTrue;
+}
+#endif
+
 unsigned int abGPU_DisplayChain_GetCurrentImageIndex(abGPU_DisplayChain * chain) {
 	return IDXGISwapChain3_GetCurrentBackBufferIndex(chain->i_swapChain);
 }
@@ -183,7 +233,7 @@ void abGPU_DisplayChain_Display(abGPU_DisplayChain * chain, abBool verticalSync)
 }
 
 void abGPU_DisplayChain_Shutdown(abGPU_DisplayChain * chain) {
-	for (unsigned int imageIndex = 0; imageIndex < chain->imageCount; ++imageIndex) {
+	for (unsigned int imageIndex = 0u; imageIndex < chain->imageCount; ++imageIndex) {
 		abGPU_Image_Destroy(&chain->images[imageIndex]);
 	}
 	IDXGISwapChain3_Release(chain->i_swapChain);

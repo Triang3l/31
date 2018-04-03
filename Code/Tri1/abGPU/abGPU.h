@@ -340,7 +340,7 @@ typedef struct abGPU_DisplayChain {
 } abGPU_DisplayChain;
 
 #if defined(abPlatform_OS_WindowsDesktop)
-abBool abGPU_DisplayChain_InitForHWnd(abGPU_DisplayChain * chain, HWND hWnd,
+abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, HWND hWnd,
 		unsigned int imageCount, abGPU_Image_Format format, unsigned int width, unsigned int height);
 #endif
 unsigned int abGPU_DisplayChain_GetCurrentImageIndex(abGPU_DisplayChain * chain);

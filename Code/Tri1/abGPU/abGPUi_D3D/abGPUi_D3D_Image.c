@@ -210,6 +210,24 @@ abBool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
 			optimizedClearValuePointer, &IID_ID3D12Resource, &image->i_resource)) ? abTrue : abFalse;
 }
 
+void abGPUi_D3D_Image_InitForSwapChainBuffer(abGPU_Image * image, ID3D12Resource * resource, abGPU_Image_Format format) {
+	D3D12_RESOURCE_DESC desc = ID3D12Resource_GetDesc(resource);
+	// Zeros shouldn't really occur, but why not.
+	desc.Width = abMax(desc.Width, 1u);
+	desc.Height = abMax(desc.Height, 1u);
+	desc.MipLevels = abMax(desc.MipLevels, 1u);
+	image->options = abGPU_Image_Options_Renderable;
+	image->w = desc.Width;
+	image->h = desc.Height;
+	image->d = 1u;
+	image->mips = desc.MipLevels;
+	image->format = format;
+	image->memoryUsage = abGPUi_D3D_Image_CalculateMemoryUsageForDesc(&desc);
+	image->i_resource = resource; // Reference count incremented already by GetBuffer.
+	abGPUi_D3D_Image_GetDataLayout(&desc, &image->i_copyFormat,
+			image->i_mipOffset, image->i_mipRowStride, &image->i_layerStride);
+}
+
 abBool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options dimensionOptions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format) {
 	dimensionOptions = abGPU_Image_Options_Normalize((dimensionOptions & abGPU_Image_Options_DimensionsMask) | abGPU_Image_Options_Upload);

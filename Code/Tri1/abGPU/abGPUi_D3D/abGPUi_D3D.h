@@ -25,6 +25,9 @@ inline unsigned int abGPUi_D3D_Image_SliceToSubresource(abGPU_Image const * imag
 	return subresource * image->mips + abGPU_Image_Slice_Mip(slice);
 }
 
+// Format may be sRGB, but swap chains require a linear format, so it's passed explicitly.
+void abGPUi_D3D_Image_InitForSwapChainBuffer(abGPU_Image * image, ID3D12Resource * resource, abGPU_Image_Format format);
+
 // Buffer and image handles.
 
 extern unsigned int abGPUi_D3D_HandleStore_DescriptorSize;
