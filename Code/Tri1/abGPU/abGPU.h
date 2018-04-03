@@ -156,6 +156,7 @@ abForceInline abBool abGPU_Image_Format_IsDepth(abGPU_Image_Format format) {
 abForceInline abBool abGPU_Image_Format_IsDepthStencil(abGPU_Image_Format format) {
 	return format >= abGPU_Image_Format_DepthStencilStart && format <= abGPU_Image_Format_DepthStencilEnd;
 }
+abGPU_Image_Format abGPU_Image_Format_ToLinear(abGPU_Image_Format format);
 unsigned int abGPU_Image_Format_GetSize(abGPU_Image_Format format); // Block size for compressed formats.
 
 typedef union abGPU_Image_Texel {
@@ -322,6 +323,29 @@ abBool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsign
 abBool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice);
 abBool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, abBool readOnly);
 void abGPU_RTStore_Destroy(abGPU_RTStore * store);
+
+/***********************
+ * Display image chains
+ ***********************/
+
+#define abGPU_DisplayChain_MaxImages 3u
+
+typedef struct abGPU_DisplayChain {
+	abGPU_Image images[abGPU_DisplayChain_MaxImages]; // By default have Display usage.
+	unsigned int imageCount;
+
+	#if defined(abBuild_GPUi_D3D)
+	IDXGISwapChain3 *i_swapChain;
+	#endif
+} abGPU_DisplayChain;
+
+#if defined(abPlatform_OS_WindowsDesktop)
+abBool abGPU_DisplayChain_InitForHWnd(abGPU_DisplayChain * chain, HWND hWnd,
+		unsigned int imageCount, abGPU_Image_Format format, unsigned int width, unsigned int height);
+#endif
+unsigned int abGPU_DisplayChain_GetCurrentImageIndex(abGPU_DisplayChain * chain);
+void abGPU_DisplayChain_Display(abGPU_DisplayChain * chain, abBool verticalSync);
+void abGPU_DisplayChain_Shutdown(abGPU_DisplayChain * chain);
 
 /*******************************
  * Render target configurations

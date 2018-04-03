@@ -174,4 +174,19 @@ abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * st
 	return abTrue;
 }
 
+unsigned int abGPU_DisplayChain_GetCurrentImageIndex(abGPU_DisplayChain * chain) {
+	return IDXGISwapChain3_GetCurrentBackBufferIndex(chain->i_swapChain);
+}
+
+void abGPU_DisplayChain_Display(abGPU_DisplayChain * chain, abBool verticalSync) {
+	IDXGISwapChain3_Present(chain->i_swapChain, verticalSync ? 1u : 0u, 0u);
+}
+
+void abGPU_DisplayChain_Shutdown(abGPU_DisplayChain * chain) {
+	for (unsigned int imageIndex = 0; imageIndex < chain->imageCount; ++imageIndex) {
+		abGPU_Image_Destroy(&chain->images[imageIndex]);
+	}
+	IDXGISwapChain3_Release(chain->i_swapChain);
+}
+
 #endif

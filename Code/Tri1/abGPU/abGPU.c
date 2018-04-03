@@ -4,6 +4,20 @@
  * GPU abstraction layer helper functions.
  */
 
+abGPU_Image_Format abGPU_Image_Format_ToLinear(abGPU_Image_Format format) {
+	switch (format) {
+	case abGPU_Image_Format_R8G8B8A8_sRGB:
+		return abGPU_Image_Format_R8G8B8A8;
+	case abGPU_Image_Format_S3TC_A1_sRGB:
+		return abGPU_Image_Format_S3TC_A1;
+	case abGPU_Image_Format_S3TC_A4_sRGB:
+		return abGPU_Image_Format_S3TC_A4;
+	case abGPU_Image_Format_S3TC_A8_sRGB:
+		return abGPU_Image_Format_S3TC_A8;
+	}
+	return format;
+}
+
 unsigned int abGPU_Image_Format_GetSize(abGPU_Image_Format format) {
 	switch (format) {
 	case abGPU_Image_Format_R8G8B8A8:
