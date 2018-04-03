@@ -161,10 +161,10 @@ abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * st
 		config->i_subresources[abGPU_RT_Count] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, abFalse);
 		abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->depth.prePostAction, abGPU_RT_Count);
 		if (abGPU_Image_Format_IsDepthStencil(storeRT->image->format)) {
-			config->i_descriptorHandles[abGPU_RT_Count + 1] = config->i_descriptorHandles[abGPU_RT_Count];
-			config->i_resources[abGPU_RT_Count + 1] = config->i_resources[abGPU_RT_Count];
-			config->i_subresources[abGPU_RT_Count + 1] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, abTrue);
-			abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->stencilPrePostAction, abGPU_RT_Count + 1);
+			config->i_descriptorHandles[abGPU_RT_Count + 1u] = config->i_descriptorHandles[abGPU_RT_Count];
+			config->i_resources[abGPU_RT_Count + 1u] = config->i_resources[abGPU_RT_Count];
+			config->i_subresources[abGPU_RT_Count + 1u] = abGPUi_D3D_Image_SliceToSubresource(storeRT->image, storeRT->slice, abTrue);
+			abGPUi_D3D_RTConfig_PrePostActionToBits(config, config->stencilPrePostAction, abGPU_RT_Count + 1u);
 		} else {
 			// Do no action (= do load/store) on stencil if there's no stencil.
 			config->stencilPrePostAction = abGPU_RT_PreLoad | abGPU_RT_PostStore;
