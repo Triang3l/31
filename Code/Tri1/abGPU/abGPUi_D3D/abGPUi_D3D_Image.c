@@ -217,7 +217,7 @@ void abGPUi_D3D_Image_InitForSwapChainBuffer(abGPU_Image * image, ID3D12Resource
 	desc.Height = abMax(desc.Height, 1u);
 	desc.MipLevels = abMax(desc.MipLevels, 1u);
 	image->options = abGPU_Image_Options_Renderable;
-	image->w = desc.Width;
+	image->w = (unsigned int) desc.Width;
 	image->h = desc.Height;
 	image->d = 1u;
 	image->mips = desc.MipLevels;

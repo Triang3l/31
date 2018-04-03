@@ -80,7 +80,8 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -92,7 +93,8 @@
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -109,7 +111,8 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,11 +128,13 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;winmm.lib;xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h" />
+    <ClInclude Include="abCore\abCore.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
@@ -138,8 +143,10 @@
     <ClInclude Include="abMemory\abMemory.h" />
     <ClInclude Include="abParallel\abParallel.h" />
     <ClInclude Include="abText\abText.h" />
+    <ClInclude Include="abWindow\abWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="abCore\abCore.c" />
     <ClCompile Include="abFeedback\abFeedback.c" />
     <ClCompile Include="abGPU\abGPU.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c" />
@@ -154,8 +161,8 @@
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Config.c" />
     <ClCompile Include="abMath\abVec4.c" />
     <ClCompile Include="abMemory\abMemory.c" />
-    <ClCompile Include="abTest.c" />
     <ClCompile Include="abText\abText.c" />
+    <ClCompile Include="abWindow\abWindow_WindowsDesktop.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

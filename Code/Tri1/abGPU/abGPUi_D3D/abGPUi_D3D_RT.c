@@ -208,7 +208,7 @@ abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, HWND hW
 	}
 	IDXGISwapChain1 * swapChain1;
 	if (FAILED(IDXGIFactory2_CreateSwapChainForHwnd(abGPUi_D3D_DXGIFactory,
-			abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics], hWnd, &desc, abNull, abNull, &swapChain1))) {
+			(IUnknown *) abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics], hWnd, &desc, abNull, abNull, &swapChain1))) {
 		return abFalse;
 	}
 	if (FAILED(IDXGISwapChain1_QueryInterface(swapChain1, &IID_IDXGISwapChain3, &chain->i_swapChain))) {

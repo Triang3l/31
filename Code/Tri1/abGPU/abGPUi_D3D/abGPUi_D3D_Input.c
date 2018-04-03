@@ -135,7 +135,7 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler cons
 			return abFalse;
 		}
 		config->i_rootParameters[inputIndex] = rootParameterCount++;
-		nextInput:
+		nextInput: {}
 	}
 
 	unsigned int attributeTypesUsed = 0u, vertexBufferHighestIndex = 0u;
