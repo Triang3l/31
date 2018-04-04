@@ -2,6 +2,7 @@
 #define abInclude_abGPU
 
 #include "../abMath/abBit.h"
+#include "../abData/abText.h"
 
 #if defined(abBuild_GPUi_D3D)
 #ifndef COBJMACROS
@@ -44,7 +45,7 @@ typedef struct abGPU_Fence {
 	#endif
 } abGPU_Fence;
 
-abBool abGPU_Fence_Init(abGPU_Fence * fence, abGPU_CmdQueue queue);
+abBool abGPU_Fence_Init(abGPU_Fence * fence, abTextU8 const * name, abGPU_CmdQueue queue);
 void abGPU_Fence_Enqueue(abGPU_Fence * fence);
 abBool abGPU_Fence_IsCrossed(abGPU_Fence * fence);
 void abGPU_Fence_Await(abGPU_Fence * fence);

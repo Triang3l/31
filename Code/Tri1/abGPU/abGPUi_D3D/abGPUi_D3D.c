@@ -8,6 +8,16 @@ IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain = abNull;
 ID3D12Device * abGPUi_D3D_Device = abNull;
 ID3D12CommandQueue * abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count] = { 0 };
 
+void abGPUi_D3D_SetObjectName(void * object, abGPUi_D3D_ObjectNameSetter setter, abTextU8 const * name) {
+	if (name == abNull || name[0] == '\0') {
+		return;
+	}
+	size_t nameU16Size = abTextU8_LengthInU16(name) + 1u;
+	abTextU16 * nameU16 = abStackAlloc(nameU16Size * sizeof(abTextU16));
+	abTextU16_FromU8(nameU16, nameU16Size, name);
+	setter(object, (WCHAR const *) nameU16);
+}
+
 enum {
 	abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed = 1u,
 	abGPUi_D3D_Init_Result_AdapterNotFound,

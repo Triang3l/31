@@ -11,6 +11,9 @@ extern IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain;
 extern ID3D12Device * abGPUi_D3D_Device;
 extern ID3D12CommandQueue * abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count];
 
+typedef HRESULT (STDMETHODCALLTYPE * abGPUi_D3D_ObjectNameSetter)(void * object, WCHAR const * name);
+void abGPUi_D3D_SetObjectName(void * object, abGPUi_D3D_ObjectNameSetter setter, abTextU8 const * name); // Setter is SetName from vtbl.
+
 // Images.
 
 DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format);
