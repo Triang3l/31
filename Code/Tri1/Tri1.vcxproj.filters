@@ -34,17 +34,11 @@
     <Filter Include="Header Files\abParallel">
       <UniqueIdentifier>{feb5d25b-4f6f-4ac3-b81e-e59b1b9a97b9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\abText">
-      <UniqueIdentifier>{067b25d9-fe68-44d4-8507-43c60dce5157}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\abFeedback">
       <UniqueIdentifier>{c4ec6877-832e-4168-8c2c-0070a923d13f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\abFeedback">
       <UniqueIdentifier>{ed15d011-e236-4b6c-b553-af791527d7fc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\abText">
-      <UniqueIdentifier>{11f88440-320b-499a-97b2-7fa1be41375f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\abMemory">
       <UniqueIdentifier>{46fe40e2-adf6-47af-abff-c40f246a541c}</UniqueIdentifier>
@@ -63,6 +57,12 @@
     </Filter>
     <Filter Include="Source Files\abPlatform">
       <UniqueIdentifier>{9a8ed8ce-dcd6-4c3e-89c6-b26378d03274}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\abData">
+      <UniqueIdentifier>{067b25d9-fe68-44d4-8507-43c60dce5157}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\abData">
+      <UniqueIdentifier>{11f88440-320b-499a-97b2-7fa1be41375f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -84,9 +84,6 @@
     <ClInclude Include="abParallel\abParallel.h">
       <Filter>Header Files\abParallel</Filter>
     </ClInclude>
-    <ClInclude Include="abText\abText.h">
-      <Filter>Header Files\abText</Filter>
-    </ClInclude>
     <ClInclude Include="abFeedback\abFeedback.h">
       <Filter>Header Files\abFeedback</Filter>
     </ClInclude>
@@ -98,6 +95,9 @@
     </ClInclude>
     <ClInclude Include="abPlatform\abPlatform.h">
       <Filter>Header Files\abPlatform</Filter>
+    </ClInclude>
+    <ClInclude Include="abData\abText.h">
+      <Filter>Header Files\abData</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -128,9 +128,6 @@
     <ClCompile Include="abFeedback\abFeedback.c">
       <Filter>Source Files\abFeedback</Filter>
     </ClCompile>
-    <ClCompile Include="abText\abText.c">
-      <Filter>Source Files\abText</Filter>
-    </ClCompile>
     <ClCompile Include="abMemory\abMemory.c">
       <Filter>Source Files\abMemory</Filter>
     </ClCompile>
@@ -154,6 +151,9 @@
     </ClCompile>
     <ClCompile Include="abPlatform\abPlatform_Windows.c">
       <Filter>Source Files\abPlatform</Filter>
+    </ClCompile>
+    <ClCompile Include="abData\abText.c">
+      <Filter>Source Files\abData</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

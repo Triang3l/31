@@ -1,5 +1,5 @@
-#ifndef abInclude_abText
-#define abInclude_abText
+#ifndef abInclude_abData_abText
+#define abInclude_abData_abText
 #include "../abCommon.h"
 
 /*

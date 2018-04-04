@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="abCommon.h" />
     <ClInclude Include="abCore\abCore.h" />
+    <ClInclude Include="abData\abText.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
@@ -143,10 +144,10 @@
     <ClInclude Include="abMemory\abMemory.h" />
     <ClInclude Include="abParallel\abParallel.h" />
     <ClInclude Include="abPlatform\abPlatform.h" />
-    <ClInclude Include="abText\abText.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abCore\abCore.c" />
+    <ClCompile Include="abData\abText.c" />
     <ClCompile Include="abFeedback\abFeedback.c" />
     <ClCompile Include="abGPU\abGPU.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c" />
@@ -163,7 +164,6 @@
     <ClCompile Include="abMemory\abMemory.c" />
     <ClCompile Include="abPlatform\abPlatform_Windows.c" />
     <ClCompile Include="abPlatform\abPlatform_WindowsDesktop.c" />
-    <ClCompile Include="abText\abText.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

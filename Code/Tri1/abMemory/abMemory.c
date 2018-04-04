@@ -1,6 +1,6 @@
 #include "abMemory.h"
+#include "../abData/abText.h"
 #include "../abFeedback/abFeedback.h"
-#include "../abText/abText.h"
 #include <stdlib.h>
 
 abParallel_Mutex abMemory_TagList_Mutex;
