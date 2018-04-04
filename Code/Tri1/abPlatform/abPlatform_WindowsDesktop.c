@@ -57,7 +57,10 @@ void abPlatform_Window_ProcessEvents() {
 	}
 }
 
+void abPlatformi_OS_Windows_Init();
+
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR cmdLine, int cmdShow) {
+	abPlatformi_OS_Windows_Init();
 	abCore_Run();
 	return 0;
 }

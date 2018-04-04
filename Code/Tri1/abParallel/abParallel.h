@@ -91,7 +91,6 @@ abForceInline uint64_t abAtomic_XorU64(uint64_t * location, uint64_t value) { re
 
 #define abParallel_YieldOnCore YieldProcessor
 #define abParallel_YieldOnAllCores() Sleep(0)
-#define abParallel_Pause Sleep
 
 typedef CRITICAL_SECTION abParallel_Mutex;
 abForceInline abBool abParallel_Mutex_Init(abParallel_Mutex * mutex) { InitializeCriticalSection(mutex); return abTrue; }
