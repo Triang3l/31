@@ -17,8 +17,8 @@ void abFeedback_DebugMessageForceV(char const * format, va_list arguments) {
 #if defined(abPlatform_OS_WindowsDesktop)
 void abFeedback_CrashV(abBool isAssert, char const * functionName, char const * messageFormat, va_list messageArguments) {
 	char message[1024u];
-	size_t written = abTextA_Copy(functionName, message, abArrayLength(message));
-	written += abTextA_CopyInto(isAssert ? " (assertion): " : ": ", message, abArrayLength(message), written);
+	size_t written = abTextA_Copy(message, abArrayLength(message), functionName);
+	written += abTextA_CopyInto(message, abArrayLength(message), written, isAssert ? " (assertion): " : ": ");
 	abTextA_FormatV(message + written, abArrayLength(message) - written, messageFormat, messageArguments);
 	MessageBoxA(abNull, message, "Tri1 Fatal Error", MB_OK);
 	abFeedback_Break();

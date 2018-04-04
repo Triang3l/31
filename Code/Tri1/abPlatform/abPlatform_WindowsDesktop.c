@@ -15,15 +15,15 @@ static LRESULT CALLBACK abPlatformi_WindowsDesktop_Window_Proc(HWND hWnd, UINT m
 }
 
 abBool abPlatform_Window_Init(unsigned int width, unsigned int height) {
-	WNDCLASSEXA classDesc = {
-		.cbSize = sizeof(WNDCLASSEXA),
+	WNDCLASSEXW classDesc = {
+		.cbSize = sizeof(WNDCLASSEXW),
 		.lpfnWndProc = abPlatformi_WindowsDesktop_Window_Proc,
-		.hInstance = GetModuleHandleA(abNull),
+		.hInstance = GetModuleHandleW(abNull),
 		.hCursor = LoadCursor(abNull, IDC_ARROW),
 		.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH),
-		.lpszClassName = "Tri1Game"
+		.lpszClassName = L"Tri1Game"
 	};
-	if (!RegisterClassExA(&classDesc)) {
+	if (!RegisterClassExW(&classDesc)) {
 		return abFalse;
 	}
 	DWORD const style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
@@ -32,7 +32,7 @@ abBool abPlatform_Window_Init(unsigned int width, unsigned int height) {
 	RECT rect = { .left = 0, .top = 0, .right = (LONG) width, .bottom = (LONG) height };
 	AdjustWindowRect(&rect, style, FALSE);
 	int adjustedWidth = rect.right - rect.left, adjustedHeight = rect.bottom - rect.top;
-	abWindowi_WindowsDesktop_Window_HWnd = CreateWindowA(classDesc.lpszClassName, "31", style,
+	abWindowi_WindowsDesktop_Window_HWnd = CreateWindowW(classDesc.lpszClassName, L"31", style,
 			(GetSystemMetrics(SM_CXSCREEN) - adjustedWidth) >> 1u, (GetSystemMetrics(SM_CYSCREEN) - adjustedHeight) >> 1u,
 			adjustedWidth, adjustedHeight, abNull, abNull, classDesc.hInstance, abNull);
 	if (abWindowi_WindowsDesktop_Window_HWnd == abNull) {
@@ -44,8 +44,8 @@ abBool abPlatform_Window_Init(unsigned int width, unsigned int height) {
 
 void abPlatform_Window_ProcessEvents() {
 	MSG message;
-	while (PeekMessageA(&message, abNull, 0u, 0u, PM_NOREMOVE)) {
-		BOOL gotMessage = GetMessageA(&message, abNull, 0u, 0u);
+	while (PeekMessageW(&message, abNull, 0u, 0u, PM_NOREMOVE)) {
+		BOOL gotMessage = GetMessageW(&message, abNull, 0u, 0u);
 		if (gotMessage == (BOOL) -1) { // Error in GetMessage.
 			continue;
 		}
@@ -53,7 +53,7 @@ void abPlatform_Window_ProcessEvents() {
 			abCore_RequestQuit(abFalse);
 		}
 		TranslateMessage(&message);
-		DispatchMessageA(&message);
+		DispatchMessageW(&message);
 	}
 }
 

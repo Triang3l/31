@@ -21,7 +21,7 @@ abMemory_Tag * abMemory_Tag_Create(char const * name) {
 	if (!abParallel_Mutex_Init(&tag->mutex)) {
 		abFeedback_Crash("abMemory_Tag_Init", "Failed to initialize the allocation list mutex for tag %s.", name);
 	}
-	abTextA_Copy(name, tag->name, abArrayLength(tag->name));
+	abTextA_Copy(tag->name, abArrayLength(tag->name), name);
 	tag->allocationFirst = tag->allocationLast = abNull;
 	tag->totalAllocated = 0u;
 
