@@ -1,11 +1,11 @@
-#include "../abCommon.h"
+#include "abPlatform.h"
 #ifdef abPlatform_OS_WindowsDesktop
 #include "../abCore/abCore.h"
 #include <Windows.h>
 
-static HWND abWindowi_WindowsDesktop_HWnd = abNull;
+static HWND abWindowi_WindowsDesktop_Window_HWnd = abNull;
 
-static LRESULT CALLBACK abWindowi_WindowDesktop_WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+static LRESULT CALLBACK abPlatformi_WindowsDesktop_Window_Proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch (msg) {
 	case WM_CLOSE:
 		abCore_RequestQuit(abFalse);
@@ -14,10 +14,10 @@ static LRESULT CALLBACK abWindowi_WindowDesktop_WindowProc(HWND hWnd, UINT msg, 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-abBool abWindow_Init(unsigned int width, unsigned int height) {
+abBool abPlatform_Window_Init(unsigned int width, unsigned int height) {
 	WNDCLASSEXA classDesc = {
 		.cbSize = sizeof(WNDCLASSEXA),
-		.lpfnWndProc = abWindowi_WindowDesktop_WindowProc,
+		.lpfnWndProc = abPlatformi_WindowsDesktop_Window_Proc,
 		.hInstance = GetModuleHandleA(abNull),
 		.hCursor = LoadCursor(abNull, IDC_ARROW),
 		.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH),
@@ -32,17 +32,17 @@ abBool abWindow_Init(unsigned int width, unsigned int height) {
 	RECT rect = { .left = 0, .top = 0, .right = (LONG) width, .bottom = (LONG) height };
 	AdjustWindowRect(&rect, style, FALSE);
 	int adjustedWidth = rect.right - rect.left, adjustedHeight = rect.bottom - rect.top;
-	abWindowi_WindowsDesktop_HWnd = CreateWindowA(classDesc.lpszClassName, "31", style,
+	abWindowi_WindowsDesktop_Window_HWnd = CreateWindowA(classDesc.lpszClassName, "31", style,
 			(GetSystemMetrics(SM_CXSCREEN) - adjustedWidth) >> 1u, (GetSystemMetrics(SM_CYSCREEN) - adjustedHeight) >> 1u,
 			adjustedWidth, adjustedHeight, abNull, abNull, classDesc.hInstance, abNull);
-	if (abWindowi_WindowsDesktop_HWnd == abNull) {
+	if (abWindowi_WindowsDesktop_Window_HWnd == abNull) {
 		return abFalse;
 	}
-	ShowWindow(abWindowi_WindowsDesktop_HWnd, SW_SHOWNORMAL);
+	ShowWindow(abWindowi_WindowsDesktop_Window_HWnd, SW_SHOWNORMAL);
 	return abTrue;
 }
 
-void abWindow_ProcessEvents() {
+void abPlatform_Window_ProcessEvents() {
 	MSG message;
 	while (PeekMessageA(&message, abNull, 0u, 0u, PM_NOREMOVE)) {
 		BOOL gotMessage = GetMessageA(&message, abNull, 0u, 0u);

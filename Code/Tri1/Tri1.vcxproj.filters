@@ -52,14 +52,17 @@
     <Filter Include="Header Files\abMemory">
       <UniqueIdentifier>{9a85c247-d46b-4cf1-b64b-282c18590c20}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\abWindow">
-      <UniqueIdentifier>{9a8ed8ce-dcd6-4c3e-89c6-b26378d03274}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\abCore">
       <UniqueIdentifier>{2b5acb21-b383-4ac8-a94a-dc4dcfe29558}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\abCore">
       <UniqueIdentifier>{aac26721-95f3-4325-ba10-e824f245f0f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\abPlatform">
+      <UniqueIdentifier>{25679ca8-105c-494e-b59b-eeffb72a32d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\abPlatform">
+      <UniqueIdentifier>{9a8ed8ce-dcd6-4c3e-89c6-b26378d03274}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -93,8 +96,8 @@
     <ClInclude Include="abCore\abCore.h">
       <Filter>Header Files\abCore</Filter>
     </ClInclude>
-    <ClInclude Include="abWindow\abWindow.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="abPlatform\abPlatform.h">
+      <Filter>Header Files\abPlatform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -143,11 +146,14 @@
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Config.c">
       <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
     </ClCompile>
-    <ClCompile Include="abWindow\abWindow_WindowsDesktop.c">
-      <Filter>Source Files\abWindow</Filter>
-    </ClCompile>
     <ClCompile Include="abCore\abCore.c">
       <Filter>Source Files\abCore</Filter>
+    </ClCompile>
+    <ClCompile Include="abPlatform\abPlatform_WindowsDesktop.c">
+      <Filter>Source Files\abPlatform</Filter>
+    </ClCompile>
+    <ClCompile Include="abPlatform\abPlatform_Windows.c">
+      <Filter>Source Files\abPlatform</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
