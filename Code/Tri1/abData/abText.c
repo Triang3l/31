@@ -47,7 +47,7 @@ size_t abTextA_Format(char * target, size_t targetSize, char const * format, ...
  ********/
 
 abTextU32 abTextU8_NextCP(abTextU8 const * * textCursor) {
-	abTextU8 const * text = *textCursor, first = *text;
+	uint8_t const * text = (uint8_t const *) *textCursor, first = *text;
 	if (first == '\0') {
 		return '\0';
 	}

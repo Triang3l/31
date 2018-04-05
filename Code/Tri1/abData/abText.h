@@ -23,7 +23,7 @@
  * Zero terminator is considered valid.
  */
 
-typedef uint8_t abTextU8;
+typedef char abTextU8; // So ASCII and UTF-8 literals can be written the same way.
 typedef uint16_t abTextU16;
 typedef uint32_t abTextU32; // Whole code point.
 
