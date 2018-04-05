@@ -64,6 +64,9 @@
     <Filter Include="Source Files\abData">
       <UniqueIdentifier>{11f88440-320b-499a-97b2-7fa1be41375f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\abParallel">
+      <UniqueIdentifier>{c1d38475-bf3f-4029-8224-e30bd1c63fa6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -154,6 +157,9 @@
     </ClCompile>
     <ClCompile Include="abData\abText.c">
       <Filter>Source Files\abData</Filter>
+    </ClCompile>
+    <ClCompile Include="abParallel\abParallel_Windows.c">
+      <Filter>Source Files\abParallel</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

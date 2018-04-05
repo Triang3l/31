@@ -5,6 +5,8 @@
 // Note: acquire is used like "check atomic -> acquire -> read dependencies",
 // release is used like "write dependencies -> release -> update atomic".
 
+#define abParallel_Thread_MaxNameLength 15u
+
 #if defined(abPlatform_OS_Windows)
 /**************************************************
  * Windows and Visual C parallelization primitives
@@ -112,6 +114,11 @@ typedef CONDITION_VARIABLE abParallel_CondEvent;
 #define abParallel_CondEvent_Await(condEvent, mutex) SleepConditionVariableCS(condEvent, mutex, 0xffffffffu)
 #define abParallel_CondEvent_Signal WakeConditionVariable
 #define abParallel_CondEvent_SignalAll WakeAllConditionVariable
+
+typedef HANDLE abParallel_Thread;
+typedef void * (* abParallel_Thread_Entry)(void * data);
+abBool abParallel_Thread_Start(abParallel_Thread * thread, char const * name, abParallel_Thread_Entry entry, void * data);
+abForceInline unsigned int abParallel_Thread_Destroy(abParallel_Thread * thread) { return (unsigned int) WaitForSingleObject(*thread, INFINITE); }
 
 #else
 #error No parallelization API implementation for the target OS.
