@@ -66,7 +66,7 @@ abTextU32 abTextU8_NextCP(abTextU8 const * * textCursor) {
 		if ((text[1u] >> 6u) == 2u && (text[2u] >> 6u) == 2u) {
 			*textCursor += 3u;
 			abTextU32 cp = ((abTextU32) (first & 15u) << 12u) | ((abTextU32) (text[1u] & 63u) << 6u) | (text[2u] & 63u);
-			return ((cp >> 1u) != 0x7fffu && (cp & ~((abTextU32) 0x7ffu)) != 0xd800u) ? cp : abText_InvalidSubstitute;
+			return ((cp >> 1u) != (0xfffeu >> 1u) && (cp & ~((abTextU32) 0x7ffu)) != 0xd800u) ? cp : abText_InvalidSubstitute;
 		}
 	}
 	if ((first >> 3u) == 30u) {
@@ -85,23 +85,71 @@ abTextU32 abTextU8_NextCP(abTextU8 const * * textCursor) {
  * UTF-16
  *********/
 
+abTextU32 abTextU16_NextCP(abTextU16 const * * textCursor) {
+	abTextU16 first = (*textCursor)[0u];
+	if (first == 0u) {
+		return 0u;
+	}
+	++(*textCursor);
+	if ((first >> 10u) == (0xd800u >> 10u)) {
+		abTextU16 second = (*textCursor)[0u];
+		if ((second >> 10u) == (0xdc00u >> 10u)) {
+			++(*textCursor);
+			return (abTextU32) ((first & 0x3ffu) << 10u) | (second & 0x3ffu);
+		} else {
+			return abText_InvalidSubstitute;
+		}
+	}
+	return first;
+}
+
+unsigned int abTextU16_WriteCP(abTextU16 * target, size_t targetSize, abTextU32 cp) {
+	if (targetSize == 0u) {
+		return 0u;
+	}
+	if ((cp >> 16u) == 0u) {
+		if (targetSize <= 1u) {
+			return 0u;
+		}
+		target[0u] = 0xd800u | ((cp >> 10u) - (0x10000u >> 10u));
+		target[1u] = 0xdc00u | (cp & 0x3ffu);
+		return 2u;
+	} else {
+		target[0u] = cp;
+		return 1u;
+	}
+}
+
+size_t abTextU16_Copy(abTextU16 * target, size_t targetSize, abTextU16 const * source) {
+	abTextU16 * originalTarget = target;
+	if (targetSize != 0u) {
+		--targetSize;
+		abTextU32 cp;
+		while (targetSize != 0u && (cp = abTextU16_NextCP(&source)) != '\0') {
+			unsigned int written = abTextU16_WriteCP(target, targetSize, cp);
+			if (written == 0u) {
+				break;
+			}
+			target += written;
+			targetSize -= written;
+		}
+		*target = '\0';
+	}
+	return (size_t) (target - originalTarget);
+}
+
 size_t abTextU16_FromU8(abTextU16 * target, size_t targetSize, abTextU8 const * source) {
 	abTextU16 * originalTarget = target;
 	if (targetSize != 0u) {
 		--targetSize;
 		abTextU32 cp;
 		while (targetSize != 0u && (cp = abTextU8_NextCP(&source)) != '\0') {
-			if ((cp >> 16u) != 0u) {
-				if (targetSize < 2u) {
-					break;
-				}
-				*(target++) = 0xd800u | ((cp >> 10u) - 0x40u);
-				*(target++) = 0xdc00u | (cp & 0x3ffu);
-				targetSize -= 2u;
-			} else {
-				*(target++) = cp;
-				--targetSize;
+			unsigned int written = abTextU16_WriteCP(target, targetSize, cp);
+			if (written == 0u) {
+				break;
 			}
+			target += written;
+			targetSize -= written;
 		}
 		*target = '\0';
 	}

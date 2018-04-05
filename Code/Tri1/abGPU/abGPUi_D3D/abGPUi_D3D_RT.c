@@ -3,7 +3,7 @@
 
 unsigned int abGPUi_D3D_RTStore_DescriptorSizeColor, abGPUi_D3D_RTStore_DescriptorSizeDepth;
 
-abBool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepth) {
+abBool abGPU_RTStore_Init(abGPU_RTStore * store, abTextU8 const * name, unsigned int countColor, unsigned int countDepth) {
 	D3D12_DESCRIPTOR_HEAP_DESC desc = { 0 };
 	if (countColor != 0u) {
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -11,6 +11,7 @@ abBool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsign
 		if (FAILED(ID3D12Device_CreateDescriptorHeap(abGPUi_D3D_Device, &desc, &IID_ID3D12DescriptorHeap, &store->i_descriptorHeapColor))) {
 			return abFalse;
 		}
+		abGPUi_D3D_SetObjectName(store->i_descriptorHeapColor, (abGPUi_D3D_ObjectNameSetter) store->i_descriptorHeapColor->lpVtbl->SetName, name);
 		store->i_cpuDescriptorHandleStartColor = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeapColor);
 	} else {
 		store->i_descriptorHeapColor = abNull;
@@ -25,6 +26,7 @@ abBool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsign
 			}
 			return abFalse;
 		}
+		abGPUi_D3D_SetObjectName(store->i_descriptorHeapDepth, (abGPUi_D3D_ObjectNameSetter) store->i_descriptorHeapDepth->lpVtbl->SetName, name);
 		store->i_cpuDescriptorHandleStartDepth = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeapDepth);
 	} else {
 		store->i_descriptorHeapDepth = abNull;
@@ -126,7 +128,7 @@ static void abGPUi_D3D_RTConfig_PrePostActionToBits(abGPU_RTConfig * config, abG
 	}
 }
 
-abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store) {
+abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abTextU8 const * name, abGPU_RTStore const * store) {
 	if (config->colorCount > abGPU_RT_Count) {
 		return abFalse;
 	}
@@ -187,8 +189,8 @@ static abBool abGPUi_D3D_DisplayChain_InitImages(abGPU_DisplayChain * chain, abG
 }
 
 #if defined(abPlatform_OS_WindowsDesktop)
-abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, HWND hWnd, unsigned int imageCount,
-		abGPU_Image_Format format, unsigned int width, unsigned int height) {
+abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, abTextU8 const * name,
+		HWND hWnd, unsigned int imageCount, abGPU_Image_Format format, unsigned int width, unsigned int height) {
 	imageCount = abClamp(imageCount, 1u, abGPU_DisplayChain_MaxImages);
 	DXGI_SWAP_CHAIN_DESC1 desc = {
 		.Width = width,

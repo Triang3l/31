@@ -151,7 +151,7 @@ static void abGPUi_D3D_Image_GetDataLayout(D3D12_RESOURCE_DESC const * desc, DXG
 	*layerStride = (isArray ? (unsigned int) (footprints[mips].Offset - footprints[0u].Offset) : 0u);
 }
 
-abBool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
+abBool abGPU_Image_Init(abGPU_Image * image, abTextU8 const * name, abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue) {
 	options = abGPU_Image_Options_Normalize(options);
@@ -205,9 +205,13 @@ abBool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
 			optimizedClearValuePointer = &optimizedClearValue;
 		}
 	}
-	return SUCCEEDED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
+	if (FAILED(ID3D12Device_CreateCommittedResource(abGPUi_D3D_Device,
 			&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, abGPUi_D3D_Image_UsageToStates(initialUsage),
-			optimizedClearValuePointer, &IID_ID3D12Resource, &image->i_resource)) ? abTrue : abFalse;
+			optimizedClearValuePointer, &IID_ID3D12Resource, &image->i_resource))) {
+		return abFalse;
+	}
+	abGPUi_D3D_SetObjectName(image->i_resource, (abGPUi_D3D_ObjectNameSetter) image->i_resource->lpVtbl->SetName, name);
+	return abTrue;
 }
 
 void abGPUi_D3D_Image_InitForSwapChainBuffer(abGPU_Image * image, ID3D12Resource * resource, abGPU_Image_Format format) {

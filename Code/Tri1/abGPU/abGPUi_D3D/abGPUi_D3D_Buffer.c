@@ -21,7 +21,7 @@ D3D12_RESOURCE_STATES abGPUi_D3D_Buffer_UsageToStates(abGPU_Buffer_Usage usage) 
 			abGPUi_D3D_Buffer_UsageToStatesMap[usage] : D3D12_RESOURCE_STATE_COMMON);
 }
 
-abBool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
+abBool abGPU_Buffer_Init(abGPU_Buffer * buffer, abTextU8 const * name, abGPU_Buffer_Access access,
 		unsigned int size, abBool editable, abGPU_Buffer_Usage initialUsage) {
 	if (size == 0u) {
 		return abFalse;
@@ -54,6 +54,7 @@ abBool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
 			&desc, abGPUi_D3D_Buffer_UsageToStates(initialUsage), abNull, &IID_ID3D12Resource, &buffer->i_resource))) {
 		return abFalse;
 	}
+	abGPUi_D3D_SetObjectName(buffer->i_resource, (abGPUi_D3D_ObjectNameSetter) buffer->i_resource->lpVtbl->SetName, name);
 	buffer->i_gpuVirtualAddress = ID3D12Resource_GetGPUVirtualAddress(buffer->i_resource);
 	return abTrue;
 }

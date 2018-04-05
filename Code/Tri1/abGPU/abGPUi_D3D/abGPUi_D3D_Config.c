@@ -87,7 +87,7 @@ static abForceInline D3D12_LOGIC_OP abGPUi_D3D_DrawConfig_BitOperationToD3D(abGP
 			abGPUi_D3D_DrawConfig_BitOperationToD3DMap[operation] : D3D12_LOGIC_OP_COPY);
 }
 
-abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config) {
+abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config, abTextU8 const * name) {
 	abGPU_DrawConfig_Options options = config->options;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = { 0 };
@@ -199,8 +199,11 @@ abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config) {
 	}
 	desc.SampleDesc.Count = 1u;
 
-	return SUCCEEDED(ID3D12Device_CreateGraphicsPipelineState(abGPUi_D3D_Device,
-			&desc, &IID_ID3D12PipelineState, &config->i_pipelineState)) ? abTrue : abFalse;
+	if (FAILED(ID3D12Device_CreateGraphicsPipelineState(abGPUi_D3D_Device, &desc, &IID_ID3D12PipelineState, &config->i_pipelineState))) {
+		return abFalse;
+	}
+	abGPUi_D3D_SetObjectName(config->i_pipelineState, (abGPUi_D3D_ObjectNameSetter) config->i_pipelineState->lpVtbl->SetName, name);
+	return abTrue;
 }
 
 void abGPU_DrawConfig_Unregister(abGPU_DrawConfig * config) {

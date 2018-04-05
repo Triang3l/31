@@ -88,7 +88,7 @@ typedef enum abGPU_Buffer_Usage {
 		abGPU_Buffer_Usage_Count
 } abGPU_Buffer_Usage;
 
-abBool abGPU_Buffer_Init(abGPU_Buffer * buffer, abGPU_Buffer_Access access,
+abBool abGPU_Buffer_Init(abGPU_Buffer * buffer, abTextU8 const * name, abGPU_Buffer_Access access,
 		unsigned int size, abBool editable, abGPU_Buffer_Usage initialUsage);
 void * abGPU_Buffer_Map(abGPU_Buffer * buffer);
 // Written range can be null, in this case, it is assumed that the whole buffer was modified.
@@ -255,7 +255,7 @@ void abGPU_Image_GetMaxSize(abGPU_Image_Options dimensionOptions,
 unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);
 // Usage must be Upload for upload buffers. Clear value is null for images that are not render targets.
-abBool abGPU_Image_Init(abGPU_Image * image, abGPU_Image_Options options,
+abBool abGPU_Image_Init(abGPU_Image * image, abTextU8 const * name, abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue);
 abBool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options dimensionOptions,
@@ -287,7 +287,7 @@ typedef struct abGPU_HandleStore {
 	#endif
 } abGPU_HandleStore;
 
-abBool abGPU_HandleStore_Init(abGPU_HandleStore * store, unsigned int handleCount);
+abBool abGPU_HandleStore_Init(abGPU_HandleStore * store, abTextU8 const * name, unsigned int handleCount);
 void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
 		abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
 void abGPU_HandleStore_Destroy(abGPU_HandleStore * store);
@@ -319,7 +319,7 @@ abForceInline abGPU_RTStore_RT * abGPU_RTStore_GetDepth(abGPU_RTStore const * st
 }
 
 // Implementation functions.
-abBool abGPU_RTStore_Init(abGPU_RTStore * store, unsigned int countColor, unsigned int countDepth);
+abBool abGPU_RTStore_Init(abGPU_RTStore * store, abTextU8 const * name, unsigned int countColor, unsigned int countDepth);
 // For 3D color render targets (3D depth render targets are not supported), the array layer is the Z.
 abBool abGPU_RTStore_SetColor(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice);
 abBool abGPU_RTStore_SetDepth(abGPU_RTStore * store, unsigned int rtIndex, abGPU_Image * image, abGPU_Image_Slice slice, abBool readOnly);
@@ -341,8 +341,8 @@ typedef struct abGPU_DisplayChain {
 } abGPU_DisplayChain;
 
 #if defined(abPlatform_OS_WindowsDesktop)
-abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, HWND hWnd,
-		unsigned int imageCount, abGPU_Image_Format format, unsigned int width, unsigned int height);
+abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, abTextU8 const * name,
+		HWND hWnd, unsigned int imageCount, abGPU_Image_Format format, unsigned int width, unsigned int height);
 #endif
 unsigned int abGPU_DisplayChain_GetCurrentImageIndex(abGPU_DisplayChain * chain);
 void abGPU_DisplayChain_Display(abGPU_DisplayChain * chain, abBool verticalSync);
@@ -387,7 +387,7 @@ typedef struct abGPU_RTConfig {
 	#endif
 } abGPU_RTConfig;
 
-abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abGPU_RTStore const * store);
+abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abTextU8 const * name, abGPU_RTStore const * store);
 #if defined(abBuild_GPUi_D3D)
 #define abGPU_RTConfig_Unregister(config) {}
 #else
@@ -515,7 +515,7 @@ typedef struct abGPU_SamplerStore {
 	#endif
 } abGPU_SamplerStore;
 
-abBool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, unsigned int samplerCount);
+abBool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, abTextU8 const * name, unsigned int samplerCount);
 void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore * store, unsigned int samplerIndex, abGPU_Sampler sampler);
 void abGPU_SamplerStore_Destroy(abGPU_SamplerStore * store);
 
@@ -638,7 +638,7 @@ typedef struct abGPU_InputConfig {
 	#endif
 } abGPU_InputConfig;
 
-abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, /* optional */ abGPU_Sampler const * staticSamplers);
+abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * name, /* optional */ abGPU_Sampler const * staticSamplers);
 void abGPU_InputConfig_Unregister(abGPU_InputConfig * config);
 
 /**************************
@@ -781,7 +781,7 @@ typedef struct abGPU_DrawConfig {
 	#endif
 } abGPU_DrawConfig;
 
-abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config); // May take a significantly long time!
+abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config, abTextU8 const * name); // May take a significantly long time!
 void abGPU_DrawConfig_Unregister(abGPU_DrawConfig * config);
 
 /****************
@@ -800,7 +800,7 @@ typedef struct abGPU_CmdList {
 	#endif
 } abGPU_CmdList;
 
-abBool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue);
+abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_CmdQueue queue);
 void abGPU_CmdList_Record(abGPU_CmdList * list);
 void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount);
 void abGPU_CmdList_Destroy(abGPU_CmdList * list);

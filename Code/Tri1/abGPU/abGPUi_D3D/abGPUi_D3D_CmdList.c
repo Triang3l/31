@@ -2,7 +2,7 @@
 #include "abGPUi_D3D.h"
 #include "../../abMath/abBit.h"
 
-abBool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue) {
+abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_CmdQueue queue) {
 	D3D12_COMMAND_LIST_TYPE type;
 	switch (queue) {
 	case abGPU_CmdQueue_Graphics:
@@ -17,11 +17,13 @@ abBool abGPU_CmdList_Init(abGPU_CmdList * list, abGPU_CmdQueue queue) {
 	if (FAILED(ID3D12Device_CreateCommandAllocator(abGPUi_D3D_Device, type, &IID_ID3D12CommandAllocator, &list->i_allocator))) {
 		return abFalse;
 	}
+	abGPUi_D3D_SetObjectName(list->i_allocator, (abGPUi_D3D_ObjectNameSetter) list->i_allocator->lpVtbl->SetName, name);
 	if (FAILED(ID3D12Device_CreateCommandList(abGPUi_D3D_Device, 0u, type, list->i_allocator, abNull,
 			&IID_ID3D12GraphicsCommandList, &list->i_list))) {
 		ID3D12CommandAllocator_Release(list->i_allocator);
 		return abFalse;
 	}
+	abGPUi_D3D_SetObjectName(list->i_list, (abGPUi_D3D_ObjectNameSetter) list->i_list->lpVtbl->SetName, name);
 	if (FAILED(ID3D12GraphicsCommandList_QueryInterface(list->i_list, &IID_ID3D12CommandList, &list->i_executeList))) {
 		ID3D12CommandAllocator_Release(list->i_list);
 		ID3D12CommandAllocator_Release(list->i_allocator);

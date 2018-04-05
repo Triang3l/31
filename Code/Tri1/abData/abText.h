@@ -83,6 +83,21 @@ inline size_t abTextU8_LengthInU16(abTextU8 const * text) {
  * UTF-16
  *********/
 
+abTextU32 abTextU16_NextCP(abTextU16 const * * textCursor); // 0 if nothing to read anymore. Advances the cursor.
+
+inline size_t abTextU16_LengthInUnits(abTextU16 const * text) {
+	abTextU16 const * originalText = text;
+	while (*(text++) != '\0') {}
+	return (size_t) (text - originalText);
+}
+inline size_t abTextU16_LengthInCPs(abTextU16 const * text) {
+	size_t length = 0u;
+	while (abTextU16_NextCP(&text) != '\0') { ++length; }
+	return length;
+}
+
+unsigned int abTextU16_WriteCP(abTextU16 * target, size_t targetSize, abTextU32 cp);
+size_t abTextU16_Copy(abTextU16 * target, size_t targetSize, abTextU16 const * source);
 size_t abTextU16_FromU8(abTextU16 * target, size_t targetSize, abTextU8 const * source);
 
 #endif

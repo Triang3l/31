@@ -1,7 +1,7 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
 
-abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler const * staticSamplers) {
+abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * name, abGPU_Sampler const * staticSamplers) {
 	if (config->inputCount > abGPU_InputConfig_MaxInputs || config->vertexAttributeCount > abGPU_VertexData_MaxAttributes) {
 		return abFalse;
 	}
@@ -195,6 +195,7 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abGPU_Sampler cons
 	}
 	abBool succeeded = (SUCCEEDED(ID3D12Device_CreateRootSignature(abGPUi_D3D_Device, 0u, ID3D10Blob_GetBufferPointer(blob),
 			ID3D10Blob_GetBufferSize(blob), &IID_ID3D12RootSignature, &config->i_rootSignature)) ? abTrue : abFalse);
+	abGPUi_D3D_SetObjectName(config->i_rootSignature, (abGPUi_D3D_ObjectNameSetter) config->i_rootSignature->lpVtbl->SetName, name);
 	ID3D10Blob_Release(blob);
 	return succeeded;
 }

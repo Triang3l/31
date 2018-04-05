@@ -3,7 +3,7 @@
 
 unsigned int abGPUi_D3D_HandleStore_DescriptorSize;
 
-abBool abGPU_HandleStore_Init(abGPU_HandleStore * store, unsigned int handleCount) {
+abBool abGPU_HandleStore_Init(abGPU_HandleStore * store, abTextU8 const * name, unsigned int handleCount) {
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		.NumDescriptors = handleCount,
@@ -12,6 +12,7 @@ abBool abGPU_HandleStore_Init(abGPU_HandleStore * store, unsigned int handleCoun
 	if (FAILED(ID3D12Device_CreateDescriptorHeap(abGPUi_D3D_Device, &desc, &IID_ID3D12DescriptorHeap, &store->i_descriptorHeap))) {
 		return abFalse;
 	}
+	abGPUi_D3D_SetObjectName(store->i_descriptorHeap, (abGPUi_D3D_ObjectNameSetter) store->i_descriptorHeap->lpVtbl->SetName, name);
 	store->handleCount = handleCount;
 	store->i_cpuDescriptorHandleStart = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
 	store->i_gpuDescriptorHandleStart = ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(store->i_descriptorHeap);

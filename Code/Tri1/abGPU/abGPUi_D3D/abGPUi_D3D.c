@@ -47,6 +47,8 @@ abGPU_Init_Result abGPU_Init(abBool debug) {
 	if (FAILED(CreateDXGIFactory2(debug ? DXGI_CREATE_FACTORY_DEBUG : 0u, &IID_IDXGIFactory2, &abGPUi_D3D_DXGIFactory))) {
 		return abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed;
 	}
+	IDXGIFactory2_SetPrivateData(abGPUi_D3D_DXGIFactory, &WKPDID_D3DDebugObjectName,
+			sizeof("abGPUi_D3D_DXGIFactory") - 1u, "abGPUi_D3D_DXGIFactory");
 
 	IDXGIAdapter1 * adapter = abNull, * softwareAdapter = abNull;
 	unsigned int adapterIndex = 0u;
@@ -90,25 +92,30 @@ abGPU_Init_Result abGPU_Init(abBool debug) {
 		return abGPUi_D3D_Init_Result_AdapterInterfaceQueryFailed;
 	}
 	IDXGIAdapter1_Release(adapter); // Don't need version 1 anymore.
+	IDXGIAdapter3_SetPrivateData(abGPUi_D3D_DXGIAdapterMain, &WKPDID_D3DDebugObjectName,
+			sizeof("abGPUi_D3D_DXGIAdapterMain") - 1u, "abGPUi_D3D_DXGIAdapterMain");
 
 	if (FAILED(D3D12CreateDevice((IUnknown *) abGPUi_D3D_DXGIAdapterMain, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, &abGPUi_D3D_Device))) {
 		abGPU_Shutdown();
 		return abGPUi_D3D_Init_Result_DeviceCreationFailed;
 	}
+	ID3D12Device_SetName(abGPUi_D3D_Device, L"abGPUi_D3D_Device");
 
-	D3D12_COMMAND_QUEUE_DESC commandQueueDesc = { 0 };
-	commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	if (FAILED(ID3D12Device_CreateCommandQueue(abGPUi_D3D_Device, &commandQueueDesc, &IID_ID3D12CommandQueue,
-			&abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics]))) {
+	D3D12_COMMAND_QUEUE_DESC queueDesc = { 0 };
+	ID3D12CommandQueue * * queuePointer = &abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics];
+	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	if (FAILED(ID3D12Device_CreateCommandQueue(abGPUi_D3D_Device, &queueDesc, &IID_ID3D12CommandQueue, queuePointer))) {
 		abGPU_Shutdown();
 		return abGPUi_D3D_Init_Result_GraphicsCommandQueueCreationFailed;
 	}
-	commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-	if (FAILED(ID3D12Device_CreateCommandQueue(abGPUi_D3D_Device, &commandQueueDesc, &IID_ID3D12CommandQueue,
-			&abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Copy]))) {
+	ID3D12CommandQueue_SetName(*queuePointer, L"abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics]");
+	queuePointer = &abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Copy];
+	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+	if (FAILED(ID3D12Device_CreateCommandQueue(abGPUi_D3D_Device, &queueDesc, &IID_ID3D12CommandQueue, queuePointer))) {
 		abGPU_Shutdown();
 		return abGPUi_D3D_Init_Result_CopyCommandQueueCreationFailed;
 	}
+	ID3D12CommandQueue_SetName(*queuePointer, L"abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Copy]");
 
 	abGPUi_D3D_HandleStore_DescriptorSize = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	abGPUi_D3D_RTStore_DescriptorSizeColor = ID3D12Device_GetDescriptorHandleIncrementSize(abGPUi_D3D_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
