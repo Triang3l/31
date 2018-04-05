@@ -45,7 +45,7 @@ typedef uint32_t abTextU32; // Whole code point.
 #endif
 size_t abTextA_Copy(char * target, size_t targetSize, char const * source);
 inline size_t abTextA_CopyInto(char * target, size_t targetSize, size_t targetOffset, char const * source) {
-	return (targetOffset < targetSize ? abTextA_Copy(target + targetOffset, targetSize - targetOffset, source) : 0);
+	return (targetOffset < targetSize ? abTextA_Copy(target + targetOffset, targetSize - targetOffset, source) : 0u);
 }
 size_t abTextA_FormatV(char * target, size_t targetSize, char const * format, va_list arguments);
 size_t abTextA_Format(char * target, size_t targetSize, char const * format, ...);
@@ -57,6 +57,7 @@ size_t abTextA_Format(char * target, size_t targetSize, char const * format, ...
 inline abBool abTextU32_IsCPValid(abTextU32 cp) {
 	return (cp <= 0x10ffffu) && ((cp & 0xfffeu) != 0xfffeu) && ((cp & ~((abTextU32) 0x7ffu)) != 0xd800u);
 }
+abForceInline abTextU32 abTextU32_ValidateCP(abTextU32 cp) { return abTextU32_IsCPValid(cp) ? cp : abText_InvalidSubstitute; }
 
 /********
  * UTF-8
@@ -85,7 +86,7 @@ inline size_t abTextU8_LengthInU16(abTextU8 const * text) {
 
 abTextU32 abTextU16_NextCP(abTextU16 const * * textCursor); // 0 if nothing to read anymore. Advances the cursor.
 
-inline size_t abTextU16_LengthInUnits(abTextU16 const * text) {
+inline size_t abTextU16_LengthInUnits(abTextU16 const * text) { // No validation - returns real data size (for appending)!
 	abTextU16 const * originalText = text;
 	while (*(text++) != '\0') {}
 	return (size_t) (text - originalText);
@@ -96,8 +97,8 @@ inline size_t abTextU16_LengthInCPs(abTextU16 const * text) {
 	return length;
 }
 
-unsigned int abTextU16_WriteCP(abTextU16 * target, size_t targetSize, abTextU32 cp);
-size_t abTextU16_Copy(abTextU16 * target, size_t targetSize, abTextU16 const * source);
+unsigned int abTextU16_WriteCP_Valid(abTextU16 * target, size_t targetSize, abTextU32 cp);
+size_t abTextU16_Copy(abTextU16 * target, size_t targetSize, abTextU16 const * source); // Does validation - length may change!
 size_t abTextU16_FromU8(abTextU16 * target, size_t targetSize, abTextU8 const * source);
 
 #endif

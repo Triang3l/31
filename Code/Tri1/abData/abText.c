@@ -91,19 +91,21 @@ abTextU32 abTextU16_NextCP(abTextU16 const * * textCursor) {
 		return 0u;
 	}
 	++(*textCursor);
+	abTextU32 cp;
 	if ((first >> 10u) == (0xd800u >> 10u)) {
 		abTextU16 second = (*textCursor)[0u];
-		if ((second >> 10u) == (0xdc00u >> 10u)) {
-			++(*textCursor);
-			return (abTextU32) ((first & 0x3ffu) << 10u) | (second & 0x3ffu);
-		} else {
+		if ((second >> 10u) != (0xdc00u >> 10u)) {
 			return abText_InvalidSubstitute;
 		}
+		++(*textCursor);
+		cp = (abTextU32) ((first & 0x3ffu) << 10u) | (second & 0x3ffu);
+	} else {
+		cp = first;
 	}
-	return first;
+	return abTextU32_ValidateCP(cp);
 }
 
-unsigned int abTextU16_WriteCP(abTextU16 * target, size_t targetSize, abTextU32 cp) {
+unsigned int abTextU16_WriteCP_Valid(abTextU16 * target, size_t targetSize, abTextU32 cp) {
 	if (targetSize == 0u) {
 		return 0u;
 	}
