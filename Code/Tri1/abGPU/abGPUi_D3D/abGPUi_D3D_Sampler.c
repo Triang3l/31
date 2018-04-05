@@ -41,10 +41,10 @@ void abGPU_SamplerStore_SetSampler(abGPU_SamplerStore * store, unsigned int samp
 	desc.AddressW = ((sampler & abGPU_Sampler_RepeatR) ? D3D12_TEXTURE_ADDRESS_MODE_WRAP : D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
 	desc.MipLODBias = 0.0f;
 	desc.ComparisonFunc = (D3D12_COMPARISON_FUNC) ((compareFail ^ abGPU_Sampler_CompareFailMask) + 1u); // Change from fail to pass.
-	desc.BorderColor[0] = 1.0f;
-	desc.BorderColor[1] = 1.0f;
-	desc.BorderColor[2] = 1.0f;
-	desc.BorderColor[3] = 1.0f;
+	desc.BorderColor[0u] = 1.0f;
+	desc.BorderColor[1u] = 1.0f;
+	desc.BorderColor[2u] = 1.0f;
+	desc.BorderColor[3u] = 1.0f;
 	desc.MinLOD = 0.0f;
 	unsigned int maxLOD = (sampler >> abGPU_Sampler_MipCountShift) & abGPU_Sampler_MipCountMask;
 	desc.MaxLOD = (maxLOD != abGPU_Sampler_MipCountMask ? (float) maxLOD : FLT_MAX);

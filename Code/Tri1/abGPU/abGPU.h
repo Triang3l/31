@@ -92,7 +92,7 @@ abBool abGPU_Buffer_Init(abGPU_Buffer * buffer, abTextU8 const * name, abGPU_Buf
 		unsigned int size, abBool editable, abGPU_Buffer_Usage initialUsage);
 void * abGPU_Buffer_Map(abGPU_Buffer * buffer);
 // Written range can be null, in this case, it is assumed that the whole buffer was modified.
-void abGPU_Buffer_Unmap(abGPU_Buffer * buffer, void * mapping, unsigned int const writtenOffsetAndSize[2]);
+void abGPU_Buffer_Unmap(abGPU_Buffer * buffer, void * mapping, unsigned int const writtenOffsetAndSize[2u]);
 void abGPU_Buffer_Destroy(abGPU_Buffer * buffer);
 
 /*********
@@ -161,7 +161,7 @@ abGPU_Image_Format abGPU_Image_Format_ToLinear(abGPU_Image_Format format);
 unsigned int abGPU_Image_Format_GetSize(abGPU_Image_Format format); // Block size for compressed formats.
 
 typedef union abGPU_Image_Texel {
-	float color[4];
+	float color[4u];
 	struct {
 		float depth;
 		uint8_t stencil;
@@ -270,7 +270,7 @@ void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
 		unsigned int yStride, unsigned int zStride, void * mapping, void const * data);
 // Written range can be null, in this case, it is assumed that the whole sub-image was modified.
 void abGPU_Image_UploadEnd(abGPU_Image * image, abGPU_Image_Slice slice,
-		void * mapping, unsigned int const writtenOffsetAndSize[2]);
+		void * mapping, unsigned int const writtenOffsetAndSize[2u]);
 void abGPU_Image_Destroy(abGPU_Image * image);
 
 /*********************************

@@ -67,7 +67,7 @@ void * abGPU_Buffer_Map(abGPU_Buffer * buffer) {
 	return (SUCCEEDED(ID3D12Resource_Map(buffer->i_resource, 0u, abNull, &mapping)) ? mapping : abNull);
 }
 
-void abGPU_Buffer_Unmap(abGPU_Buffer * buffer, void * mapping, unsigned int const writtenOffsetAndSize[2]) {
+void abGPU_Buffer_Unmap(abGPU_Buffer * buffer, void * mapping, unsigned int const writtenOffsetAndSize[2u]) {
 	if (mapping == abNull) {
 		return;
 	}

@@ -9,7 +9,7 @@ ID3D12Device * abGPUi_D3D_Device = abNull;
 ID3D12CommandQueue * abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count] = { 0 };
 
 void abGPUi_D3D_SetObjectName(void * object, abGPUi_D3D_ObjectNameSetter setter, abTextU8 const * name) {
-	if (name == abNull || name[0] == '\0') {
+	if (name == abNull || name[0u] == '\0') {
 		return;
 	}
 	size_t nameU16Size = abTextU8_LengthInU16(name) + 1u;

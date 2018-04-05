@@ -83,7 +83,7 @@ typedef unsigned char abBool; // In case any C++ code needs to interact with C c
 
 // Static array length.
 
-#define abArrayLength(arr) (sizeof(arr) / (sizeof((arr)[0])))
+#define abArrayLength(arr) (sizeof(arr) / (sizeof((arr)[0u])))
 
 // Stack allocation.
 

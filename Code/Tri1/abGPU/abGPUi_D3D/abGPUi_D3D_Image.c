@@ -329,7 +329,7 @@ void abGPU_Image_Upload(abGPU_Image * image, abGPU_Image_Slice slice,
 }
 
 void abGPU_Image_UploadEnd(abGPU_Image * image, abGPU_Image_Slice slice,
-		void * mapping, unsigned int const writtenOffsetAndSize[2]) {
+		void * mapping, unsigned int const writtenOffsetAndSize[2u]) {
 	if (!(image->options & abGPU_Image_Options_Upload)) {
 		return;
 	}
