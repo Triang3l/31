@@ -5,6 +5,7 @@
 /*
  * An abstraction for memory allocation, inspired by the Qfusion engine <3
  * Handles allocation failures (by crashing), 16 byte alignment and zero sizes (gracefully, as different pointers).
+ * Apart from aligning the offset, it also 16-aligns the size, so there's some area for things like vec4 writes of float arrays.
  * Also allows for destruction of all allocations at once by destroying a tag.
  */
 

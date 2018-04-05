@@ -68,10 +68,11 @@ void abMemory_Tag_Destroy(abMemory_Tag * tag) {
 void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, abBool align16, char const * fileName, unsigned int fileLine) {
 	abMemory_Allocation * allocation;
 	// Malloc gives 16-aligned blocks on 64-bit platforms, 8-aligned on 32-bit.
+	// Also add some padding, for instance, for uint64_t/vec4 writes.
 	#ifdef abPlatform_CPU_64Bit
-	allocation = malloc(sizeof(abMemory_Allocation) + size);
+	allocation = malloc(sizeof(abMemory_Allocation) + abAlign(size, (size_t) 16u));
 	#else
-	allocation = malloc(sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + size);
+	allocation = malloc(sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + abAlign(size, (size_t) 16u));
 	#endif
 	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoAlloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
@@ -117,7 +118,6 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 	if (wasPadded) {
 		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
 	}
-	size_t oldSize = allocation->size;
 	#endif
 	abBool align16 = (allocation->locationMark == abMemory_Allocation_LocationMark_Here16);
 	if (!align16 && allocation->locationMark != abMemory_Allocation_LocationMark_Here8) {
@@ -125,12 +125,18 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 				"Tried to reallocate memory that wasn't allocated with abMemory_Alloc at %s:%u.", fileName, fileLine);
 	}
 
+	size_t oldSize = allocation->size;
+	size_t paddedSize = abAlign(size, (size_t) 16u); // Same padding as in DoAlloc.
+	if (paddedSize == abAlign(oldSize, (size_t) 16u)) {
+		return memory; // Not resizing.
+	}
+
 	abMemory_Tag * tag = allocation->tag;
 	abParallel_Mutex_Lock(&tag->mutex);
 	#ifdef abPlatform_CPU_64Bit
-	allocation = realloc(allocation, sizeof(abMemory_Allocation) + size);
+	allocation = realloc(allocation, sizeof(abMemory_Allocation) + paddedSize);
 	#else
-	allocation = realloc(allocation, sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + size);
+	allocation = realloc(allocation, sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + paddedSize);
 	#endif
 	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
