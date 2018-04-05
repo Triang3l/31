@@ -176,7 +176,7 @@ abBool abGPU_RTConfig_Register(abGPU_RTConfig * config, abTextU8 const * name, a
 	return abTrue;
 }
 
-static abBool abGPUi_D3D_DisplayChain_InitImages(abGPU_DisplayChain * chain, abGPU_Image_Format format) {
+static abBool abGPUi_D3D_DisplayChain_Prepare(abGPU_DisplayChain * chain, abTextU8 const * name, abGPU_Image_Format format) {
 	for (unsigned int imageIndex = 0u; imageIndex < chain->imageCount; ++imageIndex) {
 		ID3D12Resource * resource;
 		if (FAILED(IDXGISwapChain3_GetBuffer(chain->i_swapChain, imageIndex, &IID_ID3D12Resource, &resource))) {
@@ -185,7 +185,24 @@ static abBool abGPUi_D3D_DisplayChain_InitImages(abGPU_DisplayChain * chain, abG
 		}
 		abGPUi_D3D_Image_InitForSwapChainBuffer(&chain->images[imageIndex], resource, format);
 	}
-	return (chain->imageCount != 0u ? abTrue : abFalse);
+	if (chain->imageCount == 0u) {
+		return abFalse;
+	}
+	if (name != abNull && name[0u] != '\0') {
+		size_t nameU16Length = abTextU8_LengthInU16(name);
+		abTextU16 * nameU16 = abStackAlloc((nameU16Length + 4u) * sizeof(abTextU16));
+		abTextU16_FromU8(nameU16, nameU16Length + 1u, name);
+		IDXGISwapChain3_SetPrivateData(chain->i_swapChain, &WKPDID_D3DDebugObjectNameW, (UINT) (nameU16Length * sizeof(abTextU16)), nameU16);
+		nameU16[nameU16Length] = '[';
+		nameU16[nameU16Length + 2u] = ']';
+		nameU16[nameU16Length + 3u] = '\0';
+		for (unsigned int imageIndex = 0u; imageIndex < chain->imageCount; ++imageIndex) {
+			nameU16[nameU16Length + 1u] = '0' + imageIndex;
+			ID3D12Resource * imageResource = chain->images[imageIndex].i_resource;
+			ID3D12Resource_SetName(imageResource, nameU16);
+		}
+	}
+	return abTrue;
 }
 
 #if defined(abPlatform_OS_WindowsDesktop)
@@ -218,7 +235,7 @@ abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, abTextU
 		return abFalse;
 	}
 	chain->imageCount = imageCount;
-	if (!abGPUi_D3D_DisplayChain_InitImages(chain, format)) {
+	if (!abGPUi_D3D_DisplayChain_Prepare(chain, name, format)) {
 		IDXGISwapChain3_Release(chain->i_swapChain);
 		return abFalse;
 	}

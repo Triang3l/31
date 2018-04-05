@@ -128,7 +128,7 @@ size_t abTextU16_Copy(abTextU16 * target, size_t targetSize, abTextU16 const * s
 		--targetSize;
 		abTextU32 cp;
 		while (targetSize != 0u && (cp = abTextU16_NextCP(&source)) != '\0') {
-			unsigned int written = abTextU16_WriteCP(target, targetSize, cp);
+			unsigned int written = abTextU16_WriteCP_Valid(target, targetSize, cp);
 			if (written == 0u) {
 				break;
 			}
@@ -146,7 +146,7 @@ size_t abTextU16_FromU8(abTextU16 * target, size_t targetSize, abTextU8 const * 
 		--targetSize;
 		abTextU32 cp;
 		while (targetSize != 0u && (cp = abTextU8_NextCP(&source)) != '\0') {
-			unsigned int written = abTextU16_WriteCP(target, targetSize, cp);
+			unsigned int written = abTextU16_WriteCP_Valid(target, targetSize, cp);
 			if (written == 0u) {
 				break;
 			}

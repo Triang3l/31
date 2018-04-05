@@ -21,6 +21,7 @@
  * abText_InvalidSubstitute replaces corrupt code points when reading UTF-8 and UTF-16 strings.
  * In all encodings, invalid code points are those above 0x10ffff, surrogate pair indicators (0xd800 to 0xdfff) and the last 2 in each plane.
  * Zero terminator is considered valid.
+ * _Valid functions assume that a pre-validated code point has been passed to them (as an optimization).
  */
 
 typedef char abTextU8; // So ASCII and UTF-8 literals can be written the same way.
