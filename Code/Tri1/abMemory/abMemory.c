@@ -107,36 +107,50 @@ void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, abBool align16, char co
 	return data;
 }
 
+abMemory_Allocation * abMemory_GetAllocation(void * memory) {
+	if (memory == abNull) {
+		return abNull;
+	}
+	abMemory_Allocation * allocation = ((abMemory_Allocation *) memory - 1u);
+	#ifndef abPlatform_CPU_64Bit
+	if (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes) {
+		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
+	}
+	#endif
+	if (allocation->locationMark != abMemory_Allocation_LocationMark_Here8 &&
+			allocation->locationMark != abMemory_Allocation_LocationMark_Here16) {
+		return abNull;
+	}
+	return allocation;
+}
+
 void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, unsigned int fileLine) {
 	if (memory == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc", "Tried to reallocate null memory at %s:%u.", fileName, fileLine);
 	}
 
-	abMemory_Allocation * allocation = ((abMemory_Allocation *) memory - 1u);
-	#ifndef abPlatform_CPU_64Bit
-	abBool wasPadded = (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes);
-	if (wasPadded) {
-		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
-	}
-	#endif
-	abBool align16 = (allocation->locationMark == abMemory_Allocation_LocationMark_Here16);
-	if (!align16 && allocation->locationMark != abMemory_Allocation_LocationMark_Here8) {
+	abMemory_Allocation * allocation = abMemory_GetAllocation(memory);
+	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc",
 				"Tried to reallocate memory that wasn't allocated with abMemory_Alloc at %s:%u.", fileName, fileLine);
 	}
 
+	#ifndef abPlatform_CPU_64Bit
+	abBool align16 = (allocation->locationMark == abMemory_Allocation_LocationMark_Here16);
+	abBool wasPadded = (((size_t) (allocation + 1u) & 15u) != 0u);
+	#endif
 	size_t oldSize = allocation->size;
-	size_t paddedSize = abAlign(size, (size_t) 16u); // Same padding as in DoAlloc.
-	if (paddedSize == abAlign(oldSize, (size_t) 16u)) {
+	size_t alignedSize = abAlign(size, (size_t) 16u); // Same padding as in DoAlloc.
+	if (alignedSize == abAlign(oldSize, (size_t) 16u)) {
 		return memory; // Not resizing.
 	}
 
 	abMemory_Tag * tag = allocation->tag;
 	abParallel_Mutex_Lock(&tag->mutex);
 	#ifdef abPlatform_CPU_64Bit
-	allocation = realloc(allocation, sizeof(abMemory_Allocation) + paddedSize);
+	allocation = realloc(allocation, sizeof(abMemory_Allocation) + alignedSize);
 	#else
-	allocation = realloc(allocation, sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + paddedSize);
+	allocation = realloc(allocation, sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + alignedSize);
 	#endif
 	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
@@ -182,14 +196,8 @@ void abMemory_Free(void * memory) {
 		return;
 	}
 
-	abMemory_Allocation * allocation = ((abMemory_Allocation *) memory - 1u);
-	#ifndef abPlatform_CPU_64Bit
-	if (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes) {
-		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
-	}
-	#endif
-	if (allocation->locationMark != abMemory_Allocation_LocationMark_Here16 &&
-			allocation->locationMark != abMemory_Allocation_LocationMark_Here8) {
+	abMemory_Allocation * allocation = abMemory_GetAllocation(memory);
+	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_Free", "Tried to free memory that wasn't allocated with abMemory_Alloc.");
 	}
 
