@@ -11,6 +11,10 @@ static abForceInline uint32_t * abHashMapi_GetNextIndices(abHashMap * hashMap) {
 	return (uint32_t *) hashMap->memory + hashMap->capacity;
 }
 
+static abForceInline void * abHashMapi_GetKey(abHashMap * hashMap, unsigned int index) {
+	return (uint8_t *) abHashMap_GetKeys(hashMap) + (size_t) index * hashMap->keySize;
+}
+
 unsigned int abHashMap_FindIndexRead(abHashMap * hashMap, void const * key) {
 	if (hashMap->count == 0u) {
 		return abHashMap_InvalidIndex;
@@ -56,8 +60,7 @@ static void abHashMapi_ChangeCapacity(abHashMap * hashMap, unsigned int newCapac
 		memcpy(abHashMap_GetValues(hashMap), oldValues, (size_t) count * hashMap->valueSize);
 
 		unsigned int hashMask = newCapacity - 1u;
-		unsigned int * newIndices = abHashMapi_GetIndices(hashMap);
-		unsigned int * newNextIndices = abHashMapi_GetNextIndices(hashMap);
+		unsigned int * newIndices = abHashMapi_GetIndices(hashMap), * newNextIndices = abHashMapi_GetNextIndices(hashMap);
 		for (unsigned int index = 0u; index < count; ++index) {
 			unsigned int * indexLocation = &newIndices[keyLocator->hashKey(newKeys + (size_t) index * keySize, keySize) & hashMask];
 			newNextIndices[index] = *indexLocation;
@@ -104,4 +107,44 @@ unsigned int abHashMap_FindIndexWrite(abHashMap * hashMap, void const * key, abB
 		*isNew = abTrue;
 	}
 	return index;
+}
+
+void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index) {
+	if (index >= hashMap->count) {
+		return;
+	}
+
+	abHashMap_KeyLocator const * keyLocator = hashMap->keyLocator;
+	unsigned int * indices = abHashMapi_GetIndices(hashMap), * nextIndices = abHashMapi_GetNextIndices(hashMap);
+
+	void * key = abHashMapi_GetKey(hashMap, index);
+	unsigned int * indexLocation = &(indices[keyLocator->hashKey(key, hashMap->keySize) & (hashMap->capacity - 1u)]);
+	if (*indexLocation == index) {
+		*indexLocation = nextIndices[index];
+	} else {
+		unsigned int previous = *indexLocation;
+		while (nextIndices[previous] != index) {
+			previous = nextIndices[previous];
+		}
+		nextIndices[previous] = nextIndices[index];
+	}
+
+	if (index + 1u < hashMap->count) {
+		// Move the last entry to the free space.
+		unsigned int lastIndex = hashMap->count - 1u;
+		void * lastKey = abHashMapi_GetKey(hashMap, lastIndex);
+		unsigned int * lastIndexLocation = &(indices[keyLocator->hashKey(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);
+		memcpy(key, lastKey, hashMap->keySize);
+		memcpy(abHashMapi_GetValue(hashMap, index), abHashMapi_GetValue(hashMap, lastIndex), hashMap->valueSize);
+		if (*lastIndexLocation == lastIndex) {
+			*lastIndexLocation = index;
+		} else {
+			unsigned int previous = *lastIndexLocation;
+			while (nextIndices[previous] != index) {
+				previous = nextIndices[previous];
+			}
+			nextIndices[previous] = index;
+		}
+		--(hashMap->count);
+	}
 }

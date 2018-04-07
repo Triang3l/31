@@ -77,6 +77,8 @@ inline void * abHashMap_FindWrite(abHashMap * hashMap, void const * key, /* opti
 	return abHashMap_GetValue(hashMap, abHashMap_FindIndexWritten(hashMap, key, isNew));
 }
 
+void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index);
+
 abForceInline abHashMap_Destroy(abHashMap * hashMap) {
 	abMemory_Free(hashMap->memory);
 }
