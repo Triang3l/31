@@ -1,6 +1,5 @@
 #ifndef abInclude_abGPU
 #define abInclude_abGPU
-
 #include "../abMath/abBit.h"
 #include "../abData/abText.h"
 
