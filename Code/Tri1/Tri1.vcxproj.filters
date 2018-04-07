@@ -102,6 +102,9 @@
     <ClInclude Include="abData\abText.h">
       <Filter>Header Files\abData</Filter>
     </ClInclude>
+    <ClInclude Include="abData\abHashMap.h">
+      <Filter>Header Files\abData</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abMath\abVec4.c">
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="abParallel\abParallel_Windows.c">
       <Filter>Source Files\abParallel</Filter>
+    </ClCompile>
+    <ClCompile Include="abData\abHashMap.c">
+      <Filter>Source Files\abData</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

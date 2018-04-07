@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="abCommon.h" />
     <ClInclude Include="abCore\abCore.h" />
+    <ClInclude Include="abData\abHashMap.h" />
     <ClInclude Include="abData\abText.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />
     <ClInclude Include="abGPU\abGPU.h" />
@@ -147,6 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abCore\abCore.c" />
+    <ClCompile Include="abData\abHashMap.c" />
     <ClCompile Include="abData\abText.c" />
     <ClCompile Include="abFeedback\abFeedback.c" />
     <ClCompile Include="abGPU\abGPU.c" />
