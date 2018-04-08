@@ -44,8 +44,8 @@ abForceInline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag,
 		abHashMap_KeyLocator const * keyLocator, size_t keySize, size_t valueSize, unsigned int minimumCapacity) {
 	hashMap->memoryTag = memoryTag;
 	hashMap->keyLocator = keyLocator;
-	hashMap->keySize = keySize;
-	hashMap->valueSize = valueSize;
+	hashMap->keySize = (unsigned int) keySize;
+	hashMap->valueSize = (unsigned int) valueSize;
 	hashMap->capacity = 0u;
 	minimumCapacity = abClamp(minimumCapacity, 8u, (unsigned int) INT_MAX + 1u);
 	if ((minimumCapacity & (minimumCapacity - 1u)) != 0u) { // Round up to a power of 2.
@@ -74,10 +74,11 @@ inline void * abHashMap_FindRead(abHashMap * hashMap, void const * key) {
 
 unsigned int abHashMap_FindIndexWrite(abHashMap * hashMap, void const * key, /* optional */ abBool * isNew);
 inline void * abHashMap_FindWrite(abHashMap * hashMap, void const * key, /* optional */ abBool * isNew) {
-	return abHashMap_GetValue(hashMap, abHashMap_FindIndexWritten(hashMap, key, isNew));
+	return abHashMap_GetValue(hashMap, abHashMap_FindIndexWrite(hashMap, key, isNew));
 }
 
 void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index);
+abBool abHashMap_Remove(abHashMap * hashMap, void const * key);
 
 abForceInline abHashMap_Destroy(abHashMap * hashMap) {
 	abMemory_Free(hashMap->memory);
