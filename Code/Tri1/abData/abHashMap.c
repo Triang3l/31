@@ -33,10 +33,7 @@ unsigned int abHashMap_FindIndexRead(abHashMap * hashMap, void const * key) {
 	unsigned int keySize = hashMap->keySize;
 
 	// Resolve collisions.
-	while (index != abHashMap_InvalidIndex) {
-		if (keyLocator->compareKeys(keys + (size_t) index * keySize, key, keySize)) {
-			return index;
-		}
+	while (index != abHashMap_InvalidIndex && !keyLocator->compareKeys(keys + (size_t) index * keySize, key, keySize)) {
 		index = nextIndices[index];
 	}
 	return index;
