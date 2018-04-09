@@ -138,6 +138,7 @@
     <ClInclude Include="abData\abHashMap.h" />
     <ClInclude Include="abData\abText.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />
+    <ClInclude Include="abFile\abFile_Mapping.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
     <ClInclude Include="abMath\abBit.h" />
@@ -151,6 +152,7 @@
     <ClCompile Include="abData\abHashMap.c" />
     <ClCompile Include="abData\abText.c" />
     <ClCompile Include="abFeedback\abFeedback.c" />
+    <ClCompile Include="abFile\abFile_Mapping.c" />
     <ClCompile Include="abGPU\abGPU.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Buffer.c" />

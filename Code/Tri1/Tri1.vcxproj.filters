@@ -67,6 +67,12 @@
     <Filter Include="Source Files\abParallel">
       <UniqueIdentifier>{c1d38475-bf3f-4029-8224-e30bd1c63fa6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\abFile">
+      <UniqueIdentifier>{3e6ee8d0-818c-46f0-ada7-af64c0c81228}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\abFile">
+      <UniqueIdentifier>{d7fb5293-c11e-4438-8bd7-904b41ff2be4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -104,6 +110,9 @@
     </ClInclude>
     <ClInclude Include="abData\abHashMap.h">
       <Filter>Header Files\abData</Filter>
+    </ClInclude>
+    <ClInclude Include="abFile\abFile_Mapping.h">
+      <Filter>Header Files\abFile</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +175,9 @@
     </ClCompile>
     <ClCompile Include="abData\abHashMap.c">
       <Filter>Source Files\abData</Filter>
+    </ClCompile>
+    <ClCompile Include="abFile\abFile_Mapping.c">
+      <Filter>Source Files\abFile</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
