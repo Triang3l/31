@@ -17,10 +17,10 @@ typedef enum abMemory_Allocation_LocationMark {
 	abMemory_Allocation_LocationMark_Back8Bytes = 0xabb8u // The real structure is 8 bytes before, this is alignment padding.
 } abMemory_Allocation_LocationMark;
 
-#ifdef abPlatform_CPU_64Bit
-typedef struct abAligned(16u) abMemory_Allocation {
-#else
+#ifdef abPlatform_CPU_32Bit
 typedef struct abAligned(8u) abMemory_Allocation {
+#else
+typedef struct abAligned(16u) abMemory_Allocation {
 #endif
 	struct abMemory_Tag * tag; // 4 (32-bit) / 8 (64-bit) bytes.
 	struct abMemory_Allocation * inTagPrevious, * inTagNext; // 12/24 bytes, protected by the tag's mutex.

@@ -69,10 +69,10 @@ void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, abBool align16, char co
 	abMemory_Allocation * allocation;
 	// Malloc gives 16-aligned blocks on 64-bit platforms, 8-aligned on 32-bit.
 	// Also add some padding, for instance, for uint64_t/vec4 writes.
-	#ifdef abPlatform_CPU_64Bit
-	allocation = malloc(sizeof(abMemory_Allocation) + abAlign(size, (size_t) 16u));
-	#else
+	#ifdef abPlatform_CPU_32Bit
 	allocation = malloc(sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + abAlign(size, (size_t) 16u));
+	#else
+	allocation = malloc(sizeof(abMemory_Allocation) + abAlign(size, (size_t) 16u));
 	#endif
 	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoAlloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
@@ -84,7 +84,7 @@ void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, abBool align16, char co
 	allocation->locationMark = (align16 ? abMemory_Allocation_LocationMark_Here16 : abMemory_Allocation_LocationMark_Here8);
 
 	void * data = allocation + 1u;
-	#ifndef abPlatform_CPU_64Bit
+	#ifdef abPlatform_CPU_32Bit
 	if (align16 && ((size_t) data & 8u) != 0u) {
 		// Add a padding between the allocation info and the data.
 		((abMemory_Allocation *) ((uint8_t *) allocation + 8u))->locationMark = abMemory_Allocation_LocationMark_Back8Bytes;
@@ -112,7 +112,7 @@ abMemory_Allocation * abMemory_GetAllocation(void * memory) {
 		return abNull;
 	}
 	abMemory_Allocation * allocation = ((abMemory_Allocation *) memory - 1u);
-	#ifndef abPlatform_CPU_64Bit
+	#ifdef abPlatform_CPU_32Bit
 	if (allocation->locationMark == abMemory_Allocation_LocationMark_Back8Bytes) {
 		allocation = (abMemory_Allocation *) ((uint8_t *) allocation - 8u);
 	}
@@ -135,7 +135,7 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 				"Tried to reallocate memory that wasn't allocated with abMemory_Alloc at %s:%u.", fileName, fileLine);
 	}
 
-	#ifndef abPlatform_CPU_64Bit
+	#ifdef abPlatform_CPU_32Bit
 	abBool align16 = (allocation->locationMark == abMemory_Allocation_LocationMark_Here16);
 	abBool wasPadded = (((size_t) (allocation + 1u) & 15u) != 0u);
 	#endif
@@ -147,10 +147,10 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 
 	abMemory_Tag * tag = allocation->tag;
 	abParallel_Mutex_Lock(&tag->mutex);
-	#ifdef abPlatform_CPU_64Bit
-	allocation = realloc(allocation, sizeof(abMemory_Allocation) + alignedSize);
-	#else
+	#ifdef abPlatform_CPU_32Bit
 	allocation = realloc(allocation, sizeof(abMemory_Allocation) + (align16 ? 8u : 0u) + alignedSize);
+	#else
+	allocation = realloc(allocation, sizeof(abMemory_Allocation) + alignedSize);
 	#endif
 	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc", "Failed to allocate %zu bytes with tag %s at %s:%u.", size, tag->name, fileName, fileLine);
@@ -172,7 +172,7 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 	abParallel_Mutex_Unlock(&tag->mutex);
 
 	void * data = allocation + 1u;
-	#ifndef abPlatform_CPU_64Bit
+	#ifdef abPlatform_CPU_32Bit
 	if (align16) {
 		// If the data was 16-aligned previously, but is 8-aligned now, realign it.
 		if (((size_t) data & 8u) != 0u) {
