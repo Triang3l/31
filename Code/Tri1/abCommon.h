@@ -37,10 +37,16 @@ typedef unsigned char abBool; // In case any C++ code needs to interact with C c
 #error Unsupported target CPU.
 #endif
 
-#if defined(abPlatform_CPU_x86_64)
+#if defined(abPlatform_CPU_x86_64) || defined(abPlatform_CPU_Arm_64)
 #define abPlatform_CPU_64Bit 1
 #else
 #define abPlatform_CPU_32Bit 1
+#endif
+
+#if defined(abPlatform_CPU_x86) || defined(abPlatform_CPU_Arm)
+#define abPlatform_CPU_EndianLittle 1
+#else
+#error Endianness not known for the target CPU.
 #endif
 
 // Operating system.
