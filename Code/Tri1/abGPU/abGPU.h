@@ -120,10 +120,16 @@ typedef enum abGPU_Image_Format {
 	abGPU_Image_Format_Invalid, // Zero.
 
 		abGPU_Image_Format_RawLDRStart,
-	abGPU_Image_Format_R8G8B8A8 = abGPU_Image_Format_RawLDRStart,
+	abGPU_Image_Format_R8 = abGPU_Image_Format_RawLDRStart,
+	abGPU_Image_Format_R8G8,
+	abGPU_Image_Format_R8G8B8A8,
 	abGPU_Image_Format_R8G8B8A8_sRGB,
 	abGPU_Image_Format_R8G8B8A8_Signed,
-		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_R8G8B8A8_Signed,
+	abGPU_Image_Format_B8G8R8A8,
+	abGPU_Image_Format_B8G8R8A8_sRGB,
+	abGPU_Image_Format_B5G5R5A1,
+	abGPU_Image_Format_B5G6R5,
+		abGPU_Image_Format_RawLDREnd = abGPU_Image_Format_B5G6R5,
 
 		abGPU_Image_Format_4x4Start,
 	abGPU_Image_Format_S3TC_A1 = abGPU_Image_Format_4x4Start,

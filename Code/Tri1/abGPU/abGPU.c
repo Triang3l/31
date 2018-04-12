@@ -8,6 +8,8 @@ abGPU_Image_Format abGPU_Image_Format_ToLinear(abGPU_Image_Format format) {
 	switch (format) {
 	case abGPU_Image_Format_R8G8B8A8_sRGB:
 		return abGPU_Image_Format_R8G8B8A8;
+	case abGPU_Image_Format_B8G8R8A8_sRGB:
+		return abGPU_Image_Format_B8G8R8A8;
 	case abGPU_Image_Format_S3TC_A1_sRGB:
 		return abGPU_Image_Format_S3TC_A1;
 	case abGPU_Image_Format_S3TC_A4_sRGB:
@@ -20,9 +22,17 @@ abGPU_Image_Format abGPU_Image_Format_ToLinear(abGPU_Image_Format format) {
 
 unsigned int abGPU_Image_Format_GetSize(abGPU_Image_Format format) {
 	switch (format) {
+	case abGPU_Image_Format_R8:
+		return 1u;
+	case abGPU_Image_Format_R8G8:
+	case abGPU_Image_Format_B5G5R5A1:
+	case abGPU_Image_Format_B5G6R5:
+		return 2u;
 	case abGPU_Image_Format_R8G8B8A8:
 	case abGPU_Image_Format_R8G8B8A8_sRGB:
 	case abGPU_Image_Format_R8G8B8A8_Signed:
+	case abGPU_Image_Format_B8G8R8A8:
+	case abGPU_Image_Format_B8G8R8A8_sRGB:
 	case abGPU_Image_Format_D32:
 	case abGPU_Image_Format_D24S8: // Stencil plane is a very special thing, so not counting it.
 		return 4u;
