@@ -109,7 +109,7 @@ unsigned int abTextU16_WriteCP_Valid(abTextU16 * target, size_t targetSize, abTe
 	if (targetSize == 0u) {
 		return 0u;
 	}
-	if ((cp >> 16u) == 0u) {
+	if ((cp >> 16u) != 0u) {
 		if (targetSize <= 1u) {
 			return 0u;
 		}
