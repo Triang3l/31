@@ -64,8 +64,40 @@ typedef struct abFile_ImageDDS_Header {
 	uint32_t reserved2;
 } abFile_ImageDDS_Header;
 
+typedef uint32_t abFile_ImageDDS_DXGIFormat;
+// Listing only formats supported by abGPU_Image.
+enum {
+	abFile_ImageDDS_DXGIFormat_R8G8B8A8_UNorm = 28u,
+	abFile_ImageDDS_DXGIFormat_R8G8B8A8_UNorm_sRGB = 29u,
+	abFile_ImageDDS_DXGIFormat_R8G8B8A8_SNorm = 31u,
+	abFile_ImageDDS_DXGIFormat_R8G8_UNorm = 49u,
+	abFile_ImageDDS_DXGIFormat_R8_UNorm = 61u,
+	abFile_ImageDDS_DXGIFormat_BC1_UNorm = 71u,
+	abFile_ImageDDS_DXGIFormat_BC1_UNorm_sRGB = 72u,
+	abFile_ImageDDS_DXGIFormat_BC2_UNorm = 74u,
+	abFile_ImageDDS_DXGIFormat_BC2_UNorm_sRGB = 75u,
+	abFile_ImageDDS_DXGIFormat_BC3_UNorm = 77u,
+	abFile_ImageDDS_DXGIFormat_BC3_UNorm_sRGB = 78u,
+	abFile_ImageDDS_DXGIFormat_BC4_UNorm = 80u,
+	abFile_ImageDDS_DXGIFormat_BC4_SNorm = 81u,
+	abFile_ImageDDS_DXGIFormat_BC5_UNorm = 83u,
+	abFile_ImageDDS_DXGIFormat_BC5_SNorm = 84u,
+	abFile_ImageDDS_DXGIFormat_B5G6R5_UNorm = 85u,
+	abFile_ImageDDS_DXGIFormat_B5G5R5A1_UNorm = 86u,
+	abFile_ImageDDS_DXGIFormat_B8G8R8A8_UNorm = 87u,
+	abFile_ImageDDS_DXGIFormat_B8G8R8A8_UNorm_sRGB = 91u,
+		abFile_ImageDDS_DXGIFormat_CountKnown
+};
+
+typedef uint32_t abFile_ImageDDS_Dimension;
+enum {
+	abFile_ImageDDS_Dimension_Texture1D = 2u,
+	abFile_ImageDDS_Dimension_Texture2D,
+	abFile_ImageDDS_Dimension_Texture3D
+};
+
 typedef struct abFile_ImageDDS_HeaderDXT10 {
-	uint32_t dxgiFormat;
+	abFile_ImageDDS_DXGIFormat dxgiFormat;
 	uint32_t dimension;
 	uint32_t miscFlags;
 	uint32_t arraySize;
