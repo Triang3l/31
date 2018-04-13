@@ -99,18 +99,20 @@ static void abGPUi_D3D_Image_FillTextureDesc(abGPU_Image_Options options,
 	}
 }
 
-void abGPU_Image_GetMaxSize(abGPU_Image_Options dimensionOptions, unsigned int * wh, unsigned int * d) {
+void abGPU_Image_GetMaxSupportedSize(abGPU_Image_Options dimensionOptions, unsigned int * wh, unsigned int * d) {
 	unsigned int maxWH, maxD;
 	if (dimensionOptions & abGPU_Image_Options_3D) {
-		maxWH = maxD = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+		maxWH = maxD = abMin(D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION, abGPU_Image_MaxAbsoluteSize3D);
 	} else {
 		maxWH = ((dimensionOptions & abGPU_Image_Options_Cube) ?
-				D3D12_REQ_TEXTURECUBE_DIMENSION : D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+				abMin(D3D12_REQ_TEXTURECUBE_DIMENSION, abGPU_Image_MaxAbsoluteSize2DCube) :
+				abMin(D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION, abGPU_Image_MaxAbsoluteSize2DCube));
 		if (dimensionOptions & abGPU_Image_Options_Array) {
 			maxD = ((dimensionOptions & abGPU_Image_Options_Cube) ?
-					D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / 6u : D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION);
+					abMin(D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / 6u, abGPU_Image_MaxAbsoluteArraySizeCube) :
+					abMin(D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION, abGPU_Image_MaxAbsoluteArraySize2D));
 		} else {
-			maxD = 1;
+			maxD = 1u;
 		}
 	}
 	if (wh != abNull) {
@@ -161,7 +163,7 @@ abBool abGPU_Image_Init(abGPU_Image * image, abTextU8 const * name, abGPU_Image_
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format,
 		abGPU_Image_Usage initialUsage, abGPU_Image_Texel const * clearValue) {
 	options = abGPU_Image_Options_Normalize(options);
-	abGPU_Image_ClampSizeToMax(options, &w, &h, &d, &mips);
+	abGPU_Image_ClampSizeToSupportedMax(options, &w, &h, &d, &mips);
 
 	D3D12_RESOURCE_DESC desc;
 	abGPUi_D3D_Image_FillTextureDesc(options, w, h, d, mips, format, &desc);
@@ -241,7 +243,7 @@ void abGPUi_D3D_Image_InitForSwapChainBuffer(abGPU_Image * image, ID3D12Resource
 abBool abGPU_Image_RespecifyUploadBuffer(abGPU_Image * image, abGPU_Image_Options dimensionOptions,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format) {
 	dimensionOptions = abGPU_Image_Options_Normalize((dimensionOptions & abGPU_Image_Options_DimensionsMask) | abGPU_Image_Options_Upload);
-	abGPU_Image_ClampSizeToMax(dimensionOptions, &w, &h, &d, &mips);
+	abGPU_Image_ClampSizeToSupportedMax(dimensionOptions, &w, &h, &d, &mips);
 	D3D12_RESOURCE_DESC desc;
 	abGPUi_D3D_Image_FillTextureDesc(dimensionOptions, w, h, d, mips, format, &desc);
 	if (desc.Format == DXGI_FORMAT_UNKNOWN || abGPUi_D3D_Image_CalculateMemoryUsageForDesc(&desc) > image->memoryUsage) {

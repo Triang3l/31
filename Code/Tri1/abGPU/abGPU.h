@@ -239,6 +239,14 @@ typedef enum abGPU_Image_Comparison {
 	abGPU_Image_Comparison_Always = abGPU_Image_Comparison_Equal | abGPU_Image_Comparison_NotEqual
 } abGPU_Image_Comparison;
 
+// These are hard engine limits, independent from the implementation, mostly to prevent overflows in loading.
+#define abGPU_Image_MaxAbsoluteMips2DCube 15u
+#define abGPU_Image_MaxAbsoluteMips3D 12u
+#define abGPU_Image_MaxAbsoluteSize2DCube (1u << (abGPU_Image_MaxAbsoluteMips2DCube - 1u))
+#define abGPU_Image_MaxAbsoluteSize3D (1u << (abGPU_Image_MaxAbsoluteMips3D - 1u))
+#define abGPU_Image_MaxAbsoluteArraySize2D 2048u
+#define abGPU_Image_MaxAbsoluteArraySizeCube (abGPU_Image_MaxAbsoluteArraySize2D / 6u)
+
 abForceInline unsigned int abGPU_Image_CalculateMipCount(abGPU_Image_Options dimensionOptions,
 		unsigned int w, unsigned int h, unsigned int d) {
 	unsigned int size = abMax(w, h);
@@ -249,13 +257,13 @@ abForceInline unsigned int abGPU_Image_CalculateMipCount(abGPU_Image_Options dim
 }
 
 // Clamps to [1, max].
-void abGPU_Image_ClampSizeToMax(abGPU_Image_Options dimensionOptions,
+void abGPU_Image_ClampSizeToSupportedMax(abGPU_Image_Options dimensionOptions,
 		unsigned int * w, unsigned int * h, unsigned int * d, /* optional */ unsigned int * mips);
 
 /*
  * Implementation functions.
  */
-void abGPU_Image_GetMaxSize(abGPU_Image_Options dimensionOptions,
+void abGPU_Image_GetMaxSupportedSize(abGPU_Image_Options dimensionOptions,
 		/* optional */ unsigned int * wh, /* optional */ unsigned int * d);
 unsigned int abGPU_Image_CalculateMemoryUsage(abGPU_Image_Options options,
 		unsigned int w, unsigned int h, unsigned int d, unsigned int mips, abGPU_Image_Format format);

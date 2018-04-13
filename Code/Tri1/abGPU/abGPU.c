@@ -52,10 +52,10 @@ unsigned int abGPU_Image_Format_GetSize(abGPU_Image_Format format) {
 	return 0u; // This shouldn't happen!
 }
 
-void abGPU_Image_ClampSizeToMax(abGPU_Image_Options dimensionOptions,
+void abGPU_Image_ClampSizeToSupportedMax(abGPU_Image_Options dimensionOptions,
 		unsigned int *w, unsigned int *h, unsigned int *d, unsigned int *mips) {
 	unsigned int maxWH, maxD;
-	abGPU_Image_GetMaxSize(dimensionOptions, &maxWH, &maxD);
+	abGPU_Image_GetMaxSupportedSize(dimensionOptions, &maxWH, &maxD);
 	*w = abClamp(*w, 1u, maxWH);
 	*h = abClamp(*h, 1u, maxWH);
 	*d = abClamp(*d, 1u, maxD);
