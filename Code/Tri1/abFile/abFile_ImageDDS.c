@@ -22,7 +22,7 @@ static abGPU_Image_Format const abFilei_ImageDDS_DXGIFormatToImageFormatMap[abFi
 	[abFile_ImageDDS_DXGIFormat_B8G8R8A8_UNorm_sRGB] = abGPU_Image_Format_B8G8R8A8_sRGB
 };
 
-abBool abFile_ImageDDS_Read(void const * dds, uint32_t ddsSize, abGPU_Image_Options * dimensionOptions,
+abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Options * dimensionOptions,
 		unsigned int * w, unsigned int * h, unsigned int * d, unsigned int * mips,
 		abGPU_Image_Format * format, unsigned int * dataOffset) {
 	// Header.
@@ -185,7 +185,7 @@ abBool abFile_ImageDDS_Read(void const * dds, uint32_t ddsSize, abGPU_Image_Opti
 	if (header10 != abNull) {
 		headersSize += sizeof(abFile_ImageDDS_HeaderDXT10);
 	}
-	uint32_t dataSize = ddsSize - headersSize;
+	size_t dataSize = ddsSize - headersSize;
 	unsigned int formatSize = abGPU_Image_Format_GetSize(imageFormat);
 	uint64_t actualDataSize = 0ull;
 	for (unsigned int mip = 0u; mip < mipCount; ++mip) {

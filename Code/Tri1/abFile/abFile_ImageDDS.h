@@ -105,7 +105,7 @@ typedef struct abFile_ImageDDS_HeaderDXT10 {
 } abFile_ImageDDS_HeaderDXT10;
 
 // All outputs are optional. The data is an array (for cubemaps, 6 times as many elements) of mips, with unaligned rows.
-abBool abFile_ImageDDS_Read(void const * dds, uint32_t ddsSize, abGPU_Image_Options * dimensionOptions,
+abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Options * dimensionOptions,
 		unsigned int * w, unsigned int * h, unsigned int * d, unsigned int * mips,
 		abGPU_Image_Format * format, unsigned int * dataOffset);
 
