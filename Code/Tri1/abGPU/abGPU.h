@@ -815,6 +815,7 @@ typedef struct abGPU_CmdList {
 
 abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_CmdQueue queue);
 void abGPU_CmdList_Record(abGPU_CmdList * list);
+void abGPU_CmdList_Abort(abGPU_CmdList * list); // Stops recording without submitting (useful for file loading errors).
 void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount);
 void abGPU_CmdList_Destroy(abGPU_CmdList * list);
 

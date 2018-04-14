@@ -38,6 +38,10 @@ void abGPU_CmdList_Record(abGPU_CmdList * list) {
 	ID3D12GraphicsCommandList_Reset(list->i_list, list->i_allocator, abNull);
 }
 
+void abGPU_CmdList_Abort(abGPU_CmdList * list) {
+	ID3D12GraphicsCommandList_Close(list->i_list);
+}
+
 void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount) {
 	if (listCount == 0u) {
 		return;
