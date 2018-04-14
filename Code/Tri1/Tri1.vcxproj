@@ -140,6 +140,7 @@
     <ClInclude Include="abFeedback\abFeedback.h" />
     <ClInclude Include="abFile\abFile_ImageDDS.h" />
     <ClInclude Include="abFile\abFile_Mapping.h" />
+    <ClInclude Include="abFile\abFile_MeshIQM.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
     <ClInclude Include="abMath\abBit.h" />

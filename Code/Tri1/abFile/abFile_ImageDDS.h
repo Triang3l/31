@@ -2,6 +2,8 @@
 #define abInclude_abFile_ImageDDS
 #include "../abGPU/abGPU.h"
 
+// Public - can be used by tools.
+
 typedef uint32_t abFile_ImageDDS_Flags;
 enum {
 	abFile_ImageDDS_Flags_Caps = 1u << 0u,

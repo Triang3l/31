@@ -117,6 +117,9 @@
     <ClInclude Include="abFile\abFile_ImageDDS.h">
       <Filter>Header Files\abFile</Filter>
     </ClInclude>
+    <ClInclude Include="abFile\abFile_MeshIQM.h">
+      <Filter>Header Files\abFile</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abMath\abVec4.c">
