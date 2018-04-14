@@ -827,4 +827,26 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig);
 void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list);
 
+// Copying.
+#if defined(abBuild_GPUi_D3D)
+#define abGPU_Cmd_CopyingBegin(list) {}
+#define abGPU_Cmd_CopyingEnd(list) {}
+#else
+void abGPU_Cmd_CopyingBegin(abGPU_CmdList * list);
+void abGPU_Cmd_CopyingEnd(abGPU_CmdList * list);
+#endif
+void abGPU_Cmd_CopyBuffer(abGPU_CmdList * list, abGPU_Buffer * target, abGPU_Buffer * source);
+void abGPU_Cmd_CopyBufferRange(abGPU_CmdList * list, abGPU_Buffer * target, unsigned int targetOffset,
+		abGPU_Buffer * source, unsigned int sourceOffset, unsigned int size);
+// For depth/stencil images, only CopyImage or CopyImageDepth must be used - not CopyImageSlice or CopyImageArea!
+void abGPU_Cmd_CopyImage(abGPU_CmdList * list, abGPU_Image * target, abGPU_Image * source);
+void abGPU_Cmd_CopyImageSlice(abGPU_CmdList * list, abGPU_Image * target, abGPU_Image_Slice targetSlice,
+		abGPU_Image * source, abGPU_Image_Slice sourceSlice);
+void abGPU_Cmd_CopyImageDepth(abGPU_CmdList * list, abGPU_Image * target, abGPU_Image_Slice targetSlice,
+		abGPU_Image * source, abGPU_Image_Slice sourceSlice, abBool depth, abBool stencil);
+void abGPU_Cmd_CopyImageArea(abGPU_CmdList * list,
+		abGPU_Image * target, abGPU_Image_Slice targetSlice, unsigned int targetX, unsigned int targetY, unsigned int targetZ,
+		abGPU_Image * source, abGPU_Image_Slice sourceSlice, unsigned int sourceX, unsigned int sourceY, unsigned int sourceZ,
+		unsigned int w, unsigned int h, unsigned int d);
+
 #endif

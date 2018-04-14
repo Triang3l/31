@@ -2,6 +2,10 @@
 #include "abGPUi_D3D.h"
 #include "../../abMath/abBit.h"
 
+/**************************
+ * Command list management
+ **************************/
+
 abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_CmdQueue queue) {
 	D3D12_COMMAND_LIST_TYPE type;
 	switch (queue) {
@@ -72,6 +76,10 @@ void abGPU_CmdList_Destroy(abGPU_CmdList * list) {
 	ID3D12CommandAllocator_Release(list->i_allocator);
 }
 
+/********
+ * Setup
+ ********/
+
 void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list, abGPU_HandleStore * handleStore, abGPU_SamplerStore * samplerStore) {
 	ID3D12DescriptorHeap * heaps[2u];
 	unsigned int heapCount = 0u;
@@ -83,6 +91,10 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list, abGPU_HandleStore
 	}
 	ID3D12GraphicsCommandList_SetDescriptorHeaps(list->i_list, heapCount, heaps);
 }
+
+/**********
+ * Drawing
+ **********/
 
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig) {
 	ID3D12GraphicsCommandList * cmdList = list->i_list;
@@ -131,6 +143,76 @@ void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list) {
 		discardRegion.FirstSubresource = rtConfig->i_subresources[rtIndex];
 		ID3D12GraphicsCommandList_DiscardResource(cmdList, rtConfig->i_resources[rtIndex], &discardRegion);
 	}
+}
+
+/**********
+ * Copying
+ **********/
+
+void abGPU_Cmd_CopyBuffer(abGPU_CmdList * list, abGPU_Buffer * target, abGPU_Buffer * source) {
+	ID3D12GraphicsCommandList_CopyResource(list->i_list, target->i_resource, source->i_resource);
+}
+
+void abGPU_Cmd_CopyBufferRange(abGPU_CmdList * list, abGPU_Buffer const * target, unsigned int targetOffset,
+		abGPU_Buffer const * source, unsigned int sourceOffset, unsigned int size) {
+	ID3D12GraphicsCommandList_CopyBufferRegion(list->i_list, target->i_resource, targetOffset, source->i_resource, sourceOffset, size);
+}
+
+void abGPU_Cmd_CopyImage(abGPU_CmdList * list, abGPU_Image * target, abGPU_Image * source) {
+	ID3D12GraphicsCommandList_CopyResource(list->i_list, target->i_resource, source->i_resource);
+}
+
+static void abGPUi_D3D_Cmd_FillImageCopyLocation(D3D12_TEXTURE_COPY_LOCATION * location,
+		abGPU_Image * image, abGPU_Image_Slice slice, abBool stencil) {
+	location->pResource = image->i_resource;
+	if (image->options & abGPU_Image_Options_Upload) {
+		// Stencil not supported in upload buffers, so don't care about that bit in the slice.
+		location->Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		unsigned int mip = abGPU_Image_Slice_Mip(slice);
+		location->PlacedFootprint.Offset = (((image->options & abGPU_Image_Options_Cube) ? 6u : 1u) * abGPU_Image_Slice_Layer(slice) +
+				abGPU_Image_Slice_Side(slice)) * image->i_layerStride + image->i_mipOffset[mip];
+		location->PlacedFootprint.Footprint.Format = image->i_copyFormat;
+		abGPU_Image_GetMipSize(image, mip, &location->PlacedFootprint.Footprint.Width, &location->PlacedFootprint.Footprint.Height,
+				&location->PlacedFootprint.Footprint.Depth);
+		location->PlacedFootprint.Footprint.RowPitch = image->i_mipRowStride[mip];
+	} else {
+		location->Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		location->SubresourceIndex = abGPUi_D3D_Image_SliceToSubresource(image, slice, stencil);
+	}
+}
+
+void abGPU_Cmd_CopyImageSlice(abGPU_CmdList * list, abGPU_Image * target, abGPU_Image_Slice targetSlice,
+		abGPU_Image * source, abGPU_Image_Slice sourceSlice) {
+	D3D12_TEXTURE_COPY_LOCATION targetLocation, sourceLocation;
+	abGPUi_D3D_Cmd_FillImageCopyLocation(&targetLocation, target, targetSlice, abFalse);
+	abGPUi_D3D_Cmd_FillImageCopyLocation(&sourceLocation, source, sourceSlice, abFalse);
+	ID3D12GraphicsCommandList_CopyTextureRegion(list->i_list, &targetLocation, 0u, 0u, 0u, &sourceLocation, abNull);
+}
+
+void abGPU_Cmd_CopyImageDepth(abGPU_CmdList * list, abGPU_Image * target, abGPU_Image_Slice targetSlice,
+		abGPU_Image * source, abGPU_Image_Slice sourceSlice, abBool depth, abBool stencil) {
+	D3D12_TEXTURE_COPY_LOCATION targetLocation, sourceLocation;
+	if (depth) {
+		abGPUi_D3D_Cmd_FillImageCopyLocation(&targetLocation, target, targetSlice, abFalse);
+		abGPUi_D3D_Cmd_FillImageCopyLocation(&sourceLocation, source, sourceSlice, abFalse);
+		ID3D12GraphicsCommandList_CopyTextureRegion(list->i_list, &targetLocation, 0u, 0u, 0u, &sourceLocation, abNull);
+	}
+	if (stencil) {
+		abGPUi_D3D_Cmd_FillImageCopyLocation(&targetLocation, target, targetSlice, abTrue);
+		abGPUi_D3D_Cmd_FillImageCopyLocation(&sourceLocation, source, sourceSlice, abTrue);
+		ID3D12GraphicsCommandList_CopyTextureRegion(list->i_list, &targetLocation, 0u, 0u, 0u, &sourceLocation, abNull);
+	}
+}
+
+void abGPU_Cmd_CopyImageArea(abGPU_CmdList * list,
+		abGPU_Image * target, abGPU_Image_Slice targetSlice, unsigned int targetX, unsigned int targetY, unsigned int targetZ,
+		abGPU_Image * source, abGPU_Image_Slice sourceSlice, unsigned int sourceX, unsigned int sourceY, unsigned int sourceZ,
+		unsigned int w, unsigned int h, unsigned int d) {
+	D3D12_TEXTURE_COPY_LOCATION targetLocation, sourceLocation;
+	abGPUi_D3D_Cmd_FillImageCopyLocation(&targetLocation, target, targetSlice, abFalse);
+	abGPUi_D3D_Cmd_FillImageCopyLocation(&sourceLocation, source, sourceSlice, abFalse);
+	D3D12_BOX sourceBox = { .left = sourceX, .top = sourceY, .front = sourceZ, .right = sourceX + w, .bottom = sourceY + h, .back = sourceZ + d };
+	ID3D12GraphicsCommandList_CopyTextureRegion(list->i_list, &targetLocation, targetX, targetY, targetZ, &sourceLocation, &sourceBox);
 }
 
 #endif
