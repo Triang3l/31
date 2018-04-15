@@ -138,6 +138,7 @@
     <ClInclude Include="abData\abHashMap.h" />
     <ClInclude Include="abData\abText.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />
+    <ClInclude Include="abFile\abFilei_GPUUpload.h" />
     <ClInclude Include="abFile\abFile_ImageDDS.h" />
     <ClInclude Include="abFile\abFile_Mapping.h" />
     <ClInclude Include="abFile\abFile_MeshIQM.h" />
@@ -154,6 +155,7 @@
     <ClCompile Include="abData\abHashMap.c" />
     <ClCompile Include="abData\abText.c" />
     <ClCompile Include="abFeedback\abFeedback.c" />
+    <ClCompile Include="abFile\abFilei_GPUUpload.c" />
     <ClCompile Include="abFile\abFile_ImageDDS.c" />
     <ClCompile Include="abFile\abFile_Mapping.c" />
     <ClCompile Include="abGPU\abGPU.c" />

@@ -153,8 +153,8 @@ void abGPU_Cmd_CopyBuffer(abGPU_CmdList * list, abGPU_Buffer * target, abGPU_Buf
 	ID3D12GraphicsCommandList_CopyResource(list->i_list, target->i_resource, source->i_resource);
 }
 
-void abGPU_Cmd_CopyBufferRange(abGPU_CmdList * list, abGPU_Buffer const * target, unsigned int targetOffset,
-		abGPU_Buffer const * source, unsigned int sourceOffset, unsigned int size) {
+void abGPU_Cmd_CopyBufferRange(abGPU_CmdList * list, abGPU_Buffer * target, unsigned int targetOffset,
+		abGPU_Buffer * source, unsigned int sourceOffset, unsigned int size) {
 	ID3D12GraphicsCommandList_CopyBufferRegion(list->i_list, target->i_resource, targetOffset, source->i_resource, sourceOffset, size);
 }
 
