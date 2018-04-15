@@ -123,6 +123,9 @@
     <ClInclude Include="abFile\abFilei_GPUUpload.h">
       <Filter>Header Files\abFile</Filter>
     </ClInclude>
+    <ClInclude Include="abFile\abFile.h">
+      <Filter>Header Files\abFile</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abMath\abVec4.c">
@@ -192,6 +195,9 @@
       <Filter>Source Files\abFile</Filter>
     </ClCompile>
     <ClCompile Include="abFile\abFilei_GPUUpload.c">
+      <Filter>Source Files\abFile</Filter>
+    </ClCompile>
+    <ClCompile Include="abFile\abFile.c">
       <Filter>Source Files\abFile</Filter>
     </ClCompile>
   </ItemGroup>
