@@ -240,12 +240,14 @@ typedef enum abGPU_Image_Comparison {
 } abGPU_Image_Comparison;
 
 // These are hard engine limits, independent from the implementation, mostly to prevent overflows in loading.
-#define abGPU_Image_MaxAbsoluteMips2DCube 15u
-#define abGPU_Image_MaxAbsoluteMips3D 12u
-#define abGPU_Image_MaxAbsoluteSize2DCube (1u << (abGPU_Image_MaxAbsoluteMips2DCube - 1u))
-#define abGPU_Image_MaxAbsoluteSize3D (1u << (abGPU_Image_MaxAbsoluteMips3D - 1u))
-#define abGPU_Image_MaxAbsoluteArraySize2D 2048u
-#define abGPU_Image_MaxAbsoluteArraySizeCube (abGPU_Image_MaxAbsoluteArraySize2D / 6u)
+enum {
+	abGPU_Image_MaxAbsoluteMips2DCube = 15u,
+	abGPU_Image_MaxAbsoluteMips3D = 12u,
+	abGPU_Image_MaxAbsoluteSize2DCube = 1u << (abGPU_Image_MaxAbsoluteMips2DCube - 1u),
+	abGPU_Image_MaxAbsoluteSize3D = 1u << (abGPU_Image_MaxAbsoluteMips3D - 1u),
+	abGPU_Image_MaxAbsoluteArraySize2D = 2048u,
+	abGPU_Image_MaxAbsoluteArraySizeCube = abGPU_Image_MaxAbsoluteArraySize2D / 6u
+};
 
 abForceInline unsigned int abGPU_Image_CalculateMipCount(abGPU_Image_Options dimensionOptions,
 		unsigned int w, unsigned int h, unsigned int d) {
