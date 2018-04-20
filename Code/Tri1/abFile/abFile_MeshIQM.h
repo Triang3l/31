@@ -35,7 +35,7 @@ enum {
 	abFile_MeshIQM_VertexDataType_BlendIndices, // UInt8x4.
 	abFile_MeshIQM_VertexDataType_BlendWeights, // UNorm8x4.
 	abFile_MeshIQM_VertexDataType_Color, // UNorm8x4.
-	abFile_MeshIQM_VertexDataType_Custom = 16u
+		abFile_MeshIQM_VertexDataType_CustomNameOffset = 16u
 };
 
 typedef uint32_t abFile_MeshIQM_VertexDataFormat;

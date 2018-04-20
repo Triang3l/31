@@ -175,7 +175,7 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 		}
 	} else {
 		if (width > abGPU_Image_MaxAbsoluteSize2DCube || height > abGPU_Image_MaxAbsoluteSize2DCube ||
-				depth > (isCube ? abGPU_Image_MaxAbsoluteArraySizeCube : abGPU_Image_MaxAbsoluteArraySize2D)) {
+				depth > (unsigned int) (isCube ? abGPU_Image_MaxAbsoluteArraySizeCube : abGPU_Image_MaxAbsoluteArraySize2D)) {
 			return abFalse;
 		}
 	}
