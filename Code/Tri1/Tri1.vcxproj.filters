@@ -73,6 +73,9 @@
     <Filter Include="Source Files\abFile">
       <UniqueIdentifier>{d7fb5293-c11e-4438-8bd7-904b41ff2be4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\abGFX">
+      <UniqueIdentifier>{5e3a8a0f-fa63-457a-8e8b-c92edacc037a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -199,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="abFile\abFile.c">
       <Filter>Source Files\abFile</Filter>
+    </ClCompile>
+    <ClCompile Include="abGFX\abGFX_Handles.c">
+      <Filter>Source Files\abGFX</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
