@@ -11,6 +11,10 @@
 void abFeedback_DebugMessageForceV(char const * format, va_list arguments) {
 	char message[1024u];
 	abTextA_FormatV(message, abArrayLength(message), format, arguments);
+	size_t messageLength = abTextA_Length(message);
+	messageLength = abMin(abArrayLength(message) - 2u, messageLength);
+	message[messageLength] = '\n';
+	message[messageLength + 1u] = '\0';
 	OutputDebugStringA(message);
 }
 
