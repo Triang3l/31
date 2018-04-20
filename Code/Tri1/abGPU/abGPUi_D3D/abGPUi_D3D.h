@@ -14,6 +14,13 @@ extern ID3D12CommandQueue * abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Count];
 typedef HRESULT (STDMETHODCALLTYPE * abGPUi_D3D_ObjectNameSetter)(void * object, WCHAR const * name);
 void abGPUi_D3D_SetObjectName(void * object, abGPUi_D3D_ObjectNameSetter setter, abTextU8 const * name); // Setter is SetName from vtbl.
 
+// Fixes for methods returning structures.
+typedef void (STDMETHODCALLTYPE * abGPUi_D3D_ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart)(
+		ID3D12DescriptorHeap * heap, D3D12_CPU_DESCRIPTOR_HANDLE * handle);
+typedef void (STDMETHODCALLTYPE * abGPUi_D3D_ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart)(
+		ID3D12DescriptorHeap * heap, D3D12_GPU_DESCRIPTOR_HANDLE * handle);
+typedef void (STDMETHODCALLTYPE * abGPUi_D3D_ID3D12Resource_GetDesc)(ID3D12Resource * resource, D3D12_RESOURCE_DESC * desc);
+
 // Images.
 
 DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format);

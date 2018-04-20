@@ -223,7 +223,8 @@ abBool abGPU_Image_Init(abGPU_Image * image, abTextU8 const * name, abGPU_Image_
 }
 
 void abGPUi_D3D_Image_InitForSwapChainBuffer(abGPU_Image * image, ID3D12Resource * resource, abGPU_Image_Format format) {
-	D3D12_RESOURCE_DESC desc = ID3D12Resource_GetDesc(resource);
+	D3D12_RESOURCE_DESC desc;
+	((abGPUi_D3D_ID3D12Resource_GetDesc) resource->lpVtbl->GetDesc)(resource, &desc);
 	// Zeros shouldn't really occur, but why not.
 	desc.Width = abMax(desc.Width, 1u);
 	desc.Height = abMax(desc.Height, 1u);

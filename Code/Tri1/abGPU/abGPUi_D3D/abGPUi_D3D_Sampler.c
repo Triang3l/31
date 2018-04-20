@@ -9,13 +9,17 @@ abBool abGPU_SamplerStore_Init(abGPU_SamplerStore * store, abTextU8 const * name
 		.NumDescriptors = samplerCount,
 		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 	};
-	if (FAILED(ID3D12Device_CreateDescriptorHeap(abGPUi_D3D_Device, &desc, &IID_ID3D12DescriptorHeap, &store->i_descriptorHeap))) {
+	ID3D12DescriptorHeap * heap;
+	if (FAILED(ID3D12Device_CreateDescriptorHeap(abGPUi_D3D_Device, &desc, &IID_ID3D12DescriptorHeap, &heap))) {
 		return abFalse;
 	}
-	abGPUi_D3D_SetObjectName(store->i_descriptorHeap, (abGPUi_D3D_ObjectNameSetter) store->i_descriptorHeap->lpVtbl->SetName, name);
+	abGPUi_D3D_SetObjectName(heap, (abGPUi_D3D_ObjectNameSetter) heap->lpVtbl->SetName, name);
 	store->samplerCount = samplerCount;
-	store->i_cpuDescriptorHandleStart = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
-	store->i_gpuDescriptorHandleStart = ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(store->i_descriptorHeap);
+	store->i_descriptorHeap = heap;
+	((abGPUi_D3D_ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart)
+			heap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(heap, &store->i_cpuDescriptorHandleStart);
+	((abGPUi_D3D_ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart)
+			heap->lpVtbl->GetGPUDescriptorHandleForHeapStart)(heap, &store->i_gpuDescriptorHandleStart);
 	return abTrue;
 }
 

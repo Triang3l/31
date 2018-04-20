@@ -12,7 +12,8 @@ abBool abGPU_RTStore_Init(abGPU_RTStore * store, abTextU8 const * name, unsigned
 			return abFalse;
 		}
 		abGPUi_D3D_SetObjectName(store->i_descriptorHeapColor, (abGPUi_D3D_ObjectNameSetter) store->i_descriptorHeapColor->lpVtbl->SetName, name);
-		store->i_cpuDescriptorHandleStartColor = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeapColor);
+		((abGPUi_D3D_ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart)
+				store->i_descriptorHeapColor->lpVtbl->GetCPUDescriptorHandleForHeapStart)(store->i_descriptorHeapColor, &store->i_cpuDescriptorHandleStartColor);
 	} else {
 		store->i_descriptorHeapColor = abNull;
 		store->i_cpuDescriptorHandleStartColor.ptr = 0u;
@@ -27,7 +28,8 @@ abBool abGPU_RTStore_Init(abGPU_RTStore * store, abTextU8 const * name, unsigned
 			return abFalse;
 		}
 		abGPUi_D3D_SetObjectName(store->i_descriptorHeapDepth, (abGPUi_D3D_ObjectNameSetter) store->i_descriptorHeapDepth->lpVtbl->SetName, name);
-		store->i_cpuDescriptorHandleStartDepth = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(store->i_descriptorHeapDepth);
+		((abGPUi_D3D_ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart)
+				store->i_descriptorHeapColor->lpVtbl->GetCPUDescriptorHandleForHeapStart)(store->i_descriptorHeapDepth, &store->i_cpuDescriptorHandleStartDepth);
 	} else {
 		store->i_descriptorHeapDepth = abNull;
 		store->i_cpuDescriptorHandleStartDepth.ptr = 0u;
