@@ -1,6 +1,7 @@
 #include "abCore.h"
 #include "../abFile/abFile.h"
 #include "../abFeedback/abFeedback.h"
+#include "../abGFX/abGFX.h"
 #include "../abGPU/abGPU.h"
 #include "../abMemory/abMemory.h"
 #include "../abPlatform/abPlatform.h"
@@ -20,6 +21,8 @@ void abCore_Run() {
 	abGPU_Init(abFalse);
 	#endif
 
+	abGFX_InitPreFile();
+
 	abFile_Init();
 
 	while (!abCorei_QuitRequested) {
@@ -29,6 +32,8 @@ void abCore_Run() {
 	}
 
 	abFile_Shutdown();
+
+	abGFX_ShutdownPostFile();
 
 	abGPU_Shutdown();
 
