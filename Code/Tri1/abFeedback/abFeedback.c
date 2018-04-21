@@ -24,6 +24,7 @@ void abFeedback_CrashV(abBool isAssert, char const * functionName, char const * 
 	size_t written = abTextA_Copy(message, abArrayLength(message), functionName);
 	written += abTextA_CopyInto(message, abArrayLength(message), written, isAssert ? " (assertion): " : ": ");
 	abTextA_FormatV(message + written, abArrayLength(message) - written, messageFormat, messageArguments);
+	abFeedback_DebugMessageForce("Fatal error: %s", message);
 	MessageBoxA(abNull, message, "Tri1 Fatal Error", MB_OK);
 	abFeedback_Break();
 	_exit(EXIT_FAILURE);
