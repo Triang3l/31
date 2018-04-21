@@ -7,6 +7,40 @@ abGPU_HandleStore abGFX_Handles_Store;
 /*
  * An allocator for power-of-2-sized blocks.
  * Each power of 2 is called a level, with the first (0) level containing 2 blocks, and the last with MinBlockSize handles.
+ *
+ * Maintaining lists of free halves (nodes which are free, but have their ^1 sibling allocated) ensures that
+ * the worst case allocation time will be logarithmic. Without such list, a linear search (recursive or horizontal)
+ * will be required to find a free level 2 block in this case:
+ *
+ *   +---------------+---------------+
+ * 0 |       S       |       S       |
+ *   |---------------|---------------|
+ * 1 |   S   |   S   |   S   |   S   |
+ *   |-------|-------|-------|-------|
+ * 2 | A | A | A | F | F | F | A | A |
+ *   +---------------+---------------+
+ *
+ * The free half lists allow for cases that are trivially resolvable:
+ *
+ *   +---------------+---------------+
+ * 0 |       S       |       S       |
+ *   |---------------|---------------|
+ * 1 |  (H)  |   A   |   A   |   H   |
+ *   |-------|-------|-------|-------|
+ * 2 |(F)| F | - | - | - | - | F | F |
+ *   +---------------+---------------+
+ *
+ * Or:
+ *
+ *   +---------------+---------------+
+ * 0 |       S       |       S       |
+ *   |---------------|---------------|
+ * 1 |   S   |   A   |   A   |   H   |
+ *   |-------|-------|-------|-------|
+ * 2 |(H)| A | - | - | - | - | F | F |
+ *   +---------------+---------------+
+ *
+ * If there's free space, and the tree is not empty, there will be a free half on the needed level or shallower.
  */
 
 typedef uint32_t abGFXi_Handles_Block;
@@ -57,8 +91,49 @@ void abGFXi_Handles_Init() {
 	memset(abGFXi_Handles_FirstFreeHalves, 255u, sizeof(abGFXi_Handles_FirstFreeHalves));
 }
 
-abForceInline unsigned int abGFX_Handles_LevelBlockOffset(unsigned int level) {
+static abForceInline unsigned int abGFXi_Handles_LevelBlockOffset(unsigned int level) {
 	return (1u << (level + 1u)) - 2u;
+}
+
+static void abGFXi_Handles_MakeFreeHalf(unsigned int level, unsigned int blockIndex) {
+	unsigned int blockOffset = abGFXi_Handles_LevelBlockOffset(level);
+	abGFXi_Handles_Block * block = &abGFXi_Handles_Blocks[blockOffset + blockIndex];
+	unsigned int * firstFreeHalf = &abGFXi_Handles_FirstFreeHalves[level];
+	if (*firstFreeHalf != abGFXi_Handles_FreeHalfFirstNone) {
+		unsigned int secondBlockIndex = *firstFreeHalf;
+		abGFXi_Handles_Block * secondBlock = &abGFXi_Handles_Blocks[blockOffset + secondBlockIndex];
+		*secondBlock &= ~(abGFXi_Handles_Block_FreeHalfLinkMask << abGFXi_Handles_Block_FreeHalfPrevShift);
+		*secondBlock |= blockIndex << abGFXi_Handles_Block_FreeHalfPrevShift;
+		*block = abGFXi_Handles_Block_Type_FreeHalf |
+				(blockIndex << abGFXi_Handles_Block_FreeHalfPrevShift) |
+				(secondBlockIndex << abGFXi_Handles_Block_FreeHalfNextShift);
+	} else {
+		*block = abGFXi_Handles_Block_Type_FreeHalf |
+				(blockIndex << abGFXi_Handles_Block_FreeHalfPrevShift) |
+				(blockIndex << abGFXi_Handles_Block_FreeHalfNextShift);
+	}
+	*firstFreeHalf = blockIndex;
+}
+
+static void abGFXi_Handles_UnlinkFreeHalf(unsigned int level, unsigned int blockIndex) {
+	unsigned int blockOffset = abGFXi_Handles_LevelBlockOffset(level);
+	abGFXi_Handles_Block block = abGFXi_Handles_Blocks[blockOffset + blockIndex];
+	unsigned int prevBlockIndex = (block >> abGFXi_Handles_Block_FreeHalfPrevShift) & abGFXi_Handles_Block_FreeHalfLinkMask;
+	unsigned int nextBlockIndex = (block >> abGFXi_Handles_Block_FreeHalfNextShift) & abGFXi_Handles_Block_FreeHalfLinkMask;
+
+	if (prevBlockIndex != blockIndex) {
+		abGFXi_Handles_Block * prevBlock = &abGFXi_Handles_Blocks[blockOffset + prevBlockIndex];
+		*prevBlock &= ~(abGFXi_Handles_Block_FreeHalfLinkMask << abGFXi_Handles_Block_FreeHalfNextShift);
+		*prevBlock |= ((nextBlockIndex != blockIndex) ? nextBlockIndex : prevBlockIndex) << abGFXi_Handles_Block_FreeHalfNextShift;
+	} else {
+		abGFXi_Handles_FirstFreeHalves[level] = ((nextBlockIndex != blockIndex) ? nextBlockIndex : abGFXi_Handles_FreeHalfFirstNone);
+	}
+
+	if (nextBlockIndex != blockIndex) {
+		abGFXi_Handles_Block * nextBlock = &abGFXi_Handles_Blocks[blockOffset + nextBlockIndex];
+		*nextBlock &= ~(abGFXi_Handles_Block_FreeHalfLinkMask << abGFXi_Handles_Block_FreeHalfPrevShift);
+		*nextBlock |= ((prevBlockIndex != blockIndex) ? prevBlockIndex : nextBlockIndex) << abGFXi_Handles_Block_FreeHalfPrevShift;
+	}
 }
 
 unsigned int abGFX_Handles_Alloc(unsigned int count) {
@@ -69,7 +144,8 @@ unsigned int abGFX_Handles_Alloc(unsigned int count) {
 		return abGFXi_Handles_HandleCount; // A more or less valid range (definitely not a valid index though).
 	}
 	if (count > (abGFXi_Handles_HandleCount >> 1u)) {
-		return abGFX_Handles_Alloc_Failed;
+		abFeedback_Crash("abGFX_Handles_Alloc", "Too many texture/buffer handles requested: %u, maximum %u.",
+				count, abGFXi_Handles_HandleCount >> 1u);
 	}
 
 	unsigned int requestedLevel = (abGFXi_Handles_LevelCount - 1u) - ((unsigned int) abBit_HighestOne32(
@@ -77,42 +153,6 @@ unsigned int abGFX_Handles_Alloc(unsigned int count) {
 	if (count > abGFXi_Handles_MinBlockSize && (count & (count - 1u)) != 0u) {
 		--requestedLevel;
 	}
-
-	/*
-	 * Maintaining lists of free halves (nodes which are free, but have their ^1 sibling allocated)
-	 * ensures that the worst case allocation time will be logarithmic. Without such list, a linear
-	 * search (recursive or horizontal) will be required to find a free level 2 block in this case:
-	 *
-	 *   +---------------+---------------+
-	 * 0 |       S       |       S       |
-	 *   |---------------|---------------|
-	 * 1 |   S   |   S   |   S   |   S   |
-	 *   |-------|-------|-------|-------|
-	 * 2 | A | A | A | F | F | F | A | A |
-	 *   +---------------+---------------+
-	 *
-	 * The free half lists allow for cases that are trivially resolvable:
-	 *
-	 *   +---------------+---------------+
-	 * 0 |       S       |       S       |
-	 *   |---------------|---------------|
-	 * 1 |  (H)  |   A   |   A   |   H   |
-	 *   |-------|-------|-------|-------|
-	 * 2 |(F)| F | - | - | - | - | F | F |
-	 *   +---------------+---------------+
-	 *
-	 * Or:
-	 *
-	 *   +---------------+---------------+
-	 * 0 |       S       |       S       |
-	 *   |---------------|---------------|
-	 * 1 |   S   |   A   |   A   |   H   |
-	 *   |-------|-------|-------|-------|
-	 * 2 |(H)| A | - | - | - | - | F | F |
-	 *   +---------------+---------------+
-	 *
-	 * If there's free space, and the tree is not empty, there will be a free half on the needed level or shallower.
-	 */
 
 	// Find the closest free half.
 	int freeHalfLevel;
@@ -128,7 +168,7 @@ unsigned int abGFX_Handles_Alloc(unsigned int count) {
 		// If there's no free half, the tree is either empty or there's no free space.
 		// Only need to check one, if the first isn't free, the second can't be Free, only FreeHalf (but then it'd be found).
 		if (abGFXi_Handles_Blocks[0u] != abGFXi_Handles_Block_Type_Free) {
-			return abGFX_Handles_Alloc_Failed;
+			abFeedback_Crash("abGFX_Handles_Alloc", "No free space for %u texture/buffer handles.", count);
 		}
 		blockIndex = 0u;
 		freeHalfLevel = 0;
@@ -136,42 +176,17 @@ unsigned int abGFX_Handles_Alloc(unsigned int count) {
 				(1u << abGFXi_Handles_Block_FreeHalfPrevShift) | (1u << abGFXi_Handles_Block_FreeHalfNextShift);
 		abGFXi_Handles_FirstFreeHalves[0u] = 1u;
 	} else {
-		unsigned int blockOffset = abGFX_Handles_LevelBlockOffset(freeHalfLevel);
 		blockIndex = abGFXi_Handles_FirstFreeHalves[freeHalfLevel];
-		abGFXi_Handles_Block freeHalf = abGFXi_Handles_Blocks[blockOffset + blockIndex];
-		unsigned int nextFreeHalfIndex = (freeHalf >> abGFXi_Handles_Block_FreeHalfNextShift) & abGFXi_Handles_Block_FreeHalfLinkMask;
-		if (nextFreeHalfIndex != blockIndex) {
-			abGFXi_Handles_Block * secondFreeHalf = &abGFXi_Handles_Blocks[blockOffset + nextFreeHalfIndex];
-			*secondFreeHalf &= ~(abGFXi_Handles_Block_FreeHalfLinkMask << abGFXi_Handles_Block_FreeHalfPrevShift);
-			*secondFreeHalf |= nextFreeHalfIndex << abGFXi_Handles_Block_FreeHalfPrevShift;
-			abGFXi_Handles_FirstFreeHalves[freeHalfLevel] = nextFreeHalfIndex;
-		} else {
-			abGFXi_Handles_FirstFreeHalves[freeHalfLevel] = abGFXi_Handles_FreeHalfFirstNone;
-		}
+		abGFXi_Handles_UnlinkFreeHalf(freeHalfLevel, blockIndex);
 	}
 
 	// Bridge with split nodes, then mark as allocated.
 	for (unsigned int level = freeHalfLevel; level <= requestedLevel; ++level) {
-		unsigned int blockOffset = abGFX_Handles_LevelBlockOffset(level);
+		unsigned int blockOffset = abGFXi_Handles_LevelBlockOffset(level);
 		abGFXi_Handles_Blocks[blockOffset + blockIndex] = ((level == requestedLevel) ?
 				abGFXi_Handles_Block_Type_Allocated : abGFXi_Handles_Block_Type_Split);
 		if (level != freeHalfLevel) {
-			unsigned int newFreeHalfIndex = blockIndex ^ 1u;
-			unsigned int * levelFirstFreeHalfIndex = &abGFXi_Handles_FirstFreeHalves[level];
-			if (*levelFirstFreeHalfIndex != abGFXi_Handles_FreeHalfFirstNone) {
-				// Link with the next one - update the previous in the next.
-				abGFXi_Handles_Block * secondFreeHalf = &abGFXi_Handles_Blocks[blockOffset + *levelFirstFreeHalfIndex];
-				*secondFreeHalf &= ~(abGFXi_Handles_Block_FreeHalfLinkMask << abGFXi_Handles_Block_FreeHalfPrevShift);
-				*secondFreeHalf |= newFreeHalfIndex << abGFXi_Handles_Block_FreeHalfPrevShift;
-				abGFXi_Handles_Blocks[blockOffset + newFreeHalfIndex] = abGFXi_Handles_Block_Type_FreeHalf |
-						(newFreeHalfIndex << abGFXi_Handles_Block_FreeHalfPrevShift) |
-						(*levelFirstFreeHalfIndex << abGFXi_Handles_Block_FreeHalfNextShift);
-			} else {
-				abGFXi_Handles_Blocks[blockOffset + newFreeHalfIndex] = abGFXi_Handles_Block_Type_FreeHalf |
-					(newFreeHalfIndex << abGFXi_Handles_Block_FreeHalfPrevShift) |
-					(newFreeHalfIndex << abGFXi_Handles_Block_FreeHalfNextShift);
-			}
-			*levelFirstFreeHalfIndex = newFreeHalfIndex;
+			abGFXi_Handles_MakeFreeHalf(level, blockIndex ^ 1u);
 		}
 		if (level != requestedLevel) {
 			blockIndex <<= 1u;
@@ -179,6 +194,46 @@ unsigned int abGFX_Handles_Alloc(unsigned int count) {
 	}
 
 	return blockIndex << ((abGFXi_Handles_LevelCount - 1u) - requestedLevel + abGFXi_Handles_MinBlockSizePower);
+}
+
+void abGFX_Handles_Free(unsigned int handleIndex) {
+	if (handleIndex == abGFXi_Handles_HandleCount) {
+		// Special case for empty allocations.
+		return;
+	}
+	if (handleIndex > abGFXi_Handles_HandleCount) {
+		abFeedback_Crash("abGFX_Handles_Free", "Tried to free handles starting with %u, which is out of range.", handleIndex);
+	}
+	if ((handleIndex & (abGFXi_Handles_MinBlockSize - 1u)) != 0u) {
+		abFeedback_Crash("abGFX_Handles_Free", "Tried to free handles starting with %u, which has invalid alignment.", handleIndex);
+	}
+
+	// Find the block containing the handle. Start from the level that actually may contain the allocation according to the alignment.
+	unsigned int lastLevelBlockIndex = handleIndex >> abGFXi_Handles_MinBlockSizePower;
+	int level = (lastLevelBlockIndex != 0u ? ((abGFXi_Handles_LevelCount - 1u) - abBit_LowestOne32(lastLevelBlockIndex)) : 0u);
+	unsigned int blockIndex = 0u;
+	for (; level < abGFXi_Handles_LevelCount; ++level) {
+		blockIndex = lastLevelBlockIndex >> ((abGFXi_Handles_LevelCount - 1u) - level);
+		if (abGFXi_Handles_Blocks[abGFXi_Handles_LevelBlockOffset(level) + blockIndex] == abGFXi_Handles_Block_Type_Allocated) {
+			break;
+		}
+	}
+	if (level >= abGFXi_Handles_LevelCount) {
+		abFeedback_Crash("abGFX_Handles_Free", "Tried to free a range of handles not allocated with abGFX_Handles_Alloc (%u).", handleIndex);
+	}
+
+	// Mark the allocated block as free and ensure no split block contains 2 free blocks (in this case, it becomes free).
+	for (; level >= 0; --level, blockIndex >>= 1u) {
+		unsigned int blockOffset = abGFXi_Handles_LevelBlockOffset(level);
+		abGFXi_Handles_Block * otherBlock = &abGFXi_Handles_Blocks[blockOffset + (blockIndex ^ 1u)];
+		if (*otherBlock == abGFXi_Handles_Block_Type_Split || *otherBlock == abGFXi_Handles_Block_Type_Allocated) {
+			abGFXi_Handles_MakeFreeHalf(level, blockIndex);
+			break;
+		}
+		abGFXi_Handles_Blocks[abGFXi_Handles_LevelBlockOffset(level) + blockIndex] = abGFXi_Handles_Block_Type_Free;
+		abGFXi_Handles_UnlinkFreeHalf(level, blockIndex ^ 1u);
+		*otherBlock = abGFXi_Handles_Block_Type_Free;
+	}
 }
 
 void abGFXi_Handles_Shutdown() {
