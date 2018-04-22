@@ -75,7 +75,10 @@ enum {
 
 	abGFXi_Handles_Block_TotalBitCount = abGFXi_Handles_Block_FreeHalfNextShift + abGFXi_Handles_LevelCount,
 
-	abGFXi_Handles_FreeHalfFirstNone = UINT_MAX
+	abGFXi_Handles_FreeHalfFirstNone = UINT_MAX,
+
+	abGFXi_Handles_MaxSingleAreas = abGFXi_Handles_HandleCount >> 5u,
+	abGFXi_Handles_SingleAreaIndexNone = UINT_MAX
 };
 
 // Starting from the top level (with 2 blocks), then the level with 4 blocks.
@@ -83,12 +86,23 @@ static abGFXi_Handles_Block abGFXi_Handles_Blocks[abGFXi_Handles_BlockCount];
 
 static unsigned int abGFXi_Handles_FirstFreeHalves[abGFXi_Handles_LevelCount];
 
+// Single handle areas - blocks of 32 handles used for allocating individual handles that are not in sets (for effects).
+typedef struct abGFXi_Handles_SingleArea {
+	uint32_t handlesAllocated;
+	uint32_t blockIndex;
+} abGFXi_Handles_SingleArea;
+abGFXi_Handles_SingleArea abGFXi_Handles_SingleAreas[abGFXi_Handles_MaxSingleAreas]; // Available followed by full.
+unsigned int abGFXi_Handles_SingleAreasAvailable, abGFXi_Handles_SingleAreasUsed;
+static unsigned int abGFXi_Handles_SingleAreaIndices[abGFXi_Handles_MaxSingleAreas]; // Mapping of handle indices to single handle areas.
+
 void abGFXi_Handles_Init() {
 	if (!abGPU_HandleStore_Init(&abGFX_Handles_Store, "abGFX_Handles_Store", abGFXi_Handles_HandleCount)) {
 		abFeedback_Crash("abGFX_Handles_Init", "Failed to create the store for %u texture/buffer handles.", abGFXi_Handles_HandleCount);
 	}
 	memset(abGFXi_Handles_Blocks, 0u, sizeof(abGFXi_Handles_Blocks));
 	memset(abGFXi_Handles_FirstFreeHalves, 255u, sizeof(abGFXi_Handles_FirstFreeHalves));
+	abGFXi_Handles_SingleAreasAvailable = abGFXi_Handles_SingleAreasUsed = 0u;
+	memset(abGFXi_Handles_SingleAreaIndices, 255u, sizeof(abGFXi_Handles_SingleAreaIndices));
 }
 
 static abForceInline unsigned int abGFXi_Handles_LevelBlockOffset(unsigned int level) {
@@ -136,12 +150,42 @@ static void abGFXi_Handles_UnlinkFreeHalf(unsigned int level, unsigned int block
 	}
 }
 
+static unsigned int abGFXi_Handles_AllocSingle() {
+	if (abGFXi_Handles_SingleAreasAvailable == 0u) {
+		if (abGFXi_Handles_SingleAreasUsed >= abGFXi_Handles_MaxSingleAreas) {
+			abFeedback_Crash("abGFXi_Handles_AllocSingle", "No free space for 1 texture/buffer handle.");
+		}
+		unsigned int newAreaHandleIndex = abGFX_Handles_Alloc(32u);
+		if (abGFXi_Handles_SingleAreasUsed != 0u) {
+			// First full -> last full, to free space for a new available area.
+			abGFXi_Handles_SingleAreaIndices[abGFXi_Handles_SingleAreas[0u].blockIndex] = abGFXi_Handles_SingleAreasUsed;
+			abGFXi_Handles_SingleAreas[abGFXi_Handles_SingleAreasUsed] = abGFXi_Handles_SingleAreas[0u];
+		}
+		++abGFXi_Handles_SingleAreasAvailable;
+		++abGFXi_Handles_SingleAreasUsed;
+		abGFXi_Handles_SingleAreaIndices[newAreaHandleIndex >> 5u] = 0u;
+		abGFXi_Handles_SingleAreas[0u].blockIndex = newAreaHandleIndex >> 5u;
+		abGFXi_Handles_SingleAreas[0u].handlesAllocated = 1u;
+		return newAreaHandleIndex;
+	}
+	// Take the last available area, adjacent to the full areas.
+	abGFXi_Handles_SingleArea * area = &abGFXi_Handles_SingleAreas[abGFXi_Handles_SingleAreasAvailable - 1u];
+	unsigned int handleOffsetInArea = (unsigned int) abBit_LowestOne32(~(area->handlesAllocated));
+	if ((area->handlesAllocated |= ((uint32_t) 1u << handleOffsetInArea)) == UINT32_MAX) {
+		--abGFXi_Handles_SingleAreasAvailable;
+	}
+	return (area->blockIndex << 5u) + handleOffsetInArea;
+}
+
 unsigned int abGFX_Handles_Alloc(unsigned int count) {
 	abFeedback_StaticAssert(abGFXi_Handles_Block_TotalBitCount <= sizeof(abGFXi_Handles_Block) * 8u,
 			"Not enough bits in abGFXi_Handles_Block to store the type and two links for free halves.");
 
 	if (count == 0u) {
 		return abGFXi_Handles_HandleCount; // A more or less valid range (definitely not a valid index though).
+	}
+	if (count == 1u) {
+		return abGFXi_Handles_AllocSingle(); // Special handling.
 	}
 	if (count > (abGFXi_Handles_HandleCount >> 1u)) {
 		abFeedback_Crash("abGFX_Handles_Alloc", "Too many texture/buffer handles requested: %u, maximum %u.",
@@ -196,6 +240,53 @@ unsigned int abGFX_Handles_Alloc(unsigned int count) {
 	return blockIndex << ((abGFXi_Handles_LevelCount - 1u) - requestedLevel + abGFXi_Handles_MinBlockSizePower);
 }
 
+static abBool abGFXi_Handles_FreeSingle(unsigned int handleIndex) {
+	unsigned int areaIndex = abGFXi_Handles_SingleAreaIndices[handleIndex >> 5u];
+	if (areaIndex == abGFXi_Handles_SingleAreaIndexNone) {
+		return abFalse;
+	}
+	abGFXi_Handles_SingleArea * area = &abGFXi_Handles_SingleAreas[areaIndex];
+	uint32_t handleBit = (uint32_t) 1u << (handleIndex & 31u);
+	if (!(area->handlesAllocated & handleBit)) {
+		abFeedback_Crash("abGFXi_Handles_FreeSingle", "Tried to free unallocated handles starting with %u in a single-handle area.", handleIndex);
+	}
+	abBool wasFull = (area->handlesAllocated == UINT32_MAX);
+	area->handlesAllocated &= ~handleBit;
+	if (wasFull) {
+		if (areaIndex != abGFXi_Handles_SingleAreasAvailable) {
+			// This newly available <-> first full (because increasing SingleAreasAvailable will make the first full available).
+			abGFXi_Handles_SingleArea * firstFullArea = &abGFXi_Handles_SingleAreas[abGFXi_Handles_SingleAreasAvailable];
+			unsigned int blockIndex = area->blockIndex, firstFullBlockIndex = firstFullArea->blockIndex;
+			abGFXi_Handles_SingleAreaIndices[blockIndex] = abGFXi_Handles_SingleAreasAvailable;
+			abGFXi_Handles_SingleAreaIndices[firstFullBlockIndex] = areaIndex;
+			area->blockIndex = firstFullBlockIndex;
+			firstFullArea->blockIndex = blockIndex;
+			uint32_t handlesAllocated = area->handlesAllocated;
+			area->handlesAllocated = firstFullArea->handlesAllocated;
+		}
+		++abGFXi_Handles_SingleAreasAvailable;
+	} else if (area->handlesAllocated == 0u) {
+		--abGFXi_Handles_SingleAreasAvailable;
+		--abGFXi_Handles_SingleAreasUsed;
+		if (areaIndex != abGFXi_Handles_SingleAreasAvailable) {
+			// Last available -> new free spot in the available indices.
+			abGFXi_Handles_SingleArea const * areaSource = &abGFXi_Handles_SingleAreas[abGFXi_Handles_SingleAreasAvailable];
+			abGFXi_Handles_SingleAreaIndices[areaSource->blockIndex] = areaIndex;
+			*area = *areaSource;
+		}
+		if (abGFXi_Handles_SingleAreasUsed != abGFXi_Handles_SingleAreasAvailable) {
+			// Last full -> newly created hole between available and full.
+			abGFXi_Handles_SingleArea * areaTarget = &abGFXi_Handles_SingleAreas[abGFXi_Handles_SingleAreasAvailable];
+			abGFXi_Handles_SingleArea const * areaSource = &abGFXi_Handles_SingleAreas[abGFXi_Handles_SingleAreasUsed];
+			abGFXi_Handles_SingleAreaIndices[areaSource->blockIndex] = abGFXi_Handles_SingleAreasAvailable;
+			*areaTarget = *areaSource;
+		}
+		abGFXi_Handles_SingleAreaIndices[handleIndex >> 5u] = abGFXi_Handles_SingleAreaIndexNone;
+		abGFX_Handles_Free(handleIndex & ~31u);
+	}
+	return abTrue;
+}
+
 void abGFX_Handles_Free(unsigned int handleIndex) {
 	if (handleIndex == abGFXi_Handles_HandleCount) {
 		// Special case for empty allocations.
@@ -203,6 +294,9 @@ void abGFX_Handles_Free(unsigned int handleIndex) {
 	}
 	if (handleIndex > abGFXi_Handles_HandleCount) {
 		abFeedback_Crash("abGFX_Handles_Free", "Tried to free handles starting with %u, which is out of range.", handleIndex);
+	}
+	if (abGFXi_Handles_FreeSingle(handleIndex)) {
+		return;
 	}
 	if ((handleIndex & (abGFXi_Handles_MinBlockSize - 1u)) != 0u) {
 		abFeedback_Crash("abGFX_Handles_Free", "Tried to free handles starting with %u, which has invalid alignment.", handleIndex);
