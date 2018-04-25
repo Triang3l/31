@@ -16,9 +16,6 @@
     <Filter Include="Header Files\abMath">
       <UniqueIdentifier>{986f1d36-d975-4b20-82c3-6ca3c9ce86ef}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\abMath">
-      <UniqueIdentifier>{8084046f-77f5-4ca4-990a-ce7e6810bc25}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\abGPU">
       <UniqueIdentifier>{8e64b352-2d10-47d1-a25b-774738dd9343}</UniqueIdentifier>
     </Filter>
@@ -81,9 +78,6 @@
     <ClInclude Include="abCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="abMath\abVec4.h">
-      <Filter>Header Files\abMath</Filter>
-    </ClInclude>
     <ClInclude Include="abGPU\abGPU.h">
       <Filter>Header Files\abGPU</Filter>
     </ClInclude>
@@ -129,11 +123,11 @@
     <ClInclude Include="abFile\abFile.h">
       <Filter>Header Files\abFile</Filter>
     </ClInclude>
+    <ClInclude Include="abMath\abVec.h">
+      <Filter>Header Files\abMath</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="abMath\abVec4.c">
-      <Filter>Source Files\abMath</Filter>
-    </ClCompile>
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c">
       <Filter>Source Files\abGPU\abGPUi_D3D</Filter>
     </ClCompile>
