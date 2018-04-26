@@ -98,6 +98,7 @@ abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return _mm_shuffle_ps(v, v, _MM_SHU
 #define abVec4_NotEqual _mm_cmpneq_ps
 #define abVec4s32_NotEqual _mm_cmpneq_epi32
 #define abVec4u32_NotEqual abVec4s32_NotEqual
+// #undef abVec4u32_ComparisonsAvailable
 #define abVec4_Less _mm_cmplt_ps
 #define abVec4s32_Less _mm_cmplt_epi32
 #define abVec4_LessEqual _mm_cmple_ps
@@ -170,6 +171,7 @@ abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return vextq_f32(v, v, 2u); }
 #define abVec4u32_Subtract vsubq_u32
 #define abVec4_Negate vnegq_f32
 #define abVec4_Multiply vmulq_f32
+// #undef abVec4_MultiplyAdd_Separate
 #define abVec4_MultiplyAdd vmlaq_f32
 #define abVec4_MultiplySubtract vmlsq_f32
 #define abVec4_Min vminq_f32
@@ -194,14 +196,19 @@ abForceInline abVec4 abVec4_ZWXY(abVec4 v) { return vextq_f32(v, v, 2u); }
 #define abVec4_NotEqual(a, b) abVec4u32_AsF32(vmvnq_u32(vceqq_f32((a), (b))))
 #define abVec4s32_NotEqual(a, b) abVec4u32_AsS32(vmvnq_u32(vceqq_s32((a), (b))))
 #define abVec4u32_NotEqual(a, b) vmvnq_u32(vceqq_u32((a), (b)))
+#define abVec4u32_ComparisonAvailable 1
 #define abVec4_Less(a, b) abVec4u32_AsF32(vcltq_f32((a), (b)))
 #define abVec4s32_Less(a, b) abVec4u32_AsS32(vcltq_s32((a), (b)))
+#define abVec4u32_Less vcltq_u32
 #define abVec4_LessEqual(a, b) abVec4u32_AsF32(vcleq_f32((a), (b)))
 #define abVec4s32_LessEqual(a, b) abVec4u32_AsS32(vcleq_s32((a), (b)))
+#define abVec4u32_LessEqual vcleq_u32
 #define abVec4_Greater(a, b) abVec4u32_AsF32(vcgtq_f32((a), (b)))
 #define abVec4s32_Greater(a, b) abVec4u32_AsS32(vcgtq_s32((a), (b)))
+#define abVec4u32_Greater vcgtq_u32
 #define abVec4_GreaterEqual(a, b) abVec4u32_AsF32(vcgeq_f32((a), (b)))
 #define abVec4s32_GreaterEqual(a, b) abVec4u32_AsS32(vcgeq_s32((a), (b)))
+#define abVec4u32_GreaterEqual vcgeq_u32
 
 #else
 #error No SIMD abVec4 for the target CPU.
