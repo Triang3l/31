@@ -191,16 +191,16 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 
 #define abVec4s32_And vandq_s32
 #define abVec4u32_And vandq_u32
-#define abVec4_And(a, b) abVec4u32_AsF32(abVec4u32_And(abVec4_AsU32(a), abVec4_AsU32(b)))
+#define abVec4_And(a, b) abVec4u32_AsF32(abVec4u32_And(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_AndNot vbicq_s32
 #define abVec4u32_AndNot vbicq_u32
-#define abVec4_AndNot(a, b) abVec4u32_AsF32(abVec4u32_AndNot(abVec4_AsU32(a), abVec4_AsU32(b)))
+#define abVec4_AndNot(a, b) abVec4u32_AsF32(abVec4u32_AndNot(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_Or vorrq_s32
 #define abVec4u32_Or vorrq_u32
-#define abVec4_Or(a, b) abVec4u32_AsF32(abVec4u32_Or(abVec4_AsU32(a), abVec4_AsU32(b)))
+#define abVec4_Or(a, b) abVec4u32_AsF32(abVec4u32_Or(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_Xor veorq_s32
 #define abVec4u32_Xor veorq_u32
-#define abVec4_Xor(a, b) abVec4u32_AsF32(abVec4u32_Xor(abVec4_AsU32(a), abVec4_AsU32(b)))
+#define abVec4_Xor(a, b) abVec4u32_AsF32(abVec4u32_Xor(abVec4_AsU32((a)), abVec4_AsU32((b))))
 
 #define abVec4_Equal(a, b) abVec4u32_AsF32(vceqq_f32((a), (b)))
 #define abVec4s32_Equal(a, b) abVec4u32_AsS32(vceqq_s32((a), (b)))
