@@ -203,5 +203,8 @@
     <ClCompile Include="abFile\abFile_IQM.c">
       <Filter>Source Files\abFile</Filter>
     </ClCompile>
+    <ClCompile Include="abGPU\abGPU_VertexData.c">
+      <Filter>Source Files\abGPU</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

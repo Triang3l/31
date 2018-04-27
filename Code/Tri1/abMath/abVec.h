@@ -46,6 +46,10 @@ typedef __m128i abVec16u8;
 #define abVec4s32_AsU32(v) (v)
 #define abVec4u32_AsF32(v) abVec4s32_AsF32((v))
 #define abVec4u32_AsS32(v) (v)
+#define abVec8s16_AsU16(v) (v)
+#define abVec8u16_AsS16(v) (v)
+#define abVec16s8_AsU8(v) (v)
+#define abVec16u8_AsS8(v) (v)
 
 #define abVec4_LoadAligned _mm_load_ps
 #define abVec4s32_LoadAligned(p) _mm_load_si128((__m128i const *) (p))
@@ -145,6 +149,8 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec4s32_Greater _mm_cmpgt_epi32
 #define abVec4_GreaterEqual _mm_cmpge_ps
 
+#define abVec4_ToS32 _mm_cvtps_epi32
+#define abVec4s32_ToF32 _mm_cvtepi32_ps
 abForceInline abVec8s16 abVec16s8_ToS16Low(abVec16s8 v) { return _mm_srai_epi16(_mm_unpacklo_epi8(v, v), 8u); }
 abForceInline abVec8s16 abVec16s8_ToS16High(abVec16s8 v) { return _mm_srai_epi16(_mm_unpackhi_epi8(v, v), 8u); }
 #define abVec16u8_ToU16Low(v) _mm_unpacklo_epi8((v), abVec16u8_Zero)
@@ -175,6 +181,10 @@ typedef uint32x4_t abVec4u32;
 #define abVec4s32_AsU32 vreinterpretq_u32_s32
 #define abVec4u32_AsF32 vreinterpretq_f32_u32
 #define abVec4u32_AsS32 vreinterpretq_s32_u32
+#define abVec8s16_AsU16 vreinterpretq_u16_s16
+#define abVec8u16_AsS16 vreinterpretq_s16_u16
+#define abVec16s8_AsU8 vreinterpretq_u8_s8
+#define abVec16u8_AsS8 vreinterpretq_s8_u8
 
 #if defined(abPlatform_Compiler_MSVC)
 #define abVec4_LoadAligned(p) vld1q_f32_ex((p), 128u)
@@ -295,6 +305,8 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #define abVec4u32_Greater vcgtq_u32
 #define abVec4_GreaterEqual(a, b) abVec4u32_AsF32(vcgeq_f32((a), (b)))
 
+#define abVec4_ToS32 vcvtq_s32_f32
+#define abVec4s32_ToF32 vcvtq_f32_s32
 #define abVec16s8_ToS16Low(v) vmovl_s8(vget_low_s8((v)))
 #define abVec16s8_ToS16High(v) vmovl_s8(vget_high_s8((v)))
 #define abVec16u8_ToU16Low(v) vmovl_u8(vget_low_u8((v)))

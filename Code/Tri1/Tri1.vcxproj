@@ -175,6 +175,7 @@
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_RT.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Sampler.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Config.c" />
+    <ClCompile Include="abGPU\abGPU_VertexData.c" />
     <ClCompile Include="abMemory\abMemory.c" />
     <ClCompile Include="abParallel\abParallel_Windows.c" />
     <ClCompile Include="abPlatform\abPlatform_Windows.c" />

@@ -39,9 +39,10 @@ static abBool abFilei_IQM_ValidateTriangles(uint32_t const * triangles, uint32_t
 		#else
 		abVec4s32 maxIndices = abVec4s32_LoadX4((int32_t) vertexCount - 1);
 		abVec4s32 anyOutside = abVec4s32_Zero;
+		abVec4s32 const zeros = abVec4s32_Zero;
 		while (indexCount >= 4u) {
 			abVec4s32 fourIndices = abVec4s32_LoadAligned((int32_t const *) triangles);
-			anyOutside = abVec4s32_Or(anyOutside, abVec4s32_Less(fourIndices, abVec4s32_Zero));
+			anyOutside = abVec4s32_Or(anyOutside, abVec4s32_Less(fourIndices, zeros));
 			anyOutside = abVec4s32_Or(anyOutside, abVec4s32_Greater(fourIndices, maxIndices));
 			triangles += 4u;
 			indexCount -= 4u;
