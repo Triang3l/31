@@ -134,25 +134,35 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec4u32_ShiftLeftConst abVec4s32_ShiftLeftConst
 #define abVec4s32_ShiftRightConst _mm_srai_epi32
 #define abVec4u32_ShiftRightConst _mm_srli_epi32
+#define abVec8s16_ShiftLeftConst _mm_slli_epi16
+#define abVec8u16_ShiftLeftConst abVec8s16_ShiftLeftConst
+#define abVec8s16_ShiftRightConst _mm_srai_epi16
+#define abVec8u16_ShiftRightConst _mm_srli_epi16
 
 #define abVec4_Equal _mm_cmpeq_ps
 #define abVec4s32_Equal _mm_cmpeq_epi32
 #define abVec4u32_Equal abVec4s32_Equal
+#define abVec8s16_Equal _mm_cmpeq_epi16
+#define abVec8u16_Equal abVec8s16_Equal
+#define abVec16s8_Equal _mm_cmpeq_epi8
+#define abVec16u8_Equal abVec16s8_Equal
 #define abVec4_NotEqual _mm_cmpneq_ps
-#define abVec4s32_NotEqual _mm_cmpneq_epi32
-#define abVec4u32_NotEqual abVec4s32_NotEqual
-// #undef abVec4u32_ComparisonsAvailable
+// #undef abVec4u_ComparisonAvailable
 #define abVec4_Less _mm_cmplt_ps
 #define abVec4s32_Less _mm_cmplt_epi32
+#define abVec8s16_Less _mm_cmplt_epi16
+#define abVec16s8_Less _mm_cmplt_epi8
 #define abVec4_LessEqual _mm_cmple_ps
 #define abVec4_Greater _mm_cmpgt_ps
 #define abVec4s32_Greater _mm_cmpgt_epi32
+#define abVec8s16_Greater _mm_cmpgt_epi16
+#define abVec16s8_Greater _mm_cmpgt_epi8
 #define abVec4_GreaterEqual _mm_cmpge_ps
 
 #define abVec4_ToS32 _mm_cvtps_epi32
 #define abVec4s32_ToF32 _mm_cvtepi32_ps
-abForceInline abVec8s16 abVec16s8_ToS16Low(abVec16s8 v) { return _mm_srai_epi16(_mm_unpacklo_epi8(v, v), 8u); }
-abForceInline abVec8s16 abVec16s8_ToS16High(abVec16s8 v) { return _mm_srai_epi16(_mm_unpackhi_epi8(v, v), 8u); }
+abForceInline abVec8s16 abVec16s8_ToS16Low(abVec16s8 v) { return abVec8s16_ShiftRightConst(_mm_unpacklo_epi8(v, v), 8u); }
+abForceInline abVec8s16 abVec16s8_ToS16High(abVec16s8 v) { return abVec8s16_ShiftRightConst(_mm_unpackhi_epi8(v, v), 8u); }
 #define abVec16u8_ToU16Low(v) _mm_unpacklo_epi8((v), abVec16u8_Zero)
 #define abVec16u8_ToU16High(v) _mm_unpackhi_epi8((v), abVec16u8_Zero)
 abForceInline abVec4s32 abVec8s16_ToS32Low(abVec8s16 v) { return abVec4s32_ShiftRightConst(_mm_unpacklo_epi16(v, v), 16u); }
@@ -288,21 +298,35 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #define abVec4u32_ShiftLeftConst vshrq_n_u32
 #define abVec4s32_ShiftRightConst vshlq_n_s32
 #define abVec4u32_ShiftRightConst vshlq_n_u32
+#define abVec8s16_ShiftLeftConst vshrq_n_s16
+#define abVec8u16_ShiftLeftConst vshrq_n_u16
+#define abVec8s16_ShiftRightConst vshlq_n_s16
+#define abVec8u16_ShiftRightConst vshlq_n_u16
 
 #define abVec4_Equal(a, b) abVec4u32_AsF32(vceqq_f32((a), (b)))
 #define abVec4s32_Equal(a, b) abVec4u32_AsS32(vceqq_s32((a), (b)))
 #define abVec4u32_Equal vceqq_u32
+#define abVec8s16_Equal(a, b) abVec8u16_AsS16(vceqq_s16((a), (b)))
+#define abVec8u16_Equal vceqq_u16
+#define abVec16s8_Equal(a, b) abVec16u8_AsS8(vceqq_s8((a), (b)))
+#define abVec16u8_Equal vceqq_u8
 #define abVec4_NotEqual(a, b) abVec4u32_AsF32(vmvnq_u32(vceqq_f32((a), (b))))
-#define abVec4s32_NotEqual(a, b) abVec4u32_AsS32(vmvnq_u32(vceqq_s32((a), (b))))
-#define abVec4u32_NotEqual(a, b) vmvnq_u32(vceqq_u32((a), (b)))
-#define abVec4u32_ComparisonAvailable 1
+#define abVec4u_ComparisonAvailable 1
 #define abVec4_Less(a, b) abVec4u32_AsF32(vcltq_f32((a), (b)))
 #define abVec4s32_Less(a, b) abVec4u32_AsS32(vcltq_s32((a), (b)))
 #define abVec4u32_Less vcltq_u32
+#define abVec8s16_Less(a, b) abVec8u16_AsS16(vcltq_s16((a), (b)))
+#define abVec8u16_Less vcltq_u16
+#define abVec16s8_Less(a, b) abVec16u8_AsS8(vcltq_s8((a), (b)))
+#define abVec16u8_Less vcltq_u8
 #define abVec4_LessEqual(a, b) abVec4u32_AsF32(vcleq_f32((a), (b)))
 #define abVec4_Greater(a, b) abVec4u32_AsF32(vcgtq_f32((a), (b)))
 #define abVec4s32_Greater(a, b) abVec4u32_AsS32(vcgtq_s32((a), (b)))
 #define abVec4u32_Greater vcgtq_u32
+#define abVec8s16_Greater(a, b) abVec8u16_AsS16(vcgtq_s16((a), (b)))
+#define abVec8u16_Greater vcgtq_u16
+#define abVec16s8_Greater(a, b) abVec16u8_AsS8(vcgtq_s8((a), (b)))
+#define abVec16u8_Greater vcgtq_u8
 #define abVec4_GreaterEqual(a, b) abVec4u32_AsF32(vcgeq_f32((a), (b)))
 
 #define abVec4_ToS32 vcvtq_s32_f32
