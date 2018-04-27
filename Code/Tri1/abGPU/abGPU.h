@@ -481,8 +481,10 @@ typedef struct abGPU_VertexData_Attribute {
 	uint8_t instanceRate; // 0 for per-vertex, 1 for per-instance, 2 for loading every 2 instances...
 } abGPU_VertexData_Attribute;
 
-void abGPU_VertexData_Convert_UNorm8ToFloat32_Array(float * target, uint8_t const * source, unsigned int count);
-void abGPU_VertexData_Convert_UNorm16ToFloat32_Array(float * target, uint16_t const * source, unsigned int count);
+void abGPU_VertexData_Convert_UNorm8ToFloat32_Array(float * target, uint8_t const * source, size_t count);
+void abGPU_VertexData_Convert_SNorm8ToFloat32_Array(float * target, int8_t const * source, size_t count);
+void abGPU_VertexData_Convert_UNorm16ToFloat32_Array(float * target, uint16_t const * source, size_t count);
+void abGPU_VertexData_Convert_SNorm16ToFloat32_Array(float * target, int16_t const * source, size_t count);
 
 /***********
  * Samplers
