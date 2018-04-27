@@ -125,6 +125,12 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec4_MultiplySubtract(a, m1, m2) abVec4_Subtract((a), abVec4_Multiply((m1), (m2)))
 #define abVec4_Min _mm_min_ps
 #define abVec4_Max _mm_max_ps
+#define abVec8s16_Min _mm_min_epi16
+#define abVec8s16_Max _mm_max_epi16
+// #undef abVec8u16_MinMax_Available
+// #undef abVec16s8_MinMax_Available
+#define abVec16u8_Min _mm_min_epu8
+#define abVec16u8_Max _mm_max_epu8
 
 #define abVec4_And _mm_and_ps
 #define abVec4s32_And _mm_and_si128
@@ -171,7 +177,7 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec16s8_Equal _mm_cmpeq_epi8
 #define abVec16u8_Equal abVec16s8_Equal
 #define abVec4_NotEqual _mm_cmpneq_ps
-// #undef abVec4u_ComparisonAvailable
+// #undef abVec4u_Comparison_Available
 #define abVec4_Less _mm_cmplt_ps
 #define abVec4s32_Less _mm_cmplt_epi32
 #define abVec8s16_Less _mm_cmplt_epi16
@@ -313,6 +319,16 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #define abVec4_MultiplySubtract vmlsq_f32
 #define abVec4_Min vminq_f32
 #define abVec4_Max vmaxq_f32
+#define abVec8s16_Min vminq_s16
+#define abVec8s16_Max vmaxq_s16
+#define abVec8u16_MinMax_Available 1
+#define abVec8u16_Min vminq_u16
+#define abVec8u16_Max vmaxq_u16
+#define abVec16s8_MinMax_Available 1
+#define abVec16s8_Min vminq_s8
+#define abVec16s8_Max vmaxq_s8
+#define abVec16u8_Min vminq_u8
+#define abVec16u8_Max vmaxq_u8
 
 #define abVec4s32_And vandq_s32
 #define abVec4u32_And vandq_u32
@@ -359,7 +375,7 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #define abVec16s8_Equal(a, b) abVec16u8_AsS8(vceqq_s8((a), (b)))
 #define abVec16u8_Equal vceqq_u8
 #define abVec4_NotEqual(a, b) abVec4u32_AsF32(vmvnq_u32(vceqq_f32((a), (b))))
-#define abVec4u_ComparisonAvailable 1
+#define abVec4u_Comparison_Available 1
 #define abVec4_Less(a, b) abVec4u32_AsF32(vcltq_f32((a), (b)))
 #define abVec4s32_Less(a, b) abVec4u32_AsS32(vcltq_s32((a), (b)))
 #define abVec4u32_Less vcltq_u32
