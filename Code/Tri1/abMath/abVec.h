@@ -116,7 +116,7 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec4_MultiplyAdd(a, m1, m2) abVec4_Add((a), abVec4_Multiply((m1), (m2)))
 #define abVec4_MultiplySubtract(a, m1, m2) abVec4_Subtract((a), abVec4_Multiply((m1), (m2)))
 #define abVec4_Min _mm_min_ps
-#define abVec4_Max _mm_min_ps
+#define abVec4_Max _mm_max_ps
 
 #define abVec4_And _mm_and_ps
 #define abVec4s32_And _mm_and_si128
