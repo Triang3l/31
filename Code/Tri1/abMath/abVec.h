@@ -107,9 +107,17 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec4_Add _mm_add_ps
 #define abVec4s32_Add _mm_add_epi32
 #define abVec4u32_Add abVec4s32_Add
+#define abVec8s16_Add _mm_add_epi16
+#define abVec8u16_Add abVec8s16_Add
+#define abVec16s8_Add _mm_add_epi8
+#define abVec16u8_Add abVec16s8_Add
 #define abVec4_Subtract _mm_sub_ps
 #define abVec4s32_Subtract _mm_sub_epi32
 #define abVec4u32_Subtract abVec4s32_Subtract
+#define abVec8s16_Subtract _mm_sub_epi16
+#define abVec8u16_Subtract abVec8s16_Subtract
+#define abVec16s8_Subtract _mm_sub_epi8
+#define abVec16u8_Subtract abVec16s8_Subtract
 #define abVec4_Negate(v) abVec4_Subtract(abVec4_Zero, (v))
 #define abVec4_Multiply _mm_mul_ps
 #define abVec4_MultiplyAdd_Separate 1 // Add depends on the result of Multiply, prefer separating them if possible.
@@ -121,15 +129,31 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
 #define abVec4_And _mm_and_ps
 #define abVec4s32_And _mm_and_si128
 #define abVec4u32_And abVec4s32_And
+#define abVec8s16_And abVec4s32_And
+#define abVec8u16_And abVec4s32_And
+#define abVec16s8_And abVec4s32_And
+#define abVec16u8_And abVec4s32_And
 #define abVec4_AndNot _mm_andnot_ps
 #define abVec4s32_AndNot _mm_andnot_si128
 #define abVec4u32_AndNot abVec4s32_AndNot
+#define abVec8s16_AndNot abVec4s32_AndNot
+#define abVec8u16_AndNot abVec4s32_AndNot
+#define abVec16s8_AndNot abVec4s32_AndNot
+#define abVec16u8_AndNot abVec4s32_AndNot
 #define abVec4_Or _mm_or_ps
 #define abVec4s32_Or _mm_or_si128
 #define abVec4u32_Or abVec4s32_Or
+#define abVec8s16_Or abVec4s32_Or
+#define abVec8u16_Or abVec4s32_Or
+#define abVec16s8_Or abVec4s32_Or
+#define abVec16u8_Or abVec4s32_Or
 #define abVec4_Xor _mm_xor_ps
 #define abVec4s32_Xor _mm_xor_si128
 #define abVec4u32_Xor abVec4s32_Xor
+#define abVec8s16_Xor abVec4s32_Xor
+#define abVec8u16_Xor abVec4s32_Xor
+#define abVec16s8_Xor abVec4s32_Xor
+#define abVec16u8_Xor abVec4s32_Xor
 #define abVec4s32_ShiftLeftConst _mm_slli_epi32
 #define abVec4u32_ShiftLeftConst abVec4s32_ShiftLeftConst
 #define abVec4s32_ShiftRightConst _mm_srai_epi32
@@ -271,9 +295,17 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #define abVec4_Add vaddq_f32
 #define abVec4s32_Add vaddq_s32
 #define abVec4u32_Add vaddq_u32
+#define abVec8s16_Add vaddq_s16
+#define abVec8u16_Add vaddq_u16
+#define abVec16s8_Add vaddq_s8
+#define abVec16u8_Add vaddq_u8
 #define abVec4_Subtract vsubq_f32
 #define abVec4s32_Subtract vsubq_s32
 #define abVec4u32_Subtract vsubq_u32
+#define abVec8s16_Subtract vsubq_s16
+#define abVec8u16_Subtract vsubq_u16
+#define abVec16s8_Subtract vsubq_s8
+#define abVec16u8_Subtract vsubq_u8
 #define abVec4_Negate vnegq_f32
 #define abVec4_Multiply vmulq_f32
 // #undef abVec4_MultiplyAdd_Separate
@@ -284,15 +316,31 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 
 #define abVec4s32_And vandq_s32
 #define abVec4u32_And vandq_u32
+#define abVec8s16_And vandq_s16
+#define abVec8u16_And vandq_u16
+#define abVec16s8_And vandq_s8
+#define abVec16u8_And vandq_u8
 #define abVec4_And(a, b) abVec4u32_AsF32(abVec4u32_And(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_AndNot vbicq_s32
 #define abVec4u32_AndNot vbicq_u32
+#define abVec8s16_AndNot vbicq_s16
+#define abVec8u16_AndNot vbicq_u16
+#define abVec16s8_AndNot vbicq_s8
+#define abVec16u8_AndNot vbicq_u8
 #define abVec4_AndNot(a, b) abVec4u32_AsF32(abVec4u32_AndNot(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_Or vorrq_s32
 #define abVec4u32_Or vorrq_u32
+#define abVec8s16_Or vorrq_s16
+#define abVec8u16_Or vorrq_u16
+#define abVec16s8_Or vorrq_s8
+#define abVec16u8_Or vorrq_u8
 #define abVec4_Or(a, b) abVec4u32_AsF32(abVec4u32_Or(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_Xor veorq_s32
 #define abVec4u32_Xor veorq_u32
+#define abVec8s16_Xor veorq_s16
+#define abVec8u16_Xor veorq_u16
+#define abVec16s8_Xor veorq_s8
+#define abVec16u8_Xor veorq_u8
 #define abVec4_Xor(a, b) abVec4u32_AsF32(abVec4u32_Xor(abVec4_AsU32((a)), abVec4_AsU32((b))))
 #define abVec4s32_ShiftLeftConst vshrq_n_s32
 #define abVec4u32_ShiftLeftConst vshrq_n_u32
