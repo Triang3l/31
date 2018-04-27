@@ -114,9 +114,6 @@
     <ClInclude Include="abFile\abFile_ImageDDS.h">
       <Filter>Header Files\abFile</Filter>
     </ClInclude>
-    <ClInclude Include="abFile\abFile_MeshIQM.h">
-      <Filter>Header Files\abFile</Filter>
-    </ClInclude>
     <ClInclude Include="abFile\abFilei_GPUUpload.h">
       <Filter>Header Files\abFile</Filter>
     </ClInclude>
@@ -125,6 +122,9 @@
     </ClInclude>
     <ClInclude Include="abMath\abVec.h">
       <Filter>Header Files\abMath</Filter>
+    </ClInclude>
+    <ClInclude Include="abFile\abFile_IQM.h">
+      <Filter>Header Files\abFile</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="abGFX\abGFX_Handles.c">
       <Filter>Source Files\abGFX</Filter>
+    </ClCompile>
+    <ClCompile Include="abFile\abFile_IQM.c">
+      <Filter>Source Files\abFile</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

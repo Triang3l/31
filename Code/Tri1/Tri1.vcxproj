@@ -141,8 +141,8 @@
     <ClInclude Include="abFile\abFile.h" />
     <ClInclude Include="abFile\abFilei_GPUUpload.h" />
     <ClInclude Include="abFile\abFile_ImageDDS.h" />
+    <ClInclude Include="abFile\abFile_IQM.h" />
     <ClInclude Include="abFile\abFile_Mapping.h" />
-    <ClInclude Include="abFile\abFile_MeshIQM.h" />
     <ClInclude Include="abGFX\abGFX.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
@@ -160,6 +160,7 @@
     <ClCompile Include="abFile\abFile.c" />
     <ClCompile Include="abFile\abFilei_GPUUpload.c" />
     <ClCompile Include="abFile\abFile_ImageDDS.c" />
+    <ClCompile Include="abFile\abFile_IQM.c" />
     <ClCompile Include="abFile\abFile_Mapping.c" />
     <ClCompile Include="abGFX\abGFX.c" />
     <ClCompile Include="abGFX\abGFX_Handles.c" />
