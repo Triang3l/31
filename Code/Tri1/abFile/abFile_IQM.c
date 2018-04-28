@@ -64,7 +64,8 @@ static abBool abFilei_IQM_ValidateVertexData(abFile_IQM_VertexData const * verte
 		uint32_t vertexSize = element->size * abFile_IQM_VertexDataFormat_ComponentSize(element->format);
 		// Non-4-aligned elements not supported.
 		if (vertexSize == 0u || (vertexSize & 3u)) { return abFalse; }
-		if (element->offset > iqmSize || (vertexCount * vertexSize) > (iqmSize - element->offset)) { return abFalse; }
+		if ((element->offset & 3u) || element->offset > iqmSize ||
+				(vertexCount * vertexSize) > (iqmSize - element->offset)) { return abFalse; }
 	}
 	return abTrue;
 }
