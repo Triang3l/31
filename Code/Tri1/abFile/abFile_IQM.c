@@ -7,12 +7,73 @@
 
 char const abFile_IQM_Header_Identifier[16u] = "INTERQUAKEMODEL";
 
+unsigned int abFile_IQM_VertexDataFormat_ComponentSize(abFile_IQM_VertexDataFormat format) {
+	switch (format) {
+	case abFile_IQM_VertexDataFormat_SInt8:
+	case abFile_IQM_VertexDataFormat_UInt8:
+		return 1u;
+	case abFile_IQM_VertexDataFormat_SInt16:
+	case abFile_IQM_VertexDataFormat_UInt16:
+	case abFile_IQM_VertexDataFormat_Float16:
+		return 2u;
+	case abFile_IQM_VertexDataFormat_SInt32:
+	case abFile_IQM_VertexDataFormat_UInt32:
+	case abFile_IQM_VertexDataFormat_Float32:
+		return 4u;
+	// case abFile_IQM_VertexDataFormat_Float64: // Not supported.
+		// return 8u;
+	}
+	return 0u;
+}
+
+static abBool abFilei_IQM_ValidateVertexData(abFile_IQM_VertexData const * vertexData, uint32_t elementCount,
+		uint32_t vertexCount, uint32_t iqmSize, uint32_t textSize) {
+	// The last check is needed so stream size can be safely calculated from vertex count (max 4 components of at most 4 bytes).
+	if (vertexCount > (UINT32_MAX >> 4u)) { return abFalse; }
+	abFile_IQM_VertexDataType lastType = (abFile_IQM_VertexDataType) 0u;
+	for (uint32_t elementIndex = 0u; elementIndex < elementCount; ++elementIndex) {
+		abFile_IQM_VertexData const * element = &vertexData[elementIndex];
+		if (elementIndex != 0u && element->type <= lastType) { return abFalse; }
+		lastType = element->type;
+		switch (element->type) {
+		case abFile_IQM_VertexDataType_Position:
+			if (element->format != abFile_IQM_VertexDataFormat_Float32 || element->size < 3u) { return abFalse; }
+			break;
+		case abFile_IQM_VertexDataType_TexCoord:
+			if (element->format != abFile_IQM_VertexDataFormat_Float32 || element->size != 2u) { return abFalse; }
+			break;
+		case abFile_IQM_VertexDataType_Normal:
+			if ((element->format != abFile_IQM_VertexDataFormat_Float32 && element->format != abFile_IQM_VertexDataFormat_SInt16) ||
+					element->size < 3u) { return abFalse; }
+			break;
+		case abFile_IQM_VertexDataType_Tangent:
+			if ((element->format != abFile_IQM_VertexDataFormat_Float32 && element->format != abFile_IQM_VertexDataFormat_SInt16) ||
+					element->size < 4u) { return abFalse; }
+			break;
+		case abFile_IQM_VertexDataType_BlendIndices:
+		case abFile_IQM_VertexDataType_BlendWeights:
+		case abFile_IQM_VertexDataType_Color:
+			if (element->format != abFile_IQM_VertexDataFormat_UInt8 || element->size != 4u) { return abFalse; }
+			break;
+		default:
+			if (element->type < abFile_IQM_VertexDataType_CustomNameOffset ||
+					(element->type - abFile_IQM_VertexDataType_CustomNameOffset) >= textSize) { return abFalse; }
+			break;
+		}
+		if (element->size > 4u) { return abFalse; }
+		uint32_t vertexSize = element->size * abFile_IQM_VertexDataFormat_ComponentSize(element->format);
+		// Non-4-aligned elements not supported.
+		if (vertexSize == 0u || (vertexSize & 3u)) { return abFalse; }
+		if (element->offset > iqmSize || (vertexCount * vertexSize) > (iqmSize - element->offset)) { return abFalse; }
+	}
+	return abTrue;
+}
+
 static abBool abFilei_IQM_ValidateTriangles(uint32_t const * triangles, uint32_t triangleCount, uint32_t vertexCount) {
 	if (triangleCount == 0u) {
 		return abTrue;
 	}
-	// The last check is needed because when unsigned vector comparisons are unavailable, signed check will be done.
-	if ((triangleCount % 3u) != 0u || triangleCount > (UINT32_MAX / 3u) || vertexCount == 0u || vertexCount > (uint32_t) INT32_MAX) {
+	if ((triangleCount % 3u) != 0u || triangleCount > (UINT32_MAX / 3u) || vertexCount == 0u) {
 		return abFalse;
 	}
 	uint32_t indexCount = triangleCount * 3u;
@@ -98,6 +159,10 @@ abBool abFile_IQM_Validate(void const * fileData, size_t fileSize) {
 			return abFalse;
 		}
 	}
+
+	// Vertex data.
+	if (!abFilei_IQM_ValidateVertexData((abFile_IQM_VertexData const *) (iqmData + header.vertexDataOffset), header.vertexDataCount,
+			header.vertexCount, iqmSize, header.textSize)) { return abFalse; }
 
 	// Triangles.
 	if (!abFilei_IQM_ValidateTriangles((uint32_t const *) (iqmData + header.triangleOffset),

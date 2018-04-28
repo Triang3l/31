@@ -52,6 +52,7 @@ enum {
 	abFile_IQM_VertexDataFormat_Float32,
 	abFile_IQM_VertexDataFormat_Float64
 };
+unsigned int abFile_IQM_VertexDataFormat_ComponentSize(abFile_IQM_VertexDataFormat format);
 
 typedef struct abFile_IQM_VertexData {
 	abFile_IQM_VertexDataType type;
