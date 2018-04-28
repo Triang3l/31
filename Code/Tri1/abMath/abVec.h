@@ -191,14 +191,17 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2u, 3u, 0u, 1u)
 
 #define abVec4_ToS32 _mm_cvtps_epi32
 #define abVec4s32_ToF32 _mm_cvtepi32_ps
+#define abVec4s32_ToS16Saturate _mm_packs_epi32
+abForceInline abVec4s32 abVec8s16_ToS32Low(abVec8s16 v) { return abVec4s32_ShiftRightConst(_mm_unpacklo_epi16(v, v), 16u); }
+abForceInline abVec4s32 abVec8s16_ToS32High(abVec8s16 v) { return abVec4s32_ShiftRightConst(_mm_unpackhi_epi16(v, v), 16u); }
+#define abVec8s16_ToS8Saturate _mm_packs_epi16
+#define abVec8u16_ToU32Low(v) _mm_unpacklo_epi16((v), abVec8u16_Zero)
+#define abVec8u16_ToU32High(v) _mm_unpackhi_epi16((v), abVec8u16_Zero)
+#define abVec8u16_ToU8Saturate _mm_packus_epi16
 abForceInline abVec8s16 abVec16s8_ToS16Low(abVec16s8 v) { return abVec8s16_ShiftRightConst(_mm_unpacklo_epi8(v, v), 8u); }
 abForceInline abVec8s16 abVec16s8_ToS16High(abVec16s8 v) { return abVec8s16_ShiftRightConst(_mm_unpackhi_epi8(v, v), 8u); }
 #define abVec16u8_ToU16Low(v) _mm_unpacklo_epi8((v), abVec16u8_Zero)
 #define abVec16u8_ToU16High(v) _mm_unpackhi_epi8((v), abVec16u8_Zero)
-abForceInline abVec4s32 abVec8s16_ToS32Low(abVec8s16 v) { return abVec4s32_ShiftRightConst(_mm_unpacklo_epi16(v, v), 16u); }
-abForceInline abVec4s32 abVec8s16_ToS32High(abVec8s16 v) { return abVec4s32_ShiftRightConst(_mm_unpackhi_epi16(v, v), 16u); }
-#define abVec8u16_ToU32Low(v) _mm_unpacklo_epi16((v), abVec8u16_Zero)
-#define abVec8u16_ToU32High(v) _mm_unpackhi_epi16((v), abVec8u16_Zero)
 
 #elif defined(abPlatform_CPU_Arm)
 
@@ -395,14 +398,17 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 
 #define abVec4_ToS32 vcvtq_s32_f32
 #define abVec4s32_ToF32 vcvtq_f32_s32
+#define abVec4s32_ToS16Saturate(a, b) vcombine_s16(vqmovn_s32((a)), vqmovn_s32((b)))
+#define abVec8s16_ToS32Low(v) vmovl_s16(vget_low_s16((v)))
+#define abVec8s16_ToS32High(v) vmovl_s16(vget_high_s16((v)))
+#define abVec8s16_ToS8Saturate(a, b) vcombine_s8(vqmovn_s16((a)), vqmovn_s16((b)))
+#define abVec8u16_ToU32Low(v) vmovl_u16(vget_low_u16((v)))
+#define abVec8u16_ToU32High(v) vmovl_u16(vget_high_u16((v)))
+#define abVec8u16_ToU8Saturate(a, b) vcombine_u8(vqmovn_u16((a)), vqmovn_u16((b)))
 #define abVec16s8_ToS16Low(v) vmovl_s8(vget_low_s8((v)))
 #define abVec16s8_ToS16High(v) vmovl_s8(vget_high_s8((v)))
 #define abVec16u8_ToU16Low(v) vmovl_u8(vget_low_u8((v)))
 #define abVec16u8_ToU16High(v) vmovl_u8(vget_high_u8((v)))
-#define abVec8s16_ToS32Low(v) vmovl_s16(vget_low_s16((v)))
-#define abVec8s16_ToS32High(v) vmovl_s16(vget_high_s16((v)))
-#define abVec8u16_ToU32Low(v) vmovl_u16(vget_low_u16((v)))
-#define abVec8u16_ToU32High(v) vmovl_u16(vget_high_u16((v)))
 
 #else
 #error No SIMD vectors for the target CPU.
