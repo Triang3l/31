@@ -101,8 +101,8 @@ abForceInline uint32_t abVec4u32_GetX(abVec4u32 v) { uint32_t x; _mm_store_ss((f
 	abForceInline abVec4 abVec4_##name(abVec4 v) { return _mm_shuffle_ps(v, v, _MM_SHUFFLE((w), (z), (y), (x))); } \
 	abForceInline abVec4s32 abVec4s32_##name(abVec4s32 v) { return _mm_shuffle_epi32(v, _MM_SHUFFLE((w), (z), (y), (x))); } \
 	abForceInline abVec4u32 abVec4u32_##name(abVec4u32 v) { return _mm_shuffle_epi32(v, _MM_SHUFFLE((w), (z), (y), (x))); }
-abVec4i_SSE_MakeSwizzle(YXWZ, 1, 0, 3, 2)
-abVec4i_SSE_MakeSwizzle(ZWXY, 2, 3, 0, 1)
+abVec4i_SSE_MakeSwizzle(YXWZ, 1u, 0u, 3u, 2u)
+abVec4i_SSE_MakeSwizzle(ZWXY, 2u, 3u, 0u, 1u)
 
 #define abVec4_Add _mm_add_ps
 #define abVec4s32_Add _mm_add_epi32
@@ -407,6 +407,21 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #else
 #error No SIMD vectors for the target CPU.
 #endif
+
+abForceInline void abVec4_FourVec3ToVec4(abVec4 xyz0x1_v0, abVec4 yz1xy2, abVec4 z2xyz3, abVec4 * v1, abVec4 * v2, abVec4 * v3) {
+	#if defined(abPlatform_CPU_x86)
+	abVec4 xxyz1 = _mm_shuffle_ps(xyz0x1_v0, yz1xy2, _MM_SHUFFLE(1u, 0u, 3u, 3u));
+	*v1 = _mm_shuffle_ps(xxyz1, xxyz1, _MM_SHUFFLE(0u, 3u, 2u, 1u));
+	*v2 = _mm_shuffle_ps(yz1xy2, z2xyz3, _MM_SHUFFLE(1u, 0u, 3u, 2u));
+	*v3 = _mm_shuffle_ps(z2xyz3, z2xyz3, _MM_SHUFFLE(1u, 3u, 2u, 1u));
+	#elif defined(abPlatform_CPU_Arm)
+	*v1 = vextq_f32(xyz0x1_v0, yz1xy2, 3u);
+	*v2 = vextq_f32(yz1xy2, z2xyz3, 2u);
+	*v3 = vextq_f32(z2xyz3, z2xyz3, 1u);
+	#else
+	#error No abVec4_FourVec3ToVec4 for the target CPU.
+	#endif
+}
 
 abForceInline abVec4 abVec4_Dots4(abVec4 a, abVec4 b) {
 	abVec4 r = abVec4_Multiply(a, b);
