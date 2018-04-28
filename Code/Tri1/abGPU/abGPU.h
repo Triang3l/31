@@ -481,11 +481,12 @@ typedef struct abGPU_VertexData_Attribute {
 	uint8_t instanceRate; // 0 for per-vertex, 1 for per-instance, 2 for loading every 2 instances...
 } abGPU_VertexData_Attribute;
 
-void abGPU_VertexData_Convert_Float32x3ToSNorm16x4(int16_t * target, float const * source, size_t vertexCount);
-void abGPU_VertexData_Convert_UNorm8ToFloat32_Array(float * target, uint8_t const * source, size_t count);
-void abGPU_VertexData_Convert_SNorm8ToFloat32_Array(float * target, int8_t const * source, size_t count);
-void abGPU_VertexData_Convert_UNorm16ToFloat32_Array(float * target, uint16_t const * source, size_t count);
-void abGPU_VertexData_Convert_SNorm16ToFloat32_Array(float * target, int16_t const * source, size_t count);
+void abGPU_VertexData_Convert_Float32ToSNorm16_Array(int16_t * target, float const * source, size_t componentCount);
+void abGPU_VertexData_Convert_Float32x3ToSNorm16x4_Array(int16_t * target, float const * source, size_t vertexCount);
+void abGPU_VertexData_Convert_UNorm8ToFloat32_Array(float * target, uint8_t const * source, size_t componentCount);
+void abGPU_VertexData_Convert_SNorm8ToFloat32_Array(float * target, int8_t const * source, size_t componentCount);
+void abGPU_VertexData_Convert_UNorm16ToFloat32_Array(float * target, uint16_t const * source, size_t componentCount);
+void abGPU_VertexData_Convert_SNorm16ToFloat32_Array(float * target, int16_t const * source, size_t componentCount);
 
 /***********
  * Samplers
