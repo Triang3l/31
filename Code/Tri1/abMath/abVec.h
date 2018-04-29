@@ -132,6 +132,42 @@ abVec4i_SSE_MakeSwizzle(ZWXY, 2u, 3u, 0u, 1u)
 #define abVec16u8_Min _mm_min_epu8
 #define abVec16u8_Max _mm_max_epu8
 
+// The Two versions are to break dependencies.
+#define abVec4_ReciprocalCoarse _mm_rcp_ps
+#define abVec4_ReciprocalFine(v) _mm_div_ps(abVec4_LoadX4(1.0f), (v))
+abForceInline abVec4_ReciprocalTwoFine(abVec4 den1, abVec4 den2, abVec4 * result1, abVec4 * result2) {
+	abVec4 const ones = abVec4_LoadX4(1.0f);
+	*result1 = _mm_div_ps(ones, den1);
+	*result2 = _mm_div_ps(ones, den2);
+}
+#define abVec4_DivideFine _mm_div_ps
+abForceInline void abVec4_DivideTwoFine(abVec4 num1, abVec4 num2, abVec4 den1, abVec4 den2, abVec4 * result1, abVec4 * result2) {
+	*result1 = _mm_div_ps(num1, den1);
+	*result2 = _mm_div_ps(num2, den2);
+}
+#define abVec4_RSqrtCoarse _mm_rsqrt_ps
+abForceInline abVec4 abVec4_RSqrtFine(abVec4 v) {
+	abVec4 r = abVec4_RSqrtCoarse(v);
+	// -0.5r * (xr^2 - 3). Around 22 bit precision.
+	return abVec4_Multiply(abVec4_Multiply(abVec4_LoadX4(-0.5f), r), abVec4_MultiplyAdd(abVec4_LoadX4(-3.0f), v, abVec4_Multiply(r, r)));
+}
+abForceInline void abVec4_RSqrtTwoFine(abVec4 v1, abVec4 v2, abVec4 * result1, abVec4 * result2) {
+	abVec4 const mthrees = abVec4_LoadX4(-3.0f), mhalves = abVec4_LoadX4(-0.5f);
+	abVec4 r1 = abVec4_RSqrtCoarse(v1), r2 = abVec4_RSqrtCoarse(v2);
+	abVec4 t1 = abVec4_Multiply(r1, r1), t2 = abVec4_Multiply(r2, r2);
+	t1 = abVec4_Multiply(t1, v1);
+	t2 = abVec4_Multiply(t2, v2);
+	t1 = abVec4_Add(t1, mthrees);
+	t2 = abVec4_Add(t2, mthrees);
+	*result1 = abVec4_Multiply(t1, abVec4_Multiply(r1, mhalves));
+	*result2 = abVec4_Multiply(t2, abVec4_Multiply(r2, mhalves));
+}
+#define abVec4_SqrtFine _mm_sqrt_ps
+abForceInline void abVec4_SqrtTwoFine(abVec4 v1, abVec4 v2, abVec4 * result1, abVec4 * result2) {
+	*result1 = _mm_sqrt_ps(v1);
+	*result2 = _mm_sqrt_ps(v2);
+}
+
 #define abVec4_And _mm_and_ps
 #define abVec4s32_And _mm_and_si128
 #define abVec4u32_And abVec4s32_And
@@ -332,6 +368,57 @@ abForceInline abVec4u32 abVec4u32_ZWXY(abVec4u32 v) { return vextq_u32(v, v, 2u)
 #define abVec16s8_Max vmaxq_s8
 #define abVec16u8_Min vminq_u8
 #define abVec16u8_Max vmaxq_u8
+
+// The Two versions are to break dependencies.
+#define abVec4_ReciprocalCoarse vrecpeq_f32
+abForceInline abVec4 abVec4_ReciprocalFine(abVec4 v) {
+	abVec4 r = abVec4_ReciprocalCoarse(v);
+	r = abVec4_Multiply(r, vrecpsq_f32(v, r));
+	return abVec4_Multiply(r, vrecpsq_f32(v, r));
+}
+abForceInline abVec4_ReciprocalTwoFine(abVec4 den1, abVec4 den2, abVec4 * result1, abVec4 * result2) {
+	abVec4 r1 = abVec4_ReciprocalCoarse(den1), r2 = abVec4_ReciprocalCoarse(den2);
+	abVec4 s1 = vrecpsq_f32(den1, r1), s2 = vrecpsq_f32(den2, r2);
+	r1 = abVec4_Multiply(r1, s1);
+	r2 = abVec4_Multiply(r2, s2);
+	s1 = vrecpsq_f32(den1, r1);
+	s2 = vrecpsq_f32(den2, r2);
+	*result1 = abVec4_Multiply(r1, s1);
+	*result2 = abVec4_Multiply(r2, s2);
+}
+#define abVec4_DivideFine(num, den) abVec4_Multiply((num), abVec4_ReciprocalFine((den)))
+abForceInline void abVec4_DivideTwoFine(abVec4 num1, abVec4 num2, abVec4 den1, abVec4 den2, abVec4 * result1, abVec4 * result2) {
+	abVec4 r1, r2;
+	abVec4_ReciprocalTwoFine(den1, den2, &r1, &r2);
+	*result1 = abVec4_Multiply(num1, r1);
+	*result2 = abVec4_Multiply(num2, r2);
+}
+#define abVec4_RSqrtCoarse vrsqrteq_f32
+abForceInline abVec4 abVec4_RSqrtFine(abVec4 v) {
+	abVec4 r = abVec4_RSqrtCoarse(v);
+	r = abVec4_Multiply(r, vrsqrtsq_f32(abVec4_Multiply(r, r), v));
+	return abVec4_Multiply(r, vrsqrtsq_f32(abVec4_Multiply(r, r), v));
+}
+abForceInline void abVec4_RSqrtTwoFine(abVec4 v1, abVec4 v2, abVec4 * result1, abVec4 * result2) {
+	abVec4 r1 = abVec4_RSqrtCoarse(v1), r2 = abVec4_RSqrtCoarse(v2);
+	abVec4 rr1 = abVec4_Multiply(r1, r1), rr2 = abVec4_Multiply(r2, r2);
+	abVec4 s1 = vrsqrtsq_f32(rr1, v1), s2 = vrsqrtsq_f32(rr2, v2);
+	r1 = abVec4_Multiply(r1, s1);
+	r2 = abVec4_Multiply(r2, s2);
+	rr1 = abVec4_Multiply(r1, r1);
+	rr2 = abVec4_Multiply(r2, r2);
+	s1 = vrsqrtsq_f32(rr1, v1);
+	s2 = vrsqrtsq_f32(rr2, v2);
+	*result1 = abVec4_Multiply(r1, s1);
+	*result2 = abVec4_Multiply(r2, s2);
+}
+abForceInline abVec4 abVec4_SqrtFine(abVec4 v) { return abVec4_Multiply(abVec4_RSqrtFine(v), v); }
+abForceInline void abVec4_SqrtTwoFine(abVec4 v1, abVec4 v2, abVec4 * result1, abVec4 * result2) {
+	abVec4 r1, r2;
+	abVec4_RSqrtTwoFine(v1, v2, &r1, &r2);
+	*result1 = abVec4_Multiply(r1, v1);
+	*result2 = abVec4_Multiply(r2, v2);
+}
 
 #define abVec4s32_And vandq_s32
 #define abVec4u32_And vandq_u32
