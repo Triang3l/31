@@ -2,17 +2,19 @@
 #define abInclude_abGFX
 #include "../abGPU/abGPU.h"
 
-void abGFX_InitPreFile();
-void abGFX_ShutdownPostFile();
+// abGFXm and abGFXim functions are to be called from the main thread.
+
+void abGFXm_InitPreFile();
+void abGFXm_ShutdownPostFile();
 
 /*
  * Texture/buffer handles.
  */
 extern abGPU_HandleStore abGFX_Handles_Store;
-unsigned int abGFX_Handles_Alloc(unsigned int count);
-void abGFX_Handles_Free(unsigned int handleIndex);
+unsigned int abGFXm_Handles_Alloc(unsigned int count);
+void abGFXm_Handles_Free(unsigned int handleIndex);
 // Internal.
-void abGFXi_Handles_Init();
-void abGFXi_Handles_Shutdown();
+void abGFXim_Handles_Init();
+void abGFXim_Handles_Shutdown();
 
 #endif

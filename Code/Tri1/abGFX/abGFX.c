@@ -1,9 +1,9 @@
 #include "abGFX.h"
 
-void abGFX_InitPreFile() {
-	abGFXi_Handles_Init();
+void abGFXm_InitPreFile() {
+	abGFXim_Handles_Init();
 }
 
-void abGFX_ShutdownPostFile() {
-	abGFXi_Handles_Shutdown();
+void abGFXm_ShutdownPostFile() {
+	abGFXim_Handles_Shutdown();
 }

@@ -21,7 +21,7 @@ void abCore_Run() {
 	abGPU_Init(abFalse);
 	#endif
 
-	abGFX_InitPreFile();
+	abGFXm_InitPreFile();
 
 	abFile_Init();
 
@@ -33,7 +33,7 @@ void abCore_Run() {
 
 	abFile_Shutdown();
 
-	abGFX_ShutdownPostFile();
+	abGFXm_ShutdownPostFile();
 
 	abGPU_Shutdown();
 
