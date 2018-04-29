@@ -3,6 +3,7 @@
 #include "../abGPU/abGPU.h"
 
 // Public - can be used by tools.
+// DDS files are accessed sequentially and below 4 GB.
 
 typedef uint32_t abFile_ImageDDS_Flags;
 enum {

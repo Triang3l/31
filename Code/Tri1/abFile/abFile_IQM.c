@@ -74,7 +74,7 @@ static abBool abFilei_IQM_ValidateTriangles(uint32_t const * triangles, uint32_t
 	if (triangleCount == 0u) {
 		return abTrue;
 	}
-	if ((triangleCount % 3u) != 0u || triangleCount > (UINT32_MAX / 3u) || vertexCount == 0u) {
+	if (triangleCount > (UINT32_MAX / 3u) || vertexCount == 0u) {
 		return abFalse;
 	}
 	uint32_t indexCount = triangleCount * 3u;

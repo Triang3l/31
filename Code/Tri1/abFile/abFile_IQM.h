@@ -2,6 +2,9 @@
 #define abInclude_abFile_IQM
 #include "../abCommon.h"
 
+// For usage by tools.
+// IQM files are accessed randomly and below 4 GB.
+
 typedef struct abFile_IQM_Header {
 	char identifier[16u];
 	uint32_t version;
