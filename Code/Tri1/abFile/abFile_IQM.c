@@ -85,7 +85,7 @@ static abBool abFilei_IQM_ValidateTriangles(uint32_t const * triangles, uint32_t
 		--indexCount;
 	}
 	if (indexCount >= 16u) { // Small values are very unlikely though. An arbitrary value based on operation count.
-		#ifdef abVec4u32_ComparisonAvailable
+		#ifdef abVec4u_Comparison_Available
 		abVec4u32 maxIndices = abVec4u32_LoadX4(vertexCount - 1u);
 		abVec4u32 anyOutside = abVec4u32_Zero;
 		while (indexCount >= 4u) {
