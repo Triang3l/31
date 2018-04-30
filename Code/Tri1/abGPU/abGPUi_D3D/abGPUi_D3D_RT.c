@@ -253,7 +253,7 @@ void abGPU_DisplayChain_Display(abGPU_DisplayChain * chain, abBool verticalSync)
 	IDXGISwapChain3_Present(chain->i_swapChain, verticalSync ? 1u : 0u, 0u);
 }
 
-void abGPU_DisplayChain_Shutdown(abGPU_DisplayChain * chain) {
+void abGPU_DisplayChain_Destroy(abGPU_DisplayChain * chain) {
 	for (unsigned int imageIndex = 0u; imageIndex < chain->imageCount; ++imageIndex) {
 		abGPU_Image_Destroy(&chain->images[imageIndex]);
 	}

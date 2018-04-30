@@ -6,6 +6,8 @@
 
 extern abMemory_Tag * abGPUi_D3D_MemoryTag;
 
+extern abBool abGPUi_D3D_DebugEnabled;
+
 extern IDXGIFactory2 * abGPUi_D3D_DXGIFactory;
 extern IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain;
 extern ID3D12Device * abGPUi_D3D_Device;

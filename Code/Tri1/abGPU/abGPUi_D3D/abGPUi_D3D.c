@@ -1,7 +1,10 @@
 #ifdef abBuild_GPUi_D3D
 #include "abGPUi_D3D.h"
+#include <dxgidebug.h>
 
-extern abMemory_Tag * abGPUi_D3D_MemoryTag = abNull;
+abMemory_Tag * abGPUi_D3D_MemoryTag = abNull;
+
+abBool abGPUi_D3D_DebugEnabled;
 
 IDXGIFactory2 * abGPUi_D3D_DXGIFactory = abNull;
 IDXGIAdapter3 * abGPUi_D3D_DXGIAdapterMain = abNull;
@@ -43,6 +46,7 @@ abGPU_Init_Result abGPU_Init(abBool debug) {
 			debug = abFalse;
 		}
 	}
+	abGPUi_D3D_DebugEnabled = debug;
 
 	if (FAILED(CreateDXGIFactory2(debug ? DXGI_CREATE_FACTORY_DEBUG : 0u, &IID_IDXGIFactory2, &abGPUi_D3D_DXGIFactory))) {
 		return abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed;
@@ -167,6 +171,21 @@ void abGPU_Shutdown() {
 	if (abGPUi_D3D_MemoryTag != abNull) {
 		abMemory_Tag_Destroy(abGPUi_D3D_MemoryTag);
 		abGPUi_D3D_MemoryTag = abNull;
+	}
+	if (abGPUi_D3D_DebugEnabled) {
+		HMODULE debugLibrary = LoadLibraryA("DXGIDebug.dll");
+		if (debugLibrary != abNull) {
+			IDXGIDebug * dxgiDebug;
+			HRESULT (WINAPI * getDebugInterface)(REFIID riid, void * * debug) =
+					(void *) GetProcAddress(debugLibrary, "DXGIGetDebugInterface");
+			if (getDebugInterface != abNull) {
+				if (SUCCEEDED(getDebugInterface(&IID_IDXGIDebug, &dxgiDebug))) {
+					IDXGIDebug_ReportLiveObjects(dxgiDebug, DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+					IDXGIDebug_Release(dxgiDebug);
+				}
+			}
+			FreeLibrary(debugLibrary);
+		}
 	}
 }
 

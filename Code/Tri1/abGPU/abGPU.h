@@ -361,7 +361,7 @@ abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, abTextU
 #endif
 unsigned int abGPU_DisplayChain_GetCurrentImageIndex(abGPU_DisplayChain * chain);
 void abGPU_DisplayChain_Display(abGPU_DisplayChain * chain, abBool verticalSync);
-void abGPU_DisplayChain_Shutdown(abGPU_DisplayChain * chain);
+void abGPU_DisplayChain_Destroy(abGPU_DisplayChain * chain);
 
 /*******************************
  * Render target configurations
