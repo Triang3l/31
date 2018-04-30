@@ -73,6 +73,9 @@
     <Filter Include="Source Files\abGFX">
       <UniqueIdentifier>{5e3a8a0f-fa63-457a-8e8b-c92edacc037a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\abGFX">
+      <UniqueIdentifier>{f327b3db-6740-4622-b08f-32576474b156}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="abCommon.h">
@@ -125,6 +128,12 @@
     </ClInclude>
     <ClInclude Include="abFile\abFile_IQM.h">
       <Filter>Header Files\abFile</Filter>
+    </ClInclude>
+    <ClInclude Include="abGFX\abGFX.h">
+      <Filter>Header Files\abGFX</Filter>
+    </ClInclude>
+    <ClInclude Include="abGFX\abGFXi.h">
+      <Filter>Header Files\abGFX</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -203,8 +212,14 @@
     <ClCompile Include="abFile\abFile_IQM.c">
       <Filter>Source Files\abFile</Filter>
     </ClCompile>
+    <ClCompile Include="abGFX\abGFX.c">
+      <Filter>Source Files\abGFX</Filter>
+    </ClCompile>
     <ClCompile Include="abGPU\abGPU_VertexData.c">
       <Filter>Source Files\abGPU</Filter>
+    </ClCompile>
+    <ClCompile Include="abGFX\abGFX_RT.c">
+      <Filter>Source Files\abGFX</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -144,6 +144,7 @@
     <ClInclude Include="abFile\abFile_IQM.h" />
     <ClInclude Include="abFile\abFile_Mapping.h" />
     <ClInclude Include="abGFX\abGFX.h" />
+    <ClInclude Include="abGFX\abGFXi.h" />
     <ClInclude Include="abGPU\abGPU.h" />
     <ClInclude Include="abGPU\abGPUi_D3D\abGPUi_D3D.h" />
     <ClInclude Include="abMath\abBit.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="abFile\abFile_Mapping.c" />
     <ClCompile Include="abGFX\abGFX.c" />
     <ClCompile Include="abGFX\abGFX_Handles.c" />
+    <ClCompile Include="abGFX\abGFX_RT.c" />
     <ClCompile Include="abGPU\abGPU.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c" />
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D_Buffer.c" />

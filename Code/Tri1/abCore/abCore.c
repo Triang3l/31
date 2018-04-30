@@ -25,17 +25,23 @@ void abCore_Run() {
 
 	abFile_Init();
 
+	abGFXm_InitPostFile();
+
 	while (!abCorei_QuitRequested) {
 		abPlatform_Window_ProcessEvents();
 
 		abFile_Update();
 	}
 
+	abGFXm_ShutdownPreFile();
+
 	abFile_Shutdown();
 
 	abGFXm_ShutdownPostFile();
 
 	abGPU_Shutdown();
+
+	abPlatform_Window_Shutdown();
 
 	abMemory_Shutdown();
 }
