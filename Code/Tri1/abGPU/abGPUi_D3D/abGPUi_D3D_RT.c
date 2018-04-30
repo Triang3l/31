@@ -34,6 +34,8 @@ abBool abGPU_RTStore_Init(abGPU_RTStore * store, abTextU8 const * name, unsigned
 		store->i_descriptorHeapDepth = abNull;
 		store->i_cpuDescriptorHandleStartDepth.ptr = 0u;
 	}
+	store->countColor = countColor;
+	store->countDepth = countDepth;
 	store->renderTargets = abMemory_Alloc(abGPUi_D3D_MemoryTag, (countColor + countDepth) * sizeof(abGPU_RTStore_RT), abFalse);
 	return abTrue;
 }
@@ -232,8 +234,9 @@ abBool abGPU_DisplayChain_InitForWindowsHWnd(abGPU_DisplayChain * chain, abTextU
 			(IUnknown *) abGPUi_D3D_CommandQueues[abGPU_CmdQueue_Graphics], hWnd, &desc, abNull, abNull, &swapChain1))) {
 		return abFalse;
 	}
-	if (FAILED(IDXGISwapChain1_QueryInterface(swapChain1, &IID_IDXGISwapChain3, &chain->i_swapChain))) {
-		IDXGISwapChain1_Release(swapChain1);
+	abBool gotSwapChain3 = SUCCEEDED(IDXGISwapChain1_QueryInterface(swapChain1, &IID_IDXGISwapChain3, &chain->i_swapChain));
+	IDXGISwapChain1_Release(swapChain1);
+	if (!gotSwapChain3) {
 		return abFalse;
 	}
 	chain->imageCount = imageCount;
