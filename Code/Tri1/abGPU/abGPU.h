@@ -305,6 +305,16 @@ typedef struct abGPU_HandleStore {
 abBool abGPU_HandleStore_Init(abGPU_HandleStore * store, abTextU8 const * name, unsigned int handleCount);
 void abGPU_HandleStore_SetConstantBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
 		abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
+void abGPU_HandleStore_SetStructureBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
+		abGPU_Buffer * buffer, unsigned int elementSize, unsigned int firstElementIndex, unsigned int elementCount);
+void abGPU_HandleStore_SetRawStructureBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
+		abGPU_Buffer * buffer, unsigned int offset, unsigned int size); // 4-aligned.
+void abGPU_HandleStore_SetEditBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
+		abGPU_Buffer * buffer, unsigned int elementSize, unsigned int firstElementIndex, unsigned int elementCount);
+void abGPU_HandleStore_SetRawEditBuffer(abGPU_HandleStore * store, unsigned int handleIndex,
+		abGPU_Buffer * buffer, unsigned int offset, unsigned int size); // 4-aligned.
+void abGPU_HandleStore_SetTexture(abGPU_HandleStore * store, unsigned int handleIndex, abGPU_Image * image);
+void abGPU_HandleStore_SetEditImage(abGPU_HandleStore * store, unsigned int handleIndex, abGPU_Image * image, unsigned int mip);
 void abGPU_HandleStore_Destroy(abGPU_HandleStore * store);
 
 /***********************
