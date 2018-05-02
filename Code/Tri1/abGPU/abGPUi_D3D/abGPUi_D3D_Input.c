@@ -87,7 +87,7 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * n
 			descriptorRange->BaseShaderRegister = input->parameters.editBufferHandle.editBufferFirstIndex;
 			descriptorRange->RegisterSpace = 1u;
 			break;
-		case abGPU_Input_Type_ImageHandle:
+		case abGPU_Input_Type_TextureHandle:
 			rootParameter->ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 			rootParameter->DescriptorTable.NumDescriptorRanges = 1u;
 			rootParameter->DescriptorTable.pDescriptorRanges = descriptorRange;
@@ -111,6 +111,7 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * n
 			}
 			if (input->parameters.samplerHandle.staticSamplerIndex != abGPU_Input_SamplerDynamicOnly) {
 				if (staticSamplerCount + input->parameters.samplerHandle.count > abArrayLength(staticSamplerDescs)) {
+					input->parameters.samplerHandle.staticSamplerIndex = abGPU_Input_SamplerDynamicOnly;
 					return abFalse;
 				}
 				for (unsigned int staticSamplerIndex = 0u; staticSamplerIndex < input->parameters.samplerHandle.count; ++staticSamplerIndex) {

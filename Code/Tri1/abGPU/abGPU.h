@@ -593,7 +593,7 @@ typedef enum abGPU_Input_Type {
 	abGPU_Input_Type_Uniform, // One of the constant input types, depending on the strategy.
 	abGPU_Input_Type_StructureBufferHandle,
 	abGPU_Input_Type_EditBufferHandle,
-	abGPU_Input_Type_ImageHandle,
+	abGPU_Input_Type_TextureHandle,
 	abGPU_Input_Type_EditImageHandle,
 	abGPU_Input_Type_SamplerHandle
 } abGPU_Input_Type;
@@ -828,7 +828,10 @@ typedef struct abGPU_CmdList {
 	ID3D12GraphicsCommandList * i_list;
 	ID3D12CommandList * i_executeList; // Same object as i_list, but different interface.
 
+	abGPU_HandleStore const * i_handleStore;
+	abGPU_SamplerStore const * i_samplerStore;
 	abGPU_RTConfig const * i_drawRTConfig;
+	abGPU_DrawConfig const * i_drawConfig;
 	#endif
 } abGPU_CmdList;
 
@@ -845,6 +848,17 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 // Drawing.
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig);
 void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list);
+abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConfig); // Returns whether need to rebind all inputs.
+
+// Inputs - drawing and computing.
+void abGPU_Cmd_InputUniform32BitValues(abGPU_CmdList * list, void const * values);
+void abGPU_Cmd_InputUniformBuffer(abGPU_CmdList * list, abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
+void abGPU_Cmd_InputConstantBuffer(abGPU_CmdList * list, unsigned int inputIndex, abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
+void abGPU_Cmd_InputConstantBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
+void abGPU_Cmd_InputStructureBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
+void abGPU_Cmd_InputEditBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
+void abGPU_Cmd_InputTextureHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
+void abGPU_Cmd_InputEditImageHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
 
 // Copying.
 #if defined(abBuild_GPUi_D3D)

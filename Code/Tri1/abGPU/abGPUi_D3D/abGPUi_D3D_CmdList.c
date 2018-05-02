@@ -99,6 +99,7 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list, abGPU_HandleStore
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig) {
 	ID3D12GraphicsCommandList * cmdList = list->i_list;
 	list->i_drawRTConfig = rtConfig;
+	list->i_drawConfig = abNull;
 
 	int rtIndex;
 
@@ -142,6 +143,145 @@ void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list) {
 		postDiscardBits &= ~(1u << rtIndex);
 		discardRegion.FirstSubresource = rtConfig->i_subresources[rtIndex];
 		ID3D12GraphicsCommandList_DiscardResource(cmdList, rtConfig->i_resources[rtIndex], &discardRegion);
+	}
+}
+
+abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConfig) {
+	abBool inputDifferent = (list->i_drawConfig == abNull || list->i_drawConfig->inputConfig != drawConfig->inputConfig);
+	list->i_drawConfig = drawConfig;
+	ID3D12GraphicsCommandList_SetPipelineState(list->i_list, drawConfig->i_pipelineState);
+	if (inputDifferent) {
+		ID3D12GraphicsCommandList_SetGraphicsRootSignature(list->i_list, drawConfig->inputConfig->i_rootSignature);
+	}
+	return inputDifferent;
+}
+
+/*********
+ * Inputs
+ *********/
+
+static abGPU_InputConfig * abGPUi_D3D_CmdList_GetInputConfig(abGPU_CmdList * list, abBool * compute) {
+	if (list->i_drawConfig != abNull) {
+		*compute = abFalse;
+		return list->i_drawConfig->inputConfig;
+	}
+	return abNull;
+}
+
+void abGPU_Cmd_InputUniform32BitValues(abGPU_CmdList * list, void const * values) {
+	abGPU_InputConfig const * inputConfig;
+	abBool compute;
+	if ((inputConfig = abGPUi_D3D_CmdList_GetInputConfig(list, &compute)) == abNull) {
+		return;
+	}
+	unsigned int valueCount = inputConfig->uniform32BitCount;
+	if (valueCount == 0u) {
+		return;
+	}
+	if (compute) {
+		ID3D12GraphicsCommandList_SetComputeRoot32BitConstants(list->i_list, 0u, valueCount, values, 0u);
+	} else {
+		ID3D12GraphicsCommandList_SetGraphicsRoot32BitConstants(list->i_list, 0u, valueCount, values, 0u);
+	}
+}
+
+void abGPU_Cmd_InputUniformBuffer(abGPU_CmdList * list, abGPU_Buffer * buffer, unsigned int offset, unsigned int size) {
+	abGPU_InputConfig const * inputConfig;
+	abBool compute;
+	if ((inputConfig = abGPUi_D3D_CmdList_GetInputConfig(list, &compute)) == abNull || !inputConfig->uniformUseBuffer) {
+		return;
+	}
+	unsigned int rootParameterIndex = ((inputConfig->uniform32BitCount != 0u) ? 1u : 0u);
+	D3D12_GPU_VIRTUAL_ADDRESS address = buffer->i_gpuVirtualAddress + offset;
+	if (compute) {
+		ID3D12GraphicsCommandList_SetComputeRootConstantBufferView(list->i_list, rootParameterIndex, address);
+	} else {
+		ID3D12GraphicsCommandList_SetGraphicsRootConstantBufferView(list->i_list, rootParameterIndex, address);
+	}
+}
+
+#define abGPUi_D3D_CmdList_GetRootParameter_Invalid UINT_MAX
+
+static unsigned int abGPUi_D3D_CmdList_GetRootParameter(abGPU_CmdList * list, unsigned int inputIndex, abGPU_Input_Type type, abBool * compute) {
+	abGPU_InputConfig const * inputConfig;
+	if ((inputConfig = abGPUi_D3D_CmdList_GetInputConfig(list, compute)) == abNull) {
+		return abGPUi_D3D_CmdList_GetRootParameter_Invalid;
+	}
+	if (inputIndex >= inputConfig->inputCount || inputConfig->inputs[inputIndex].type != type) {
+		return abGPUi_D3D_CmdList_GetRootParameter_Invalid;
+	}
+	unsigned int rootParameter = inputConfig->i_rootParameters[inputIndex];
+	if (rootParameter == UINT8_MAX) {
+		return abGPUi_D3D_CmdList_GetRootParameter_Invalid;
+	}
+	return rootParameter;
+}
+
+void abGPU_Cmd_InputConstantBuffer(abGPU_CmdList * list, unsigned int inputIndex, abGPU_Buffer * buffer, unsigned int offset, unsigned int size) {
+	abBool compute;
+	unsigned int rootParameter = abGPUi_D3D_CmdList_GetRootParameter(list, inputIndex, abGPU_Input_Type_ConstantBuffer, &compute);
+	if (rootParameter == abGPUi_D3D_CmdList_GetRootParameter_Invalid) {
+		return;
+	}
+	D3D12_GPU_VIRTUAL_ADDRESS address = buffer->i_gpuVirtualAddress + offset;
+	if (compute) {
+		ID3D12GraphicsCommandList_SetComputeRootConstantBufferView(list->i_list, rootParameter, address);
+	} else {
+		ID3D12GraphicsCommandList_SetGraphicsRootConstantBufferView(list->i_list, rootParameter, address);
+	}
+}
+
+static void abGPUi_D3D_CmdList_InputHandles(abGPU_CmdList * list, unsigned int inputIndex, abGPU_Input_Type type, unsigned int firstHandleIndex) {
+	if (list->i_handleStore == abNull) {
+		return;
+	}
+	abBool compute;
+	unsigned int rootParameter = abGPUi_D3D_CmdList_GetRootParameter(list, inputIndex, type, &compute);
+	if (rootParameter == abGPUi_D3D_CmdList_GetRootParameter_Invalid) {
+		return;
+	}
+	D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle = abGPUi_D3D_HandleStore_GetGPUDescriptorHandle(list->i_handleStore, firstHandleIndex);
+	if (compute) {
+		ID3D12GraphicsCommandList_SetComputeRootDescriptorTable(list->i_list, rootParameter, descriptorHandle);
+	} else {
+		ID3D12GraphicsCommandList_SetGraphicsRootDescriptorTable(list->i_list, rootParameter, descriptorHandle);
+	}
+}
+
+void abGPU_Cmd_InputConstantBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex) {
+	abGPUi_D3D_CmdList_InputHandles(list, inputIndex, abGPU_Input_Type_ConstantBufferHandle, firstHandleIndex);
+}
+
+void abGPU_Cmd_InputStructureBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex) {
+	abGPUi_D3D_CmdList_InputHandles(list, inputIndex, abGPU_Input_Type_StructureBufferHandle, firstHandleIndex);
+}
+
+void abGPU_Cmd_InputEditBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex) {
+	abGPUi_D3D_CmdList_InputHandles(list, inputIndex, abGPU_Input_Type_EditBufferHandle, firstHandleIndex);
+}
+
+void abGPU_Cmd_InputTextureHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex) {
+	abGPUi_D3D_CmdList_InputHandles(list, inputIndex, abGPU_Input_Type_TextureHandle, firstHandleIndex);
+}
+
+void abGPU_Cmd_InputEditImageHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex) {
+	abGPUi_D3D_CmdList_InputHandles(list, inputIndex, abGPU_Input_Type_EditImageHandle, firstHandleIndex);
+}
+
+void abGPU_Cmd_InputSamplers(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstSamplerIndex) {
+	if (list->i_samplerStore == abNull) {
+		return;
+	}
+	abBool compute;
+	unsigned int rootParameter = abGPUi_D3D_CmdList_GetRootParameter(list, inputIndex, abGPU_Input_Type_SamplerHandle, &compute);
+	if (rootParameter == abGPUi_D3D_CmdList_GetRootParameter_Invalid) { // Will catch static samplers.
+		return;
+	}
+	D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle = abGPUi_D3D_SamplerStore_GetGPUDescriptorHandle(list->i_samplerStore, firstSamplerIndex);
+	if (compute) {
+		ID3D12GraphicsCommandList_SetComputeRootDescriptorTable(list->i_list, rootParameter, descriptorHandle);
+	} else {
+		ID3D12GraphicsCommandList_SetGraphicsRootDescriptorTable(list->i_list, rootParameter, descriptorHandle);
 	}
 }
 
