@@ -285,6 +285,45 @@ void abGPU_Cmd_InputSamplers(abGPU_CmdList * list, unsigned int inputIndex, unsi
 	}
 }
 
+void abGPU_Cmd_InputVertexData(abGPU_CmdList * list, unsigned int firstBufferIndex, unsigned int bufferCount,
+		abGPU_Buffer * const * buffers, unsigned int const * offsets, unsigned int vertexCount, unsigned int instanceCount) {
+	if (list->i_drawConfig == abNull) {
+		return;
+	}
+	abGPU_InputConfig const * inputConfig = list->i_drawConfig->inputConfig;
+	if (inputConfig == abNull) {
+		return;
+	}
+	if (firstBufferIndex > inputConfig->vertexBufferCount) {
+		return;
+	}
+	bufferCount = abMin(inputConfig->vertexBufferCount - firstBufferIndex, bufferCount);
+	D3D12_VERTEX_BUFFER_VIEW * views = abStackAlloc(bufferCount * sizeof(D3D12_VERTEX_BUFFER_VIEW));
+	for (unsigned int bufferIndex = 0u; bufferIndex < bufferCount; ++bufferIndex) {
+		D3D12_VERTEX_BUFFER_VIEW * view = &views[bufferIndex];
+		abGPU_VertexData_Buffer const * buffer = &inputConfig->vertexBuffers[firstBufferIndex + bufferIndex];
+		view->BufferLocation = buffers[bufferIndex]->i_gpuVirtualAddress + ((offsets != abNull) ? offsets[bufferIndex] : 0u);
+		switch (buffer->instanceRate) {
+		case 0u:
+			view->SizeInBytes = vertexCount * buffer->stride;
+			break;
+		case 1u:
+			view->SizeInBytes = instanceCount * buffer->stride;
+			break;
+		default:
+			{
+				unsigned int instanceSequenceCount = instanceCount / buffer->instanceRate;
+				if ((instanceSequenceCount * buffer->instanceRate) < instanceCount) {
+					++instanceSequenceCount;
+				}
+				view->SizeInBytes = instanceSequenceCount * buffer->stride;
+			}
+		}
+		view->StrideInBytes = buffer->stride;
+	}
+	ID3D12GraphicsCommandList_IASetVertexBuffers(list->i_list, firstBufferIndex, bufferCount, views);
+}
+
 /**********
  * Copying
  **********/

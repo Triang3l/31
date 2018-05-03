@@ -2,7 +2,8 @@
 #include "abGPUi_D3D.h"
 
 abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * name, abGPU_Sampler const * staticSamplers) {
-	if (config->inputCount > abGPU_InputConfig_MaxInputs || config->vertexAttributeCount > abGPU_VertexData_MaxAttributes) {
+	if (config->inputCount > abGPU_InputConfig_MaxInputs || config->vertexBufferCount > abGPU_VertexData_MaxBuffers ||
+			config->vertexAttributeCount > abGPU_VertexData_MaxAttributes) {
 		return abFalse;
 	}
 
@@ -139,15 +140,15 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * n
 		nextInput: {}
 	}
 
-	unsigned int attributeTypesUsed = 0u, vertexBufferHighestIndex = 0u;
+	unsigned int attributeTypesUsed = 0u;
 	for (unsigned int attributeIndex = 0u; attributeIndex < config->vertexAttributeCount; ++attributeIndex) {
 		abGPU_VertexData_Attribute const * attribute = &config->vertexAttributes[attributeIndex];
-		if (attribute->type >= abGPU_VertexData_MaxAttributes || attribute->bufferIndex >= abGPU_VertexData_MaxAttributes ||
+		unsigned int bufferIndex = attribute->bufferIndex;
+		if (attribute->type >= abGPU_VertexData_MaxAttributes || bufferIndex >= config->vertexBufferCount ||
 				(attributeTypesUsed & (1u << attribute->type))) {
 			return abFalse;
 		}
 		attributeTypesUsed |= 1u << attribute->type; // Don't allow more than 1 attribute of the same type.
-		vertexBufferHighestIndex = abMax(attribute->bufferIndex, vertexBufferHighestIndex);
 		D3D12_INPUT_ELEMENT_DESC * elementDesc = &config->i_vertexElements[attributeIndex];
 		elementDesc->SemanticIndex = 0u;
 		switch (attribute->type) {
@@ -175,13 +176,18 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * n
 		case abGPU_VertexData_Format_Float32x4: elementDesc->Format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
 		default: return abFalse;
 		}
-		elementDesc->InputSlot = attribute->bufferIndex;
+		abGPU_VertexData_Buffer * buffer = &config->vertexBuffers[bufferIndex];
+		elementDesc->InputSlot = bufferIndex;
 		elementDesc->AlignedByteOffset = attribute->offset;
-		elementDesc->InputSlotClass = (attribute->instanceRate != 0u ?
-			D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA : D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA);
-		elementDesc->InstanceDataStepRate = attribute->instanceRate;
+		elementDesc->InputSlotClass = (buffer->instanceRate != 0u ?
+				D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA : D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA);
+		elementDesc->InstanceDataStepRate = buffer->instanceRate;
+		unsigned int minStride = attribute->offset + abGPU_VertexData_Format_GetSize(attribute->format);
+		if (minStride > UINT8_MAX) {
+			return abFalse;
+		}
+		buffer->stride = abMax(minStride, buffer->stride);
 	}
-	config->i_vertexBufferCount = (config->vertexAttributeCount != 0u ? vertexBufferHighestIndex + 1u : 0u);
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {
 		.NumParameters = rootParameterCount,

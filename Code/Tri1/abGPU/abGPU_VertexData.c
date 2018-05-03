@@ -1,6 +1,27 @@
 #include "abGPU.h"
 #include "../abMath/abVec.h"
 
+unsigned int abGPU_VertexData_Format_GetSize(abGPU_VertexData_Format format) {
+	switch (format) {
+	case abGPU_VertexData_Format_UInt8x4:
+	case abGPU_VertexData_Format_UNorm8x4:
+	case abGPU_VertexData_Format_SNorm8x4:
+	case abGPU_VertexData_Format_SNorm16x2:
+	case abGPU_VertexData_Format_Float16x2:
+	case abGPU_VertexData_Format_Float32x1:
+		return 4u;
+	case abGPU_VertexData_Format_SNorm16x4:
+	case abGPU_VertexData_Format_Float16x4:
+	case abGPU_VertexData_Format_Float32x2:
+		return 8u;
+	case abGPU_VertexData_Format_Float32x3:
+		return 12u;
+	case abGPU_VertexData_Format_Float32x4:
+		return 16u;
+	}
+	return 0u;
+}
+
 void abGPU_VertexData_Convert_Float32ToSNorm16_Array(int16_t * target, float const * source, size_t componentCount) {
 	while (componentCount != 0u && (((size_t) target & 15u) || ((size_t) source & 15u))) {
 		*(target++) = (int16_t) (*(source++) * INT16_MAX);

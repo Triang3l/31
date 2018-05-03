@@ -452,6 +452,7 @@ void abGPU_ShaderCode_Destroy(abGPU_ShaderCode * code);
  ***********/
 
 #define abGPU_VertexData_MaxAttributes 16u
+#define abGPU_VertexData_MaxBuffers abGPU_VertexData_MaxAttributes
 
 typedef enum abGPU_VertexData_Type {
 	abGPU_VertexData_Type_Position, // Recommended Float32x3.
@@ -482,14 +483,19 @@ typedef enum abGPU_VertexData_Format {
 	abGPU_VertexData_Format_Float32x4
 } abGPU_VertexData_Format;
 
+unsigned int abGPU_VertexData_Format_GetSize(abGPU_VertexData_Format format);
+
 typedef struct abGPU_VertexData_Attribute {
 	uint8_t type; // abGPU_VertexData_Type - only one attribute per type allowed.
 	uint8_t format; // abGPU_VertexData_Format.
 	uint8_t bufferIndex;
 	uint8_t offset;
-	uint8_t stride;
-	uint8_t instanceRate; // 0 for per-vertex, 1 for per-instance, 2 for loading every 2 instances...
 } abGPU_VertexData_Attribute;
+
+typedef struct abGPU_VertexData_Buffer {
+	uint8_t stride; // Can't be smaller than one vertex or one sequence of instances - will be clamped (auto-calculated) if it is!
+	uint8_t instanceRate; // 0 for per-vertex, 1 for per-instance, 2 for loading every 2 instances...
+} abGPU_VertexData_Buffer;
 
 void abGPU_VertexData_Convert_Float32ToSNorm16_Array(int16_t * target, float const * source, size_t componentCount);
 void abGPU_VertexData_Convert_Float32x3ToSNorm16x4_Array(int16_t * target, float const * source, size_t vertexCount);
@@ -658,7 +664,8 @@ typedef struct abGPU_InputConfig {
 	abBool uniformUseBuffer;
 	uint8_t uniformBufferGlobalIndex;
 
-	unsigned int vertexAttributeCount;
+	unsigned int vertexBufferCount, vertexAttributeCount;
+	abGPU_VertexData_Buffer vertexBuffers[abGPU_VertexData_MaxBuffers];
 	abGPU_VertexData_Attribute vertexAttributes[abGPU_VertexData_MaxAttributes];
 
 	#if defined(abBuild_GPUi_D3D)
@@ -666,7 +673,6 @@ typedef struct abGPU_InputConfig {
 	uint8_t i_rootParameters[abGPU_InputConfig_MaxInputs]; // UINT8_MAX means it's skipped.
 	// 32-bit constants and uniform buffer use 0 and 1 root parameter indices (both 0 if there's only one of them).
 	D3D12_INPUT_ELEMENT_DESC i_vertexElements[abGPU_VertexData_MaxAttributes];
-	unsigned int i_vertexBufferCount;
 	#endif
 } abGPU_InputConfig;
 
@@ -859,6 +865,8 @@ void abGPU_Cmd_InputStructureBufferHandles(abGPU_CmdList * list, unsigned int in
 void abGPU_Cmd_InputEditBufferHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
 void abGPU_Cmd_InputTextureHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
 void abGPU_Cmd_InputEditImageHandles(abGPU_CmdList * list, unsigned int inputIndex, unsigned int firstHandleIndex);
+void abGPU_Cmd_InputVertexData(abGPU_CmdList * list, unsigned int firstBufferIndex, unsigned int bufferCount,
+		abGPU_Buffer * const * buffers, /* optional */ unsigned int const * offsets, unsigned int vertexCount, unsigned int instanceCount);
 
 // Copying.
 #if defined(abBuild_GPUi_D3D)
