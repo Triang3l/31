@@ -210,4 +210,28 @@ void abGPU_DrawConfig_Unregister(abGPU_DrawConfig * config) {
 	ID3D12PipelineState_Release(config->i_pipelineState);
 }
 
+abBool abGPU_ComputeConfig_Init(abGPU_ComputeConfig * config, abGPU_ShaderCode const * shaderCode, char const * entryPoint,
+		abGPU_InputConfig * inputConfig, unsigned int groupSizeX, unsigned int groupSizeY, unsigned int groupSizeZ) {
+	D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {
+		.pRootSignature = inputConfig->i_rootSignature,
+		.CS = {
+			.pShaderBytecode = ID3D10Blob_GetBufferPointer(shaderCode->i_blob),
+			.BytecodeLength = ID3D10Blob_GetBufferSize(shaderCode->i_blob)
+		}
+	};
+	if (FAILED(ID3D12Device_CreateComputePipelineState(abGPUi_D3D_Device, &desc, &IID_ID3D12PipelineState, &config->i_pipelineState))) {
+		return abFalse;
+	}
+	// The group size is ignored in D3D, the shader defines it, but it's stored so it can be used in group count calculations.
+	config->inputConfig = inputConfig;
+	config->groupSizeX = groupSizeX;
+	config->groupSizeY = groupSizeY;
+	config->groupSizeZ = groupSizeZ;
+	return abTrue;
+}
+
+void abGPU_ComputeConfig_Destroy(abGPU_ComputeConfig * config) {
+	ID3D12PipelineState_Release(config->i_pipelineState);
+}
+
 #endif

@@ -33,13 +33,15 @@ abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_Cmd
 		ID3D12CommandAllocator_Release(list->i_allocator);
 		return abFalse;
 	}
-	ID3D12GraphicsCommandList_Close(list->i_list); // So it's not opened twice when it's used for the first time.
+	ID3D12GraphicsCommandList_Close(list->i_list); // So it's not opened twice when it's recorded for the first time.
 	return abTrue;
 }
 
 void abGPU_CmdList_Record(abGPU_CmdList * list) {
 	ID3D12CommandAllocator_Reset(list->i_allocator);
 	ID3D12GraphicsCommandList_Reset(list->i_list, list->i_allocator, abNull);
+	list->i_drawConfig = abNull;
+	list->i_computeConfig = abNull;
 }
 
 void abGPU_CmdList_Abort(abGPU_CmdList * list) {
@@ -155,7 +157,6 @@ void abGPU_Cmd_UsageControl(abGPU_CmdList * list, unsigned int actionCount, abGP
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig) {
 	ID3D12GraphicsCommandList * cmdList = list->i_list;
 	list->i_drawRTConfig = rtConfig;
-	list->i_drawConfig = abNull;
 
 	int rtIndex;
 
@@ -200,6 +201,7 @@ void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list) {
 		discardRegion.FirstSubresource = rtConfig->i_subresources[rtIndex];
 		ID3D12GraphicsCommandList_DiscardResource(cmdList, rtConfig->i_resources[rtIndex], &discardRegion);
 	}
+	list->i_drawConfig = abNull;
 }
 
 abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConfig) {
@@ -267,6 +269,28 @@ void abGPU_Cmd_DrawIndexed(abGPU_CmdList * list, unsigned int indexCount, unsign
 void abGPU_Cmd_DrawSequential(abGPU_CmdList * list, unsigned int vertexCount, unsigned int firstVertex,
 		unsigned int instanceCount, unsigned int firstInstance) {
 	ID3D12GraphicsCommandList_DrawInstanced(list->i_list, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+/************
+ * Computing
+ ************/
+
+void abGPU_Cmd_ComputingEnd(abGPU_CmdList * list) {
+	list->i_computeConfig = abNull;
+}
+
+abBool abGPU_Cmd_ComputeSetConfig(abGPU_CmdList * list, abGPU_ComputeConfig * computeConfig) {
+	abBool inputDifferent = (list->i_computeConfig == abNull || list->i_computeConfig->inputConfig != computeConfig->inputConfig);
+	list->i_computeConfig = computeConfig;
+	ID3D12GraphicsCommandList_SetPipelineState(list->i_list, computeConfig->i_pipelineState);
+	if (inputDifferent) {
+		ID3D12GraphicsCommandList_SetComputeRootSignature(list->i_list, computeConfig->inputConfig->i_rootSignature);
+	}
+	return inputDifferent;
+}
+
+void abGPU_Cmd_Compute(abGPU_CmdList * list, unsigned int groupCountX, unsigned int groupCountY, unsigned int groupCountZ) {
+	ID3D12GraphicsCommandList_Dispatch(list->i_list, groupCountX, groupCountY, groupCountZ);
 }
 
 /*********

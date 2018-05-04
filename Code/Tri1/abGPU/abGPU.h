@@ -680,7 +680,7 @@ abBool abGPU_InputConfig_Register(abGPU_InputConfig * config, abTextU8 const * n
 void abGPU_InputConfig_Unregister(abGPU_InputConfig * config);
 
 /**************************
- * Graphics configurations
+ * Pipeline configurations
  **************************/
 
 typedef unsigned int abGPU_DrawConfig_Options;
@@ -822,6 +822,19 @@ typedef struct abGPU_DrawConfig {
 abBool abGPU_DrawConfig_Register(abGPU_DrawConfig * config, abTextU8 const * name); // May take a significantly long time!
 void abGPU_DrawConfig_Unregister(abGPU_DrawConfig * config);
 
+typedef struct abGPU_ComputeConfig {
+	abGPU_InputConfig * inputConfig;
+	unsigned int groupSizeX, groupSizeY, groupSizeZ;
+
+	#if defined(abBuild_GPUi_D3D)
+	ID3D12PipelineState * i_pipelineState;
+	#endif
+} abGPU_ComputeConfig;
+
+abBool abGPU_ComputeConfig_Init(abGPU_ComputeConfig * config, abGPU_ShaderCode const * shaderCode, char const * entryPoint,
+		abGPU_InputConfig * inputConfig, unsigned int groupSizeX, unsigned int groupSizeY, unsigned int groupSizeZ);
+void abGPU_ComputeConfig_Destroy(abGPU_ComputeConfig * config);
+
 /****************
  * Command lists
  ****************/
@@ -838,6 +851,7 @@ typedef struct abGPU_CmdList {
 	abGPU_SamplerStore const * i_samplerStore;
 	abGPU_RTConfig const * i_drawRTConfig;
 	abGPU_DrawConfig const * i_drawConfig;
+	abGPU_ComputeConfig const * i_computeConfig;
 	#endif
 } abGPU_CmdList;
 
@@ -923,6 +937,17 @@ void abGPU_Cmd_DrawIndexed(abGPU_CmdList * list, unsigned int indexCount, unsign
 		unsigned int instanceCount, unsigned int firstInstance);
 void abGPU_Cmd_DrawSequential(abGPU_CmdList * list, unsigned int vertexCount, unsigned int firstVertex,
 		unsigned int instanceCount, unsigned int firstInstance);
+
+// Computing.
+
+#if defined(abBuild_GPUi_D3D)
+#define abGPU_Cmd_ComputingBegin(list) {}
+#else
+void abGPU_Cmd_ComputingBegin(abGPU_CmdList * list);
+#endif
+void abGPU_Cmd_ComputingEnd(abGPU_CmdList * list);
+abBool abGPU_Cmd_ComputeSetConfig(abGPU_CmdList * list, abGPU_ComputeConfig * computeConfig); // Returns whether need to rebind all inputs.
+void abGPU_Cmd_Compute(abGPU_CmdList * list, unsigned int groupCountX, unsigned int groupCountY, unsigned int groupCountZ);
 
 // Inputs - drawing and computing.
 
