@@ -841,13 +841,13 @@ typedef struct abGPU_CmdList {
 	#endif
 } abGPU_CmdList;
 
-typedef enum abGPU_CmdList_Topology {
-	abGPU_CmdList_Topology_TriangleList,
-	abGPU_CmdList_Topology_TriangleStrip,
-	abGPU_CmdList_Topology_PointList,
-	abGPU_CmdList_Topology_LineList,
-	abGPU_CmdList_Topology_LineStrip
-} abGPU_CmdList_Topology;
+typedef enum abGPU_Cmd_Topology {
+	abGPU_Cmd_Topology_TriangleList,
+	abGPU_Cmd_Topology_TriangleStrip,
+	abGPU_Cmd_Topology_PointList,
+	abGPU_Cmd_Topology_LineList,
+	abGPU_Cmd_Topology_LineStrip
+} abGPU_Cmd_Topology;
 
 abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_CmdQueue queue);
 void abGPU_CmdList_Record(abGPU_CmdList * list);
@@ -856,14 +856,64 @@ void abGPU_CmdList_Submit(abGPU_CmdList * const * lists, unsigned int listCount)
 void abGPU_CmdList_Destroy(abGPU_CmdList * list);
 
 // Setup.
+
 void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 		/* optional */ abGPU_HandleStore * handleStore, /* optional */ abGPU_SamplerStore * samplerStore);
 
+// Usage control.
+
+typedef enum abGPU_Cmd_UsageControl_Type {
+	abGPU_Cmd_UsageControl_Type_BufferSwitch,
+	abGPU_Cmd_UsageControl_Type_ImageSwitch,
+	abGPU_Cmd_UsageControl_Type_BufferEditCommit,
+	abGPU_Cmd_UsageControl_Type_ImageEditCommit,
+} abGPU_Cmd_UsageControl_Type;
+
+typedef enum abGPU_Cmd_UsageControl_Time {
+	abGPU_Cmd_UsageControl_Time_Now, // (Zero) Action fully done before executing the next command.
+	abGPU_Cmd_UsageControl_Time_Start, // Begins the action - commands not using this resource can be executed in parallel.
+	abGPU_Cmd_UsageControl_Time_Finish // Completed the action started previously with the same parameters.
+} abGPU_Cmd_UsageControl_Time;
+
+typedef struct abGPU_Cmd_UsageControl_BufferSwitch {
+	abGPU_Buffer * buffer;
+	abGPU_Buffer_Usage oldUsage;
+	abGPU_Buffer_Usage newUsage;
+} abGPU_Cmd_UsageControl_BufferSwitch;
+
+typedef struct abGPU_Cmd_UsageControl_ImageSwitch {
+	abGPU_Image * image;
+	abGPU_Image_Usage oldUsage;
+	abGPU_Image_Usage newUsage;
+} abGPU_Cmd_UsageControl_ImageSwitch;
+
+typedef struct abGPU_Cmd_UsageControl_BufferEditCommit {
+	abGPU_Buffer * buffer;
+} abGPU_Cmd_UsageControl_BufferEditCommit;
+
+typedef struct abGPU_Cmd_UsageControl_ImageEditCommit {
+	abGPU_Image * image;
+} abGPU_Cmd_UsageControl_ImageEditCommit;
+
+typedef struct abGPU_Cmd_UsageControl_Action {
+	abGPU_Cmd_UsageControl_Type type;
+	abGPU_Cmd_UsageControl_Time time;
+	union {
+		abGPU_Cmd_UsageControl_BufferSwitch bufferSwitch;
+		abGPU_Cmd_UsageControl_ImageSwitch imageSwitch;
+		abGPU_Cmd_UsageControl_BufferEditCommit bufferEditCommit;
+		abGPU_Cmd_UsageControl_ImageEditCommit imageEditCommit;
+	} parameters;
+} abGPU_Cmd_UsageControl_Action;
+
+void abGPU_Cmd_UsageControl(abGPU_CmdList * list, unsigned int actionCount, abGPU_Cmd_UsageControl_Action const * actions);
+
 // Drawing.
+
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig);
 void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list);
 abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConfig); // Returns whether need to rebind all inputs.
-void abGPU_Cmd_DrawSetTopology(abGPU_CmdList * list, abGPU_CmdList_Topology topology);
+void abGPU_Cmd_DrawSetTopology(abGPU_CmdList * list, abGPU_Cmd_Topology topology);
 void abGPU_Cmd_DrawSetVertexIndices(abGPU_CmdList * list, abGPU_Buffer * buffer, unsigned int offset, unsigned int indexCount);
 void abGPU_Cmd_DrawSetViewport(abGPU_CmdList * list, float x, float y, float w, float h, float zZero, float zOne);
 void abGPU_Cmd_DrawSetScissor(abGPU_CmdList * list, int x, int y, unsigned int w, unsigned int h);
@@ -875,6 +925,7 @@ void abGPU_Cmd_DrawSequential(abGPU_CmdList * list, unsigned int vertexCount, un
 		unsigned int instanceCount, unsigned int firstInstance);
 
 // Inputs - drawing and computing.
+
 void abGPU_Cmd_InputUniform32BitValues(abGPU_CmdList * list, void const * values);
 void abGPU_Cmd_InputUniformBuffer(abGPU_CmdList * list, abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
 void abGPU_Cmd_InputConstantBuffer(abGPU_CmdList * list, unsigned int inputIndex, abGPU_Buffer * buffer, unsigned int offset, unsigned int size);
@@ -887,6 +938,7 @@ void abGPU_Cmd_InputVertexData(abGPU_CmdList * list, unsigned int firstBufferInd
 		abGPU_Buffer * const * buffers, /* optional */ unsigned int const * offsets, unsigned int vertexCount, unsigned int instanceCount);
 
 // Copying.
+
 #if defined(abBuild_GPUi_D3D)
 #define abGPU_Cmd_CopyingBegin(list) {}
 #define abGPU_Cmd_CopyingEnd(list) {}

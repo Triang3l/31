@@ -23,6 +23,10 @@ typedef void (STDMETHODCALLTYPE * abGPUi_D3D_ID3D12DescriptorHeap_GetGPUDescript
 		ID3D12DescriptorHeap * heap, D3D12_GPU_DESCRIPTOR_HANDLE * handle);
 typedef void (STDMETHODCALLTYPE * abGPUi_D3D_ID3D12Resource_GetDesc)(ID3D12Resource * resource, D3D12_RESOURCE_DESC * desc);
 
+// Buffers.
+
+D3D12_RESOURCE_STATES abGPUi_D3D_Buffer_UsageToStates(abGPU_Buffer_Usage usage);
+
 // Images.
 
 DXGI_FORMAT abGPUi_D3D_Image_FormatToResource(abGPU_Image_Format format);

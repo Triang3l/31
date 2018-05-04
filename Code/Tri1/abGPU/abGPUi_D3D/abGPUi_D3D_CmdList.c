@@ -92,6 +92,62 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list, abGPU_HandleStore
 	ID3D12GraphicsCommandList_SetDescriptorHeaps(list->i_list, heapCount, heaps);
 }
 
+/******************
+ * Usage switching
+ ******************/
+
+void abGPU_Cmd_UsageControl(abGPU_CmdList * list, unsigned int actionCount, abGPU_Cmd_UsageControl_Action const * actions) {
+	D3D12_RESOURCE_BARRIER * barriers = abStackAlloc(actionCount * sizeof(D3D12_RESOURCE_BARRIER));
+	unsigned int barrierCount = 0u; // Excluding switches into the same usage.
+	for (unsigned int actionIndex = 0u; actionIndex < actionCount; ++actionIndex) {
+		abGPU_Cmd_UsageControl_Action const * action = &actions[actionIndex];
+		D3D12_RESOURCE_BARRIER * barrier = &barriers[barrierCount];
+		if (action->time == abGPU_Cmd_UsageControl_Time_Start) {
+			barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+		} else if (action->time == abGPU_Cmd_UsageControl_Time_Finish) {
+			barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+		} else {
+			barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		}
+		switch (action->type) {
+		case abGPU_Cmd_UsageControl_Type_BufferSwitch:
+			barrier->Transition.StateBefore = abGPUi_D3D_Buffer_UsageToStates(action->parameters.bufferSwitch.oldUsage);
+			barrier->Transition.StateAfter = abGPUi_D3D_Buffer_UsageToStates(action->parameters.bufferSwitch.newUsage);
+			if (barrier->Transition.StateBefore == barrier->Transition.StateAfter) {
+				continue; // Vertex buffer and constant buffer are the same states, for instance.
+			}
+			barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier->Transition.pResource = action->parameters.bufferSwitch.buffer->i_resource;
+			barrier->Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			break;
+		case abGPU_Cmd_UsageControl_Type_ImageSwitch:
+			barrier->Transition.StateBefore = abGPUi_D3D_Image_UsageToStates(action->parameters.imageSwitch.oldUsage);
+			barrier->Transition.StateAfter = abGPUi_D3D_Image_UsageToStates(action->parameters.imageSwitch.newUsage);
+			if (barrier->Transition.StateBefore == barrier->Transition.StateAfter) {
+				continue;
+			}
+			barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier->Transition.pResource = action->parameters.imageSwitch.image->i_resource;
+			barrier->Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			break;
+		case abGPU_Cmd_UsageControl_Type_BufferEditCommit:
+			barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+			barrier->UAV.pResource = action->parameters.bufferEditCommit.buffer->i_resource;
+			break;
+		case abGPU_Cmd_UsageControl_Type_ImageEditCommit:
+			barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+			barrier->UAV.pResource = action->parameters.imageEditCommit.image->i_resource;
+			break;
+		default:
+			continue;
+		}
+		++barrierCount; // Continue to prevent if the action isn't valid.
+	}
+	if (barrierCount != 0u) {
+		ID3D12GraphicsCommandList_ResourceBarrier(list->i_list, barrierCount, barriers);
+	}
+}
+
 /**********
  * Drawing
  **********/
@@ -156,14 +212,14 @@ abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConf
 	return inputDifferent;
 }
 
-void abGPU_Cmd_DrawSetTopology(abGPU_CmdList * list, abGPU_CmdList_Topology topology) {
+void abGPU_Cmd_DrawSetTopology(abGPU_CmdList * list, abGPU_Cmd_Topology topology) {
 	D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
 	switch (topology) {
-	case abGPU_CmdList_Topology_TriangleList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST; break;
-	case abGPU_CmdList_Topology_TriangleStrip: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP; break;
-	case abGPU_CmdList_Topology_PointList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST; break;
-	case abGPU_CmdList_Topology_LineList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST; break;
-	case abGPU_CmdList_Topology_LineStrip: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP; break;
+	case abGPU_Cmd_Topology_TriangleList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST; break;
+	case abGPU_Cmd_Topology_TriangleStrip: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP; break;
+	case abGPU_Cmd_Topology_PointList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST; break;
+	case abGPU_Cmd_Topology_LineList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST; break;
+	case abGPU_Cmd_Topology_LineStrip: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP; break;
 	default: return;
 	}
 	ID3D12GraphicsCommandList_IASetPrimitiveTopology(list->i_list, primitiveTopology);
