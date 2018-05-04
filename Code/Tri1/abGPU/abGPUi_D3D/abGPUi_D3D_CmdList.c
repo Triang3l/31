@@ -156,6 +156,63 @@ abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConf
 	return inputDifferent;
 }
 
+void abGPU_Cmd_DrawSetTopology(abGPU_CmdList * list, abGPU_CmdList_Topology topology) {
+	D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
+	switch (topology) {
+	case abGPU_CmdList_Topology_TriangleList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST; break;
+	case abGPU_CmdList_Topology_TriangleStrip: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP; break;
+	case abGPU_CmdList_Topology_PointList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST; break;
+	case abGPU_CmdList_Topology_LineList: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST; break;
+	case abGPU_CmdList_Topology_LineStrip: primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP; break;
+	default: return;
+	}
+	ID3D12GraphicsCommandList_IASetPrimitiveTopology(list->i_list, primitiveTopology);
+}
+
+void abGPU_Cmd_DrawSetVertexIndices(abGPU_CmdList * list, abGPU_Buffer * buffer, unsigned int offset, unsigned int indexCount) {
+	if (list->i_drawConfig == abNull) {
+		return;
+	}
+	D3D12_INDEX_BUFFER_VIEW view;
+	view.BufferLocation = buffer->i_gpuVirtualAddress + offset;
+	if (list->i_drawConfig->options & abGPU_DrawConfig_Options_16BitVertexIndices) {
+		view.SizeInBytes = indexCount * (unsigned int) sizeof(uint16_t);
+		view.Format = DXGI_FORMAT_R16_UINT;
+	} else {
+		view.SizeInBytes = indexCount * (unsigned int) sizeof(uint32_t);
+		view.Format = DXGI_FORMAT_R32_UINT;
+	}
+	ID3D12GraphicsCommandList_IASetIndexBuffer(list->i_list, &view);
+}
+
+void abGPU_Cmd_DrawSetViewport(abGPU_CmdList * list, float x, float y, float w, float h, float zZero, float zOne) {
+	D3D12_VIEWPORT viewport = { .TopLeftX = x, .TopLeftY = y, .Width = w, .Height = h, .MinDepth = zZero, .MaxDepth = zOne };
+	ID3D12GraphicsCommandList_RSSetViewports(list->i_list, 1u, &viewport);
+}
+
+void abGPU_Cmd_DrawSetScissor(abGPU_CmdList * list, int x, int y, unsigned int w, unsigned int h) {
+	D3D12_RECT scissor = { .left = x, .top = y, .right = x + w, .bottom = y + h };
+	ID3D12GraphicsCommandList_RSSetScissorRects(list->i_list, 1u, &scissor);
+}
+
+void abGPU_Cmd_DrawSetStencilReference(abGPU_CmdList * list, uint8_t reference) {
+	ID3D12GraphicsCommandList_OMSetStencilRef(list->i_list, reference);
+}
+
+void abGPU_Cmd_DrawSetBlendConstant(abGPU_CmdList * list, float const rgba[4u]) {
+	ID3D12GraphicsCommandList_OMSetBlendFactor(list->i_list, rgba);
+}
+
+void abGPU_Cmd_DrawIndexed(abGPU_CmdList * list, unsigned int indexCount, unsigned int firstIndex, int vertexIndexOffset,
+		unsigned int instanceCount, unsigned int firstInstance) {
+	ID3D12GraphicsCommandList_DrawIndexedInstanced(list->i_list, indexCount, instanceCount, firstIndex, vertexIndexOffset, firstInstance);
+}
+
+void abGPU_Cmd_DrawSequential(abGPU_CmdList * list, unsigned int vertexCount, unsigned int firstVertex,
+		unsigned int instanceCount, unsigned int firstInstance) {
+	ID3D12GraphicsCommandList_DrawInstanced(list->i_list, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
 /*********
  * Inputs
  *********/

@@ -841,6 +841,14 @@ typedef struct abGPU_CmdList {
 	#endif
 } abGPU_CmdList;
 
+typedef enum abGPU_CmdList_Topology {
+	abGPU_CmdList_Topology_TriangleList,
+	abGPU_CmdList_Topology_TriangleStrip,
+	abGPU_CmdList_Topology_PointList,
+	abGPU_CmdList_Topology_LineList,
+	abGPU_CmdList_Topology_LineStrip
+} abGPU_CmdList_Topology;
+
 abBool abGPU_CmdList_Init(abGPU_CmdList * list, abTextU8 const * name, abGPU_CmdQueue queue);
 void abGPU_CmdList_Record(abGPU_CmdList * list);
 void abGPU_CmdList_Abort(abGPU_CmdList * list); // Stops recording without submitting (useful for file loading errors).
@@ -855,6 +863,16 @@ void abGPU_Cmd_SetHandleAndSamplerStores(abGPU_CmdList * list,
 void abGPU_Cmd_DrawingBegin(abGPU_CmdList * list, abGPU_RTConfig const * rtConfig);
 void abGPU_Cmd_DrawingEnd(abGPU_CmdList * list);
 abBool abGPU_Cmd_DrawSetConfig(abGPU_CmdList * list, abGPU_DrawConfig * drawConfig); // Returns whether need to rebind all inputs.
+void abGPU_Cmd_DrawSetTopology(abGPU_CmdList * list, abGPU_CmdList_Topology topology);
+void abGPU_Cmd_DrawSetVertexIndices(abGPU_CmdList * list, abGPU_Buffer * buffer, unsigned int offset, unsigned int indexCount);
+void abGPU_Cmd_DrawSetViewport(abGPU_CmdList * list, float x, float y, float w, float h, float zZero, float zOne);
+void abGPU_Cmd_DrawSetScissor(abGPU_CmdList * list, int x, int y, unsigned int w, unsigned int h);
+void abGPU_Cmd_DrawSetStencilReference(abGPU_CmdList * list, uint8_t reference);
+void abGPU_Cmd_DrawSetBlendConstant(abGPU_CmdList * list, float const rgba[4u]);
+void abGPU_Cmd_DrawIndexed(abGPU_CmdList * list, unsigned int indexCount, unsigned int firstIndex, int vertexIndexOffset,
+		unsigned int instanceCount, unsigned int firstInstance);
+void abGPU_Cmd_DrawSequential(abGPU_CmdList * list, unsigned int vertexCount, unsigned int firstVertex,
+		unsigned int instanceCount, unsigned int firstInstance);
 
 // Inputs - drawing and computing.
 void abGPU_Cmd_InputUniform32BitValues(abGPU_CmdList * list, void const * values);
