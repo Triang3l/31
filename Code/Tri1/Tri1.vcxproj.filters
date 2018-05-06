@@ -135,6 +135,9 @@
     <ClInclude Include="abGFX\abGFXi.h">
       <Filter>Header Files\abGFX</Filter>
     </ClInclude>
+    <ClInclude Include="abData\abHash.h">
+      <Filter>Header Files\abData</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c">

@@ -23,9 +23,9 @@
  */
 
 typedef struct abHashMap_KeyLocator {
-	uint32_t (* hashKey)(void const * key, unsigned int keySize);
-	abBool (* compareKeys)(void const * storedKey, void const * newKey, unsigned int keySize);
-	uint32_t (* copyKey)(void const * location, void const * key, unsigned int keySize);
+	uint32_t (* hash)(void const * key, unsigned int keySize);
+	abBool (* compare)(void const * storedKey, void const * newKey, unsigned int keySize);
+	void (* copy)(void * location, void const * key, unsigned int keySize);
 } abHashMap_KeyLocator;
 
 typedef struct abHashMap {
@@ -83,5 +83,19 @@ abBool abHashMap_Remove(abHashMap * hashMap, void const * key);
 abForceInline abHashMap_Destroy(abHashMap * hashMap) {
 	abMemory_Free(hashMap->memory);
 }
+
+/***************
+ * Key locators
+ ***************/
+
+uint32_t abHashMap_KeyLocator_Raw_Hash(void const * key, unsigned int keySize);
+abBool abHashMap_KeyLocator_Raw_Compare(void const * storedKey, void const * newKey, unsigned int keySize);
+void abHashMap_KeyLocator_Raw_Copy(void * location, void const * key, unsigned int keySize);
+extern abHashMap_KeyLocator const abHashMap_KeyLocator_Raw;
+
+uint32_t abHashMap_KeyLocator_TextA_Hash(void const * key, unsigned int keySize);
+abBool abHashMap_KeyLocator_TextA_Compare(void const * storedKey, void const * newKey, unsigned int keySize);
+void abHashMap_KeyLocator_TextA_Copy(void * location, void const * key, unsigned int keySize);
+extern abHashMap_KeyLocator const abHashMap_KeyLocator_TextA;
 
 #endif

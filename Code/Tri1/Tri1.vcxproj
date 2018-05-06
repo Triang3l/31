@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="abCommon.h" />
     <ClInclude Include="abCore\abCore.h" />
+    <ClInclude Include="abData\abHash.h" />
     <ClInclude Include="abData\abHashMap.h" />
     <ClInclude Include="abData\abText.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />

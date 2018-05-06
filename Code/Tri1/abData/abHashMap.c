@@ -1,4 +1,6 @@
 #include "abHashMap.h"
+#include "abHash.h"
+#include "../abData/abText.h"
 #include "../abFeedback/abFeedback.h"
 
 // Returns the table, indexed with the hash value, with the beginnings of the collision resolution lists.
@@ -23,7 +25,7 @@ unsigned int abHashMap_FindIndexRead(abHashMap * hashMap, void const * key) {
 	abHashMap_KeyLocator const * keyLocator = hashMap->keyLocator;
 
 	// Get the beginning of the list and check if there's any value with such hash.
-	unsigned int index = abHashMapi_GetFirstIndices(hashMap)[keyLocator->hashKey(key, hashMap->keySize) & (hashMap->capacity - 1u)];
+	unsigned int index = abHashMapi_GetFirstIndices(hashMap)[keyLocator->hash(key, hashMap->keySize) & (hashMap->capacity - 1u)];
 	if (index == abHashMap_InvalidIndex) {
 		return abHashMap_InvalidIndex;
 	}
@@ -33,7 +35,7 @@ unsigned int abHashMap_FindIndexRead(abHashMap * hashMap, void const * key) {
 	unsigned int keySize = hashMap->keySize;
 
 	// Resolve collisions.
-	while (index != abHashMap_InvalidIndex && !keyLocator->compareKeys(keys + (size_t) index * keySize, key, keySize)) {
+	while (index != abHashMap_InvalidIndex && !keyLocator->compare(keys + (size_t) index * keySize, key, keySize)) {
 		index = nextIndices[index];
 	}
 	return index;
@@ -63,7 +65,7 @@ static void abHashMapi_ChangeCapacity(abHashMap * hashMap, unsigned int newCapac
 
 		unsigned int hashMask = newCapacity - 1u;
 		for (unsigned int index = 0u; index < count; ++index) {
-			unsigned int * newFirstIndexLocation = &(newFirstIndices[keyLocator->hashKey(newKeys + (size_t) index * keySize, keySize) & hashMask]);
+			unsigned int * newFirstIndexLocation = &(newFirstIndices[keyLocator->hash(newKeys + (size_t) index * keySize, keySize) & hashMask]);
 			newNextIndices[index] = *newFirstIndexLocation;
 			*newFirstIndexLocation = index;
 		}
@@ -83,10 +85,10 @@ unsigned int abHashMap_FindIndexWrite(abHashMap * hashMap, void const * key, abB
 	unsigned int keySize = hashMap->keySize;
 
 	// Find the existing entry if there's any.
-	uint32_t hash = hashMap->keyLocator->hashKey(key, keySize);
+	uint32_t hash = hashMap->keyLocator->hash(key, keySize);
 	unsigned int index = firstIndices[hash & (hashMap->capacity - 1u)];
 	while (index != abHashMap_InvalidIndex) {
-		if (keyLocator->compareKeys((uint8_t const *) keys + (size_t) index * keySize, key, keySize)) {
+		if (keyLocator->compare((uint8_t const *) keys + (size_t) index * keySize, key, keySize)) {
 			if (isNew != abNull) {
 				*isNew = abFalse;
 			}
@@ -107,7 +109,7 @@ unsigned int abHashMap_FindIndexWrite(abHashMap * hashMap, void const * key, abB
 
 	// Add a new entry.
 	index = hashMap->count++;
-	keyLocator->copyKey((uint8_t *) abHashMap_GetKeys(hashMap) + (size_t) index * keySize, key, keySize);
+	keyLocator->copy((uint8_t *) abHashMap_GetKeys(hashMap) + (size_t) index * keySize, key, keySize);
 	unsigned int * firstIndexLocation = &(firstIndices[hash & (hashMap->capacity - 1u)]);
 	nextIndices[index] = *firstIndexLocation;
 	*firstIndexLocation = index;
@@ -127,7 +129,7 @@ void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index) {
 
 	// Unlink the entry.
 	void * key = abHashMapi_GetKey(hashMap, index);
-	unsigned int * firstIndexLocation = &(firstIndices[keyLocator->hashKey(key, hashMap->keySize) & (hashMap->capacity - 1u)]);
+	unsigned int * firstIndexLocation = &(firstIndices[keyLocator->hash(key, hashMap->keySize) & (hashMap->capacity - 1u)]);
 	if (*firstIndexLocation == index) {
 		*firstIndexLocation = nextIndices[index];
 	} else {
@@ -144,7 +146,7 @@ void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index) {
 		void * lastKey = abHashMapi_GetKey(hashMap, lastIndex);
 		memcpy(key, lastKey, hashMap->keySize);
 		memcpy(abHashMap_GetValue(hashMap, index), abHashMap_GetValue(hashMap, lastIndex), hashMap->valueSize);
-		firstIndexLocation = &(firstIndices[keyLocator->hashKey(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);
+		firstIndexLocation = &(firstIndices[keyLocator->hash(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);
 		if (*firstIndexLocation == lastIndex) {
 			*firstIndexLocation = index;
 		} else {
@@ -170,10 +172,10 @@ abBool abHashMap_Remove(abHashMap * hashMap, void const * key) {
 	unsigned int keySize = hashMap->keySize;
 
 	// Find the entry and unlink it if found.
-	unsigned int * firstIndexLocation = &(firstIndices[keyLocator->hashKey(key, hashMap->keySize) & (hashMap->capacity - 1u)]);
+	unsigned int * firstIndexLocation = &(firstIndices[keyLocator->hash(key, hashMap->keySize) & (hashMap->capacity - 1u)]);
 	unsigned int previousIndex = abHashMap_InvalidIndex, index = *firstIndexLocation;
 	while (index != abHashMap_InvalidIndex) {
-		if (keyLocator->compareKeys(keys + (size_t) index * keySize, key, keySize)) {
+		if (keyLocator->compare(keys + (size_t) index * keySize, key, keySize)) {
 			break;
 		}
 		previousIndex = index;
@@ -194,7 +196,7 @@ abBool abHashMap_Remove(abHashMap * hashMap, void const * key) {
 		void * lastKey = abHashMapi_GetKey(hashMap, lastIndex);
 		memcpy(keys + (size_t) index * keySize, lastKey, hashMap->keySize);
 		memcpy(abHashMap_GetValue(hashMap, index), abHashMap_GetValue(hashMap, lastIndex), hashMap->valueSize);
-		firstIndexLocation = &(firstIndices[keyLocator->hashKey(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);
+		firstIndexLocation = &(firstIndices[keyLocator->hash(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);
 		if (*firstIndexLocation == lastIndex) {
 			*firstIndexLocation = index;
 		} else {
@@ -209,3 +211,48 @@ abBool abHashMap_Remove(abHashMap * hashMap, void const * key) {
 	--(hashMap->count);
 	return abTrue;
 }
+
+/***************
+ * Key locators
+ ***************/
+
+uint32_t abHashMap_KeyLocator_Raw_Hash(void const * key, unsigned int keySize) {
+	return abHash_FNV_Raw(key, keySize);
+}
+
+abBool abHashMap_KeyLocator_Raw_Compare(void const * storedKey, void const * newKey, unsigned int keySize) {
+	return memcmp(storedKey, newKey, keySize) == 0;
+}
+
+void abHashMap_KeyLocator_Raw_Copy(void * location, void const * key, unsigned int keySize) {
+	memcpy(location, key, keySize);
+}
+
+abHashMap_KeyLocator const abHashMap_KeyLocator_Raw = {
+	.hash = abHashMap_KeyLocator_Raw_Hash,
+	.compare = abHashMap_KeyLocator_Raw_Compare,
+	.copy = abHashMap_KeyLocator_Raw_Copy
+};
+
+uint32_t abHashMap_KeyLocator_TextA_Hash(void const * key, unsigned int keySize) {
+	char const * text = (char const *) key;
+	uint32_t hash = abHash_FNV_Base;
+	while ((*text != '\0') && ((unsigned int) (text - (char const *) key) < keySize)) {
+		hash = abHash_FNV_Iteration(hash, (uint8_t) *(text++));
+	}
+	return hash;
+}
+
+abBool abHashMap_KeyLocator_TextA_Compare(void const * storedKey, void const * newKey, unsigned int keySize) {
+	return abTextA_ComparePart((char const *) storedKey, (char const *) newKey, keySize);
+}
+
+void abHashMap_KeyLocator_TextA_Copy(void const * location, void const * key, unsigned int keySize) {
+	abTextA_Copy((char *) location, keySize, (char const *) key);
+}
+
+abHashMap_KeyLocator const abHashMap_KeyLocator_TextA = {
+	.hash = abHashMap_KeyLocator_TextA_Hash,
+	.compare = abHashMap_KeyLocator_TextA_Compare,
+	.copy = abHashMap_KeyLocator_TextA_Copy
+};
