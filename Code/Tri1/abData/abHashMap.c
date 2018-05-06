@@ -13,10 +13,6 @@ static abForceInline uint32_t * abHashMapi_GetNextIndices(abHashMap * hashMap) {
 	return (uint32_t *) hashMap->memory + hashMap->capacity;
 }
 
-static abForceInline void * abHashMapi_GetKey(abHashMap * hashMap, unsigned int index) {
-	return (uint8_t *) abHashMap_GetKeys(hashMap) + (size_t) index * hashMap->keySize;
-}
-
 unsigned int abHashMap_FindIndexRead(abHashMap * hashMap, void const * key) {
 	if (hashMap->count == 0u) {
 		return abHashMap_InvalidIndex;
@@ -128,7 +124,7 @@ void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index) {
 	unsigned int * firstIndices = abHashMapi_GetFirstIndices(hashMap), * nextIndices = abHashMapi_GetNextIndices(hashMap);
 
 	// Unlink the entry.
-	void * key = abHashMapi_GetKey(hashMap, index);
+	void * key = abHashMap_GetKey(hashMap, index);
 	unsigned int * firstIndexLocation = &(firstIndices[keyLocator->hash(key, hashMap->keySize) & (hashMap->capacity - 1u)]);
 	if (*firstIndexLocation == index) {
 		*firstIndexLocation = nextIndices[index];
@@ -143,7 +139,7 @@ void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index) {
 	// Move the last entry to the free space.
 	if (index + 1u < hashMap->count) {
 		unsigned int lastIndex = hashMap->count - 1u;
-		void * lastKey = abHashMapi_GetKey(hashMap, lastIndex);
+		void * lastKey = abHashMap_GetKey(hashMap, lastIndex);
 		memcpy(key, lastKey, hashMap->keySize);
 		memcpy(abHashMap_GetValue(hashMap, index), abHashMap_GetValue(hashMap, lastIndex), hashMap->valueSize);
 		firstIndexLocation = &(firstIndices[keyLocator->hash(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);
@@ -193,7 +189,7 @@ abBool abHashMap_Remove(abHashMap * hashMap, void const * key) {
 	// Move the last entry to the free space.
 	if (index + 1u < hashMap->count) {
 		unsigned int lastIndex = hashMap->count - 1u;
-		void * lastKey = abHashMapi_GetKey(hashMap, lastIndex);
+		void * lastKey = abHashMap_GetKey(hashMap, lastIndex);
 		memcpy(keys + (size_t) index * keySize, lastKey, hashMap->keySize);
 		memcpy(abHashMap_GetValue(hashMap, index), abHashMap_GetValue(hashMap, lastIndex), hashMap->valueSize);
 		firstIndexLocation = &(firstIndices[keyLocator->hash(lastKey, hashMap->keySize) & (hashMap->capacity - 1u)]);

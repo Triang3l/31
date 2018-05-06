@@ -58,6 +58,9 @@ abForceInline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag,
 abForceInline void * abHashMap_GetKeys(abHashMap * hashMap) {
 	return hashMap->memory + (size_t) hashMap->capacity * (2u * sizeof(uint32_t)); // Minimum capacity is enough to 16-align the keys anyway.
 }
+abForceInline void * abHashMap_GetKey(abHashMap * hashMap, unsigned int index) {
+	return (uint8_t *) abHashMap_GetKeys(hashMap) + (size_t) index * hashMap->keySize;
+}
 
 abForceInline void * abHashMap_GetValues(abHashMap * hashMap) {
 	return (uint8_t *) abHashMap_GetKeys(hashMap) + abAlign((size_t) hashMap->capacity * hashMap->keySize, (size_t) 16u);
@@ -75,6 +78,12 @@ inline void * abHashMap_FindRead(abHashMap * hashMap, void const * key) {
 unsigned int abHashMap_FindIndexWrite(abHashMap * hashMap, void const * key, /* optional */ abBool * isNew);
 inline void * abHashMap_FindWrite(abHashMap * hashMap, void const * key, /* optional */ abBool * isNew) {
 	return abHashMap_GetValue(hashMap, abHashMap_FindIndexWrite(hashMap, key, isNew));
+}
+
+// Useful when the key is a pointer and need to add a new entry - can search with a stack-allocated key, but then make it persistent.
+// The new key must have the same hash as the old one!
+inline void abHashMap_SetPersistentKey(abHashMap * hashMap, unsigned int index, void const * newKey) {
+	hashMap->keyLocator->copy(abHashMap_GetKey(hashMap, index), newKey, hashMap->keySize);
 }
 
 void abHashMap_RemoveIndex(abHashMap * hashMap, unsigned int index);
