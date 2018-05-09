@@ -44,7 +44,6 @@ abBool abFilei_Asset_Map_KeyLocator_Compare(void const * storedKey, void const *
 
 void abFilei_Asset_Map_KeyLocator_Copy(void * location, void const * key, unsigned int keySize) {
 	*((uint8_t const * *) location) = *((uint8_t const * const *) key);
-	abFilei_Asset_PathList = abNull;
 }
 
 static abHashMap_KeyLocator const abFilei_Asset_Map_KeyLocator = {
@@ -57,6 +56,7 @@ void abFilei_Asset_InitSystem() {
 	// The initial capacity should preferably be bigger than the total number of assets in the game. Expansion will cause a MASSIVE rehash.
 	abHashMap_Init(&abFilei_Asset_Map, abFilei_MemoryTag, abFalse, &abFilei_Asset_Map_KeyLocator,
 			sizeof(uint8_t *), sizeof(abFilei_Asset), 1024u);
+	abFilei_Asset_PathList = abNull;
 }
 
 void abFilei_Asset_ShutdownSystem() {
