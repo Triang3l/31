@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 typedef struct abParalleli_Windows_Thread_Parameters {
-	char name[abParallel_Thread_MaxNameLength];
+	char name[abParallel_Thread_MaxNameSize];
 	abParallel_Thread_Entry entry;
 	void * data;
 } abParalleli_Windows_Thread_Parameters;

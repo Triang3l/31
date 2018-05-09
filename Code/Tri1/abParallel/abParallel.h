@@ -5,7 +5,7 @@
 // Note: acquire is used like "check atomic -> acquire -> read dependencies",
 // release is used like "write dependencies -> release -> update atomic".
 
-#define abParallel_Thread_MaxNameLength 15u
+#define abParallel_Thread_MaxNameSize 16u
 
 #if defined(abPlatform_OS_Windows)
 /**************************************************
