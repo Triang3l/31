@@ -123,6 +123,9 @@
     <ClInclude Include="abFile\abFile.h">
       <Filter>Header Files\abFile</Filter>
     </ClInclude>
+    <ClInclude Include="abFile\abFilei.h">
+      <Filter>Header Files\abFile</Filter>
+    </ClInclude>
     <ClInclude Include="abMath\abVec.h">
       <Filter>Header Files\abMath</Filter>
     </ClInclude>
@@ -211,6 +214,9 @@
     </ClCompile>
     <ClCompile Include="abGFX\abGFX_Handles.c">
       <Filter>Source Files\abGFX</Filter>
+    </ClCompile>
+    <ClCompile Include="abFile\abFilei_Asset.c">
+      <Filter>Source Files\abFile</Filter>
     </ClCompile>
     <ClCompile Include="abFile\abFile_IQM.c">
       <Filter>Source Files\abFile</Filter>

@@ -140,6 +140,7 @@
     <ClInclude Include="abData\abText.h" />
     <ClInclude Include="abFeedback\abFeedback.h" />
     <ClInclude Include="abFile\abFile.h" />
+    <ClInclude Include="abFile\abFilei.h" />
     <ClInclude Include="abFile\abFilei_GPUUpload.h" />
     <ClInclude Include="abFile\abFile_ImageDDS.h" />
     <ClInclude Include="abFile\abFile_IQM.h" />
@@ -160,6 +161,7 @@
     <ClCompile Include="abData\abText.c" />
     <ClCompile Include="abFeedback\abFeedback.c" />
     <ClCompile Include="abFile\abFile.c" />
+    <ClCompile Include="abFile\abFilei_Asset.c" />
     <ClCompile Include="abFile\abFilei_GPUUpload.c" />
     <ClCompile Include="abFile\abFile_ImageDDS.c" />
     <ClCompile Include="abFile\abFile_IQM.c" />
