@@ -40,21 +40,23 @@ unsigned int abHashMap_FindIndexRead(abHashMap * hashMap, void const * key) {
 static void abHashMapi_ChangeCapacity(abHashMap * hashMap, unsigned int newCapacity) {
 	abFeedback_Assert((newCapacity & (newCapacity - 1u)) == 0u, "abHashMapi_ChangeCapacity",
 			"New capacity must be a power of 2 (tried to change to %u from %u).", newCapacity, hashMap->capacity);
+	unsigned int keySize = hashMap->keySize;
 	uint8_t * newMemory = abMemory_Alloc(hashMap->memoryTag, (size_t) newCapacity * (2u * sizeof(unsigned int)) +
-			abAlign(newCapacity * hashMap->keySize, (size_t) 16u) + newCapacity * hashMap->valueSize, abTrue);
+			abAlign(newCapacity * keySize, (size_t) 16u) + newCapacity * hashMap->valueSize, abTrue);
 	memset(newMemory, 0xff, (size_t) newCapacity * (2u * sizeof(unsigned int))); // Reset indices and next links.
 
 	uint8_t * oldMemory = hashMap->memory;
 	void * oldKeys = abHashMap_GetKeys(hashMap), * oldValues = abHashMap_GetValues(hashMap);
 	hashMap->memory = newMemory;
 	hashMap->capacity = newCapacity;
+	hashMap->keyOffset = (size_t) newCapacity * (2u * sizeof(uint32_t)); // Minimum capacity is enough to 16-align the keys anyway
+	hashMap->valueOffset = hashMap->keyOffset + abAlign((size_t) newCapacity * keySize, (size_t) 16u);
 
 	unsigned int count = hashMap->count;
 	if (count != 0u) {
 		abHashMap_KeyLocator const * keyLocator = hashMap->keyLocator;
 		unsigned int * newFirstIndices = abHashMapi_GetFirstIndices(hashMap), * newNextIndices = abHashMapi_GetNextIndices(hashMap);
 		uint8_t * newKeys = (uint8_t *) abHashMap_GetKeys(hashMap);
-		unsigned int keySize = hashMap->keySize;
 
 		memcpy(newKeys, oldKeys, (size_t) count * keySize);
 		memcpy(abHashMap_GetValues(hashMap), oldValues, (size_t) count * hashMap->valueSize);

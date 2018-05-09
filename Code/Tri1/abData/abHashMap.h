@@ -31,6 +31,7 @@ typedef struct abHashMap_KeyLocator {
 typedef struct abHashMap {
 	abMemory_Tag * memoryTag;
 	uint8_t * memory; // Storage for all the used tables.
+	size_t keyOffset, valueOffset; // Offsets of the keys and the values in the memory (relocatable).
 	abHashMap_KeyLocator const * keyLocator;
 	unsigned int keySize, valueSize;
 	unsigned int capacity, minimumCapacity;
@@ -40,9 +41,11 @@ typedef struct abHashMap {
 #define abHashMap_InvalidIndex UINT_MAX
 
 // 0 minimum capacity to let the implementation choose.
-abForceInline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag, abBool align16,
+inline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag, abBool align16,
 		abHashMap_KeyLocator const * keyLocator, size_t keySize, size_t valueSize, unsigned int minimumCapacity) {
 	hashMap->memoryTag = memoryTag;
+	hashMap->memory = abNull;
+	hashMap->keyOffset = hashMap->valueOffset = 0u;
 	hashMap->keyLocator = keyLocator;
 	hashMap->keySize = (unsigned int) keySize;
 	hashMap->valueSize = (unsigned int) valueSize;
@@ -56,14 +59,14 @@ abForceInline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag,
 }
 
 abForceInline void * abHashMap_GetKeys(abHashMap * hashMap) {
-	return hashMap->memory + (size_t) hashMap->capacity * (2u * sizeof(uint32_t)); // Minimum capacity is enough to 16-align the keys anyway.
+	return hashMap->memory + hashMap->keyOffset;
 }
 abForceInline void * abHashMap_GetKey(abHashMap * hashMap, unsigned int index) {
 	return (uint8_t *) abHashMap_GetKeys(hashMap) + (size_t) index * hashMap->keySize;
 }
 
 abForceInline void * abHashMap_GetValues(abHashMap * hashMap) {
-	return (uint8_t *) abHashMap_GetKeys(hashMap) + abAlign((size_t) hashMap->capacity * hashMap->keySize, (size_t) 16u);
+	return hashMap->memory + hashMap->valueOffset;
 }
 abForceInline void * abHashMap_GetValue(abHashMap * hashMap, unsigned int index) {
 	return (uint8_t *) abHashMap_GetValues(hashMap) + (size_t) index * hashMap->valueSize;
