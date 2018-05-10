@@ -116,7 +116,7 @@ typedef CONDITION_VARIABLE abParallel_CondEvent;
 #define abParallel_CondEvent_SignalAll WakeAllConditionVariable
 
 typedef HANDLE abParallel_Thread;
-typedef void * (* abParallel_Thread_Entry)(void * data);
+typedef void (* abParallel_Thread_Entry)(void * data);
 abBool abParallel_Thread_Start(abParallel_Thread * thread, char const * name, abParallel_Thread_Entry entry, void * data);
 abForceInline unsigned int abParallel_Thread_Destroy(abParallel_Thread * thread) { return (unsigned int) WaitForSingleObject(*thread, INFINITE); }
 

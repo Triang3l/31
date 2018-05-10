@@ -163,6 +163,7 @@
     <ClCompile Include="abFile\abFile.c" />
     <ClCompile Include="abFile\abFilei_Asset.c" />
     <ClCompile Include="abFile\abFilei_GPUUpload.c" />
+    <ClCompile Include="abFile\abFilei_Loader.c" />
     <ClCompile Include="abFile\abFile_ImageDDS.c" />
     <ClCompile Include="abFile\abFile_IQM.c" />
     <ClCompile Include="abFile\abFile_Mapping.c" />

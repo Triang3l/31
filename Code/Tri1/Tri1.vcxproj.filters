@@ -230,5 +230,8 @@
     <ClCompile Include="abGFX\abGFX_RT.c">
       <Filter>Source Files\abGFX</Filter>
     </ClCompile>
+    <ClCompile Include="abFile\abFilei_Loader.c">
+      <Filter>Source Files\abFile</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
