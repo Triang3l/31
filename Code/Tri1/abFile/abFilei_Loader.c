@@ -66,7 +66,8 @@ void abFilei_Loader_Init() {
 	char threadName[] = "FileLoader0";
 	for (unsigned int threadIndex = 0u; threadIndex < abFilei_Loader_ThreadCount; ++threadIndex) {
 		threadName[abArrayLength(threadName) - 2u] = '0' + threadIndex;
-		if (!abParallel_Thread_Start(&abFilei_Loader_Threads[threadIndex], threadName, abFilei_Loader_ThreadFunction, (void *) threadIndex)) {
+		if (!abParallel_Thread_Start(&abFilei_Loader_Threads[threadIndex], threadName,
+				abFilei_Loader_ThreadFunction, (void *) (size_t) threadIndex)) {
 			abFeedback_Crash("abFilei_Loader_Init", "Failed to start a loader thread.");
 		}
 	}
