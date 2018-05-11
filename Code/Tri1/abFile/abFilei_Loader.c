@@ -3,18 +3,14 @@
 #include "../abMath/abBit.h"
 #include "../abParallel/abParallel.h"
 
-typedef enum abFilei_Loader_Result {
-	abFilei_Loader_Result_Unloaded,
-	abFilei_Loader_Result_Success,
-	abFilei_Loader_Result_Failure
-} abFilei_Loader_Result;
-
 #define abFilei_Loader_GPUUploader_None UINT_MAX
+
+#define abFilei_Loader_Result_Success 0u
 
 typedef struct abFilei_Loader_Request {
 	abFile_AssetHandle assetHandle;
 	unsigned int gpuUploaderIndex;
-	abFilei_Loader_Result result;
+	unsigned int result;
 } abFilei_Loader_Request;
 
 #define abFilei_Loader_QueueSize 8u
@@ -81,4 +77,37 @@ void abFilei_Loader_Shutdown() {
 	for (unsigned int threadIndex = 0u; threadIndex < abFilei_Loader_ThreadCount; ++threadIndex) {
 		abParallel_Thread_Destroy(&abFilei_Loader_Threads[threadIndex]);
 	}
+}
+
+unsigned int abFilei_Loader_GetFreeRequestCount() {
+	return abFilei_Loader_QueueSize - abBit_OneCount32(abFilei_Loader_QueueOccupied);
+}
+
+static unsigned int abFilei_Loader_AllocRequest() {
+	uint32_t freeRequests = ~abFilei_Loader_QueueOccupied;
+	int requestIndex = abBit_LowestOne32(freeRequests);
+	if (requestIndex < 0 || (unsigned int) requestIndex >= abFilei_Loader_QueueSize) {
+		return UINT_MAX;
+	}
+	abFilei_Loader_QueueOccupied |= 1u << requestIndex;
+	return requestIndex;
+}
+
+static inline void abFilei_Loader_SubmitRequest(unsigned int requestIndex) {
+	abParallel_Mutex_Lock(&abFilei_Loader_Mutex);
+	abFilei_Loader_QueueRequested |= 1u << requestIndex;
+	abParallel_CondEvent_Signal(&abFilei_Loader_Notification);
+	abParallel_Mutex_Unlock(&abFilei_Loader_Mutex);
+}
+
+abBool abFilei_Loader_RequestAssetLoad(abFile_AssetHandle handle, unsigned int gpuUploaderIndex) {
+	unsigned int requestIndex = abFilei_Loader_AllocRequest();
+	if (requestIndex == UINT_MAX) {
+		return abFalse;
+	}
+	abFilei_Loader_Request * request = &abFilei_Loader_Queue[requestIndex];
+	request->assetHandle = handle;
+	request->gpuUploaderIndex = gpuUploaderIndex;
+	abFilei_Loader_SubmitRequest(requestIndex);
+	return abTrue;
 }

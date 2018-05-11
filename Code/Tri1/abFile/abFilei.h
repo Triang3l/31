@@ -6,6 +6,10 @@
 
 extern abMemory_Tag * abFilei_MemoryTag;
 
+/*********
+ * Assets
+ *********/
+
 // Don't touch when the state is Ext_ (externally owned)!
 typedef enum abFilei_Asset_State {
 	abFilei_Asset_State_Unloaded, // Totally not loaded - data may or may not be null
@@ -39,5 +43,14 @@ abForceInline abFile_AssetHandle abFilei_Asset_GetHandle(abFilei_Asset const * a
 
 void abFilei_Asset_InitSystem();
 void abFilei_Asset_ShutdownSystem();
+
+/*****************
+ * Loader threads
+ *****************/
+
+void abFilei_Loader_Init();
+void abFilei_Loader_Shutdown();
+unsigned int abFilei_Loader_GetFreeRequestCount();
+abBool abFilei_Loader_RequestAssetLoad(abFile_AssetHandle handle, unsigned int gpuUploaderIndex);
 
 #endif
