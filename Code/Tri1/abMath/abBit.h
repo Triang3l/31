@@ -49,4 +49,20 @@ abForceInline int abBit_HighestOne64(uint64_t value) {
 #error No bitwise math functions for the current compiler.
 #endif
 
+abForceInline unsigned int abBit_OneCount32(uint32_t value) {
+	value -= (value >> 1u) & 0x55555555u;
+	value = (value & 0x33333333u) + ((value >> 2u) & 0x33333333u);
+	return (((value + (value >> 4u)) & 0x0f0f0f0fu) * 0x01010101u) >> 24u;
+}
+
+abForceInline unsigned int abBit_OneCount64(uint64_t value) {
+	#ifdef abPlatform_CPU_32Bit
+	return abBit_OneCount32((uint32_t) value) + abBit_OneCount32((uint32_t) (value >> 32u));
+	#else
+	value -= (value >> 1u) & 0x5555555555555555ull;
+	value = (value & 0x3333333333333333ull) + ((value >> 2u) & 0x3333333333333333ull);
+	return (((value + (value >> 4u)) & 0x0f0f0f0f0f0f0f0full) * 0x0101010101010101ull) >> 56u;
+	#endif
+}
+
 #endif
