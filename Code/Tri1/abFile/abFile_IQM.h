@@ -65,6 +65,23 @@ typedef struct abFile_IQM_VertexData {
 	uint32_t offset;
 } abFile_IQM_VertexData;
 
-abBool abFile_IQM_Validate(void const * fileData, size_t fileSize);
+typedef enum abFile_IQM_Error {
+	abFile_IQM_Error_None, // Must be zero to be usable as load request result.
+	abFile_IQM_Error_SizeInvalid,
+	abFile_IQM_Error_HeaderWrong,
+	abFile_IQM_Error_HeaderOffsetInvalid,
+	abFile_IQM_Error_TextCorrupt,
+	abFile_IQM_Error_PartOffsetInvalid,
+	abFile_IQM_Error_VertexCountTooBig,
+	abFile_IQM_Error_VertexDataTypeInvalid,
+	abFile_IQM_Error_VertexDataFormatUnsupported,
+	abFile_IQM_Error_VertexDataOffsetInvalid,
+	abFile_IQM_Error_TriangleCountTooBig,
+	abFile_IQM_Error_TriangleIndexOutOfRange
+} abFile_IQM_Error;
+
+/* immutable */ char const * abFile_IQM_ErrorText(abFile_IQM_Error error); // Returns null for no error.
+
+abFile_IQM_Error abFile_IQM_Validate(void const * fileData, size_t fileSize);
 
 #endif
