@@ -41,7 +41,7 @@ typedef struct abHashMap {
 #define abHashMap_InvalidIndex UINT_MAX
 
 // 0 minimum capacity to let the implementation choose.
-inline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag, abBool align16,
+abForceInline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag, abBool align16,
 		abHashMap_KeyLocator const * keyLocator, size_t keySize, size_t valueSize, unsigned int minimumCapacity) {
 	hashMap->memoryTag = memoryTag;
 	hashMap->memory = abNull;
@@ -50,11 +50,7 @@ inline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag, abBool
 	hashMap->keySize = (unsigned int) keySize;
 	hashMap->valueSize = (unsigned int) valueSize;
 	hashMap->capacity = 0u;
-	minimumCapacity = abClamp(minimumCapacity, 8u, (unsigned int) INT_MAX + 1u);
-	if ((minimumCapacity & (minimumCapacity - 1u)) != 0u) { // Round up to a power of 2.
-		minimumCapacity = 1u << ((unsigned int) abBit_HighestOne32(minimumCapacity) + 1u);
-	}
-	hashMap->minimumCapacity = minimumCapacity;
+	hashMap->minimumCapacity = abBit_ToNextPOTSaturatedU32(abMax(minimumCapacity, 8u));
 	hashMap->count = 0u;
 }
 
