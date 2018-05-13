@@ -20,8 +20,7 @@
 typedef unsigned int abGPU_Init_Result;
 #define abGPU_Init_Result_Success 0u
 abGPU_Init_Result abGPU_Init(abBool debug);
-// Returns an immutable string. May return null for success or unknown errors.
-char const * abGPU_Init_ResultToString(abGPU_Init_Result result);
+/* immutable */ char const * abGPU_Init_ResultText(abGPU_Init_Result result); // Null for success or unknown errors.
 void abGPU_Shutdown();
 
 typedef enum abGPU_CmdQueue {

@@ -129,20 +129,14 @@ abGPU_Init_Result abGPU_Init(abBool debug) {
 	return abGPU_Init_Result_Success;
 }
 
-char const * abGPU_Init_ResultToString(abGPU_Init_Result result) {
+char const * abGPU_Init_ResultText(abGPU_Init_Result result) {
 	switch (result) {
-	case abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed:
-		return "DXGI factory creation failed.";
-	case abGPUi_D3D_Init_Result_AdapterNotFound:
-		return "No Direct3D feature level 11_0 adapter found.";
-	case abGPUi_D3D_Init_Result_AdapterInterfaceQueryFailed:
-		return "DXGI adapter interface version 3 query failed.";
-	case abGPUi_D3D_Init_Result_DeviceCreationFailed:
-		return "Direct3D 12 feature level 11_0 device creation failed.";
-	case abGPUi_D3D_Init_Result_GraphicsCommandQueueCreationFailed:
-		return "Graphics command queue creation failed.";
-	case abGPUi_D3D_Init_Result_CopyCommandQueueCreationFailed:
-		return "Copy command queue creation failed.";
+	case abGPUi_D3D_Init_Result_DXGIFactoryCreationFailed: return "DXGI factory creation failed.";
+	case abGPUi_D3D_Init_Result_AdapterNotFound: return "No Direct3D feature level 11_0 adapter found.";
+	case abGPUi_D3D_Init_Result_AdapterInterfaceQueryFailed: return "DXGI adapter interface version 3 query failed.";
+	case abGPUi_D3D_Init_Result_DeviceCreationFailed: return "Direct3D 12 feature level 11_0 device creation failed.";
+	case abGPUi_D3D_Init_Result_GraphicsCommandQueueCreationFailed: return "Graphics command queue creation failed.";
+	case abGPUi_D3D_Init_Result_CopyCommandQueueCreationFailed: return "Copy command queue creation failed.";
 	}
 	return abNull;
 }

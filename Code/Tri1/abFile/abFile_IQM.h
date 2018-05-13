@@ -80,7 +80,7 @@ typedef enum abFile_IQM_Error {
 	abFile_IQM_Error_TriangleIndexOutOfRange
 } abFile_IQM_Error;
 
-/* immutable */ char const * abFile_IQM_ErrorText(abFile_IQM_Error error); // Returns null for no error.
+/* immutable */ char const * abFile_IQM_ErrorText(abFile_IQM_Error error); // Null for none or unknown.
 
 abFile_IQM_Error abFile_IQM_Validate(void const * fileData, size_t fileSize);
 

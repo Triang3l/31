@@ -28,9 +28,8 @@ unsigned int abFile_IQM_VertexDataFormat_ComponentSize(abFile_IQM_VertexDataForm
 
 char const * abFile_IQM_ErrorText(abFile_IQM_Error error) {
 	switch (error) {
-	case abFile_IQM_Error_None: return abNull;
-	case abFile_IQM_Error_SizeInvalid: return "IQM size invalid.";
-	case abFile_IQM_Error_HeaderWrong: return "IQM header identification or version incorrect.";
+	case abFile_IQM_Error_SizeInvalid: return "IQM data size is invalid.";
+	case abFile_IQM_Error_HeaderWrong: return "IQM header identification or version is incorrect.";
 	case abFile_IQM_Error_HeaderOffsetInvalid: return "IQM header contains invalid section offsets or sizes.";
 	case abFile_IQM_Error_TextCorrupt: return "IQM text section doesn't start with an empty string or isn't terminated.";
 	case abFile_IQM_Error_PartOffsetInvalid: return "IQM parts contain invalid offsets or sizes.";
@@ -41,7 +40,7 @@ char const * abFile_IQM_ErrorText(abFile_IQM_Error error) {
 	case abFile_IQM_Error_TriangleCountTooBig: return "IQM contains too many triangles.";
 	case abFile_IQM_Error_TriangleIndexOutOfRange: return "IQM contains out of range vertex indices.";
 	}
-	return "IQM unknown error.";
+	return abNull;
 }
 
 static abFile_IQM_Error abFilei_IQM_ValidateVertexData(abFile_IQM_VertexData const * vertexData, uint32_t elementCount,

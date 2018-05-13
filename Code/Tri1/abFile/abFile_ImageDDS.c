@@ -1,5 +1,18 @@
 #include "abFile_ImageDDS.h"
 
+char const * abFile_ImageDDS_ErrorText(abFile_ImageDDS_Error error) {
+	switch (error) {
+	case abFile_ImageDDS_Error_SizeInvalid: return "DDS data size is invalid.";
+	case abFile_ImageDDS_Error_HeaderWrong: return "DDS header identification or basic fields are incorrect.";
+	case abFile_ImageDDS_Error_MissingInformation: return "DDS header doesn't provide all the required information.";
+	case abFile_ImageDDS_Error_FormatUnsupported: return "DDS image has an unsupported format.";
+	case abFile_ImageDDS_Error_MipCountInvalid: return "DDS image has too many mip levels.";
+	case abFile_ImageDDS_Error_DimensionsInvalid: return "DDS image has invalid dimensions.";
+	case abFile_ImageDDS_Error_ImageSizeUnsupported: return "DDS image is too large.";
+	}
+	return abNull;
+}
+
 static abGPU_Image_Format const abFilei_ImageDDS_DXGIFormatToImageFormatMap[abFile_ImageDDS_DXGIFormat_CountKnown] = {
 	[abFile_ImageDDS_DXGIFormat_R8G8B8A8_UNorm] = abGPU_Image_Format_R8G8B8A8,
 	[abFile_ImageDDS_DXGIFormat_R8G8B8A8_UNorm_sRGB] = abGPU_Image_Format_R8G8B8A8_sRGB,
@@ -27,29 +40,29 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 		abGPU_Image_Format * format, unsigned int * dataOffset) {
 	// Header.
 	if (ddsSize < (sizeof(uint32_t) + sizeof(abFile_ImageDDS_Header))) {
-		return abFalse;
+		return abFile_ImageDDS_Error_SizeInvalid;
 	}
 	if (*((uint32_t const *) dds) != 0x20534444u) {
-		return abFalse;
+		return abFile_ImageDDS_Error_HeaderWrong;
 	}
 	abFile_ImageDDS_Header const * header = (abFile_ImageDDS_Header const *) ((uint32_t *) dds + 1u);
 	if (header->headerSize != sizeof(abFile_ImageDDS_Header)) {
-		return abFalse;
+		return abFile_ImageDDS_Error_HeaderWrong;
 	}
 
 	// Format.
 	abGPU_Image_Format imageFormat;
 	if (header->formatStructSize != 32u) {
-		return abFalse;
+		return abFile_ImageDDS_Error_HeaderWrong;
 	}
 	if (header->formatFlags & (abFile_ImageDDS_FormatFlags_YUV | abFile_ImageDDS_FormatFlags_Luminance)) {
-		return abFalse;
+		return abFile_ImageDDS_Error_FormatUnsupported;
 	}
 	uint32_t formatFourCC = ((header->formatFlags & abFile_ImageDDS_FormatFlags_FourCC) ? header->formatFourCC : 0u);
 	abFile_ImageDDS_HeaderDXT10 const * header10;
 	if (formatFourCC == 0x30315844u) {
 		if (ddsSize < (sizeof(uint32_t) + sizeof(abFile_ImageDDS_Header) + sizeof(abFile_ImageDDS_HeaderDXT10))) {
-			return abFalse;
+			return abFile_ImageDDS_Error_SizeInvalid;
 		}
 		header10 = (abFile_ImageDDS_HeaderDXT10 const *) (header + 1u);
 	} else {
@@ -57,11 +70,11 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 	}
 	if (header10 != abNull) {
 		if (header10->dxgiFormat >= abArrayLength(abFilei_ImageDDS_DXGIFormatToImageFormatMap)) {
-			return abFalse;
+			return abFile_ImageDDS_Error_FormatUnsupported;
 		}
 		imageFormat = abFilei_ImageDDS_DXGIFormatToImageFormatMap[header10->dxgiFormat];
 		if (imageFormat == abGPU_Image_Format_Invalid) {
-			return abFalse;
+			return abFile_ImageDDS_Error_FormatUnsupported;
 		}
 	} else if (formatFourCC != 0u) {
 		switch (formatFourCC) {
@@ -74,11 +87,11 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 		case 0x35545844u:
 			imageFormat = abGPU_Image_Format_S3TC_A8; break;
 		default:
-			return abFalse;
+			return abFile_ImageDDS_Error_FormatUnsupported;
 		}
 	} else {
 		if (!(header->formatFlags & abFile_ImageDDS_FormatFlags_RGB)) {
-			return abFalse; // A8 is not supported in all graphics APIs.
+			return abFile_ImageDDS_Error_FormatUnsupported; // A8 is not supported in all graphics APIs.
 		}
 		uint32_t r = header->formatBitMasks[0u], g = header->formatBitMasks[1u], b = header->formatBitMasks[2u];
 		uint32_t a = ((header->formatFlags & abFile_ImageDDS_FormatFlags_AlphaPixels) ? header->formatBitMasks[3u] : 0u);
@@ -89,12 +102,12 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 			} else if (r == 0x00ff0000u && g == 0x0000ff00u && b == 0x000000ffu) {
 				imageFormat = abGPU_Image_Format_B8G8R8A8;
 			} else {
-				return abFalse;
+				return abFile_ImageDDS_Error_FormatUnsupported;
 			}
 			break;
 		case 16u:
 			if (a != 0u) {
-				return abFalse;
+				return abFile_ImageDDS_Error_FormatUnsupported;
 			}
 			if (r == 0x000000ffu && g == 0x0000ff00u) {
 				imageFormat = abGPU_Image_Format_R8G8;
@@ -103,17 +116,17 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 			} else if (r == 0x0000f800u && g == 0x000007e0u && b == 0x0000001fu) {
 				imageFormat = abGPU_Image_Format_B5G6R5;
 			} else {
-				return abFalse;
+				return abFile_ImageDDS_Error_FormatUnsupported;
 			}
 		case 8u:
 			if (r == 0x000000ffu && a == 0u) {
 				imageFormat = abGPU_Image_Format_R8;
 			} else {
-				return abFalse;
+				return abFile_ImageDDS_Error_FormatUnsupported;
 			}
 			break;
 		default:
-			return abFalse;
+			return abFile_ImageDDS_Error_FormatUnsupported;
 		}
 	}
 	abBool formatIs4x4 = abGPU_Image_Format_Is4x4(imageFormat);
@@ -122,23 +135,23 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 	const abFile_ImageDDS_Flags requiredFlags = abFile_ImageDDS_Flags_Caps | abFile_ImageDDS_Flags_Height |
 			abFile_ImageDDS_Flags_Width | abFile_ImageDDS_Flags_Format;
 	if ((header->flags & requiredFlags) != requiredFlags) {
-		return abFalse;
+		return abFile_ImageDDS_Error_MissingInformation;
 	}
 	unsigned int height = abMax(header->height, 1u);
 	unsigned int width = abMax(header->width, 1u);
 	abBool is3D = ((header->caps2 & abFile_ImageDDS_Caps2_Volume) ? abTrue : abFalse);
 	if (is3D && (formatIs4x4 || !(header->flags & abFile_ImageDDS_Flags_Depth))) {
-		return abFalse;
+		return abFile_ImageDDS_Error_FormatUnsupported;
 	}
 	unsigned int depth = (is3D ? abMax(header->depth, 1u) : 1u);
 	unsigned int mipCount;
 	if (header->caps & abFile_ImageDDS_Caps_Mipmap) {
 		if (!(header->flags & abFile_ImageDDS_Flags_MipMapCount)) {
-			return abFalse;
+			return abFile_ImageDDS_Error_MissingInformation;
 		}
 		mipCount = abMax(header->mipMapCount, 1u);
 		if (mipCount > abGPU_Image_CalculateMipCount(is3D ? abGPU_Image_Options_3D : abGPU_Image_Options_None, width, height, depth)) {
-			return abFalse;
+			return abFile_ImageDDS_Error_MipCountInvalid;
 		}
 	} else {
 		mipCount = 1u;
@@ -146,23 +159,23 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 	abBool isCube = ((header->caps2 & abFile_ImageDDS_Caps2_Cubemap) ? abTrue : abFalse);
 	if (isCube) {
 		if (is3D) {
-			return abFalse;
+			return abFile_ImageDDS_Error_DimensionsInvalid;
 		}
 		const abFile_ImageDDS_Caps2 requiredCubeCaps2 = abFile_ImageDDS_Caps2_CubemapXP | abFile_ImageDDS_Caps2_CubemapXN |
 				abFile_ImageDDS_Caps2_CubemapYP | abFile_ImageDDS_Caps2_CubemapYN |
 				abFile_ImageDDS_Caps2_CubemapZP | abFile_ImageDDS_Caps2_CubemapZN;
 		if ((header->caps2 & requiredCubeCaps2) != requiredCubeCaps2) {
-			return abFalse;
+			return abFile_ImageDDS_Error_MissingInformation;
 		}
 	}
 	if (header10 != abNull) {
 		if (is3D) {
 			if (header10->dimension != abFile_ImageDDS_Dimension_Texture3D || header10->arraySize > 1u) {
-				return abFalse;
+				return abFile_ImageDDS_Error_DimensionsInvalid;
 			}
 		} else {
 			if (header10->dimension != abFile_ImageDDS_Dimension_Texture1D && header10->dimension != abFile_ImageDDS_Dimension_Texture2D) {
-				return abFalse;
+				return abFile_ImageDDS_Error_DimensionsInvalid;
 			}
 			depth = abMax(header10->arraySize, 1u);
 		}
@@ -171,12 +184,12 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 	// Overflow prevention in size validation.
 	if (is3D) {
 		if (width > abGPU_Image_MaxAbsoluteSize3D || height > abGPU_Image_MaxAbsoluteSize3D || depth > abGPU_Image_MaxAbsoluteSize3D) {
-			return abFalse;
+			return abFile_ImageDDS_Error_ImageSizeUnsupported;
 		}
 	} else {
 		if (width > abGPU_Image_MaxAbsoluteSize2DCube || height > abGPU_Image_MaxAbsoluteSize2DCube ||
 				depth > (unsigned int) (isCube ? abGPU_Image_MaxAbsoluteArraySizeCube : abGPU_Image_MaxAbsoluteArraySize2D)) {
-			return abFalse;
+			return abFile_ImageDDS_Error_ImageSizeUnsupported;
 		}
 	}
 
@@ -199,7 +212,7 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 	}
 	actualDataSize *= (!is3D ? depth : 1u) * (isCube ? 6u : 1u);
 	if (actualDataSize > dataSize) {
-		return abFalse;
+		return abFile_ImageDDS_Error_SizeInvalid;
 	}
 
 	// Outputs.
@@ -216,5 +229,5 @@ abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Option
 	if (mips != abNull) { *mips = mipCount; }
 	if (format != abNull) { *format = imageFormat; }
 	if (dataOffset != abNull) { *dataOffset = headersSize; }
-	return abTrue;
+	return abFile_ImageDDS_Error_None;
 }

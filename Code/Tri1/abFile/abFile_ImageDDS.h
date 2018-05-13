@@ -107,6 +107,19 @@ typedef struct abFile_ImageDDS_HeaderDXT10 {
 	uint32_t miscFlags2;
 } abFile_ImageDDS_HeaderDXT10;
 
+typedef enum abFile_ImageDDS_Error {
+	abFile_ImageDDS_Error_None,
+	abFile_ImageDDS_Error_SizeInvalid,
+	abFile_ImageDDS_Error_HeaderWrong,
+	abFile_ImageDDS_Error_MissingInformation, // <3
+	abFile_ImageDDS_Error_FormatUnsupported,
+	abFile_ImageDDS_Error_MipCountInvalid,
+	abFile_ImageDDS_Error_DimensionsInvalid,
+	abFile_ImageDDS_Error_ImageSizeUnsupported
+} abFile_ImageDDS_Error;
+
+/* immutable */ char const * abFile_ImageDDS_ErrorText(abFile_ImageDDS_Error error); // Null for none or unknown.
+
 // All outputs are optional. The data is an array (for cubemaps, 6 times as many elements) of mips, with unaligned rows.
 abBool abFile_ImageDDS_Read(void const * dds, size_t ddsSize, abGPU_Image_Options * dimensionOptions,
 		unsigned int * w, unsigned int * h, unsigned int * d, unsigned int * mips,
