@@ -50,7 +50,7 @@ abForceInline void abHashMap_Init(abHashMap * hashMap, abMemory_Tag * memoryTag,
 	hashMap->keySize = (unsigned int) keySize;
 	hashMap->valueSize = (unsigned int) valueSize;
 	hashMap->capacity = 0u;
-	hashMap->minimumCapacity = abBit_ToNextPOTSaturatedU32(abMax(minimumCapacity, 8u));
+	hashMap->minimumCapacity = abBit_ToNextPO2SaturatedU32(abMax(minimumCapacity, 8u));
 	hashMap->count = 0u;
 }
 

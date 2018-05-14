@@ -65,29 +65,29 @@ abForceInline unsigned int abBit_OneCount64(uint64_t value) {
 	#endif
 }
 
-abForceInline unsigned int abBit_NextPOTSaturatedShiftU32(uint32_t value) {
+abForceInline unsigned int abBit_NextPO2SaturatedShiftU32(uint32_t value) {
 	if (value == 0u) { return 0u; }
 	unsigned int shift = (unsigned int) abBit_HighestOne32(value);
 	if ((value & (value - 1u)) == 0u && shift < 31u) { ++shift; }
 	return shift;
 }
 
-abForceInline unsigned int abBit_NextPOTSaturatedShiftU64(uint64_t value) {
+abForceInline unsigned int abBit_NextPO2SaturatedShiftU64(uint64_t value) {
 	if (value == 0u) { return 0u; }
 	unsigned int shift = (unsigned int) abBit_HighestOne64(value);
 	if ((value & (value - 1u)) == 0u && shift < 63u) { ++shift; }
 	return shift;
 }
 
-// These are different than 1u << NextPOTSaturatedShift for zero!
+// These are different than 1u << NextPO2SaturatedShift for zero!
 
-abForceInline uint32_t abBit_ToNextPOTSaturatedU32(uint32_t value) {
+abForceInline uint32_t abBit_ToNextPO2SaturatedU32(uint32_t value) {
 	if ((value & (value - 1u)) == 0u) { return value; }
 	unsigned int shift = (unsigned int) abBit_HighestOne32(value);
 	return 1u << (shift + ((shift >> 5u) ^ 1u)); // Rather than a conditional min.
 }
 
-abForceInline uint64_t abBit_ToNextPOTSaturatedU64(uint64_t value) {
+abForceInline uint64_t abBit_ToNextPO2SaturatedU64(uint64_t value) {
 	if ((value & (value - 1u)) == 0u) { return value; }
 	unsigned int shift = (unsigned int) abBit_HighestOne64(value);
 	return 1ull << (shift + ((shift >> 6u) ^ 1u)); // Rather than a conditional min.
