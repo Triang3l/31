@@ -124,11 +124,12 @@ abMemory_Allocation * abMemory_GetAllocation(void * memory) {
 	return allocation;
 }
 
-void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, unsigned int fileLine) {
-	if (memory == abNull) {
+void abMemory_DoRealloc(void * * memoryAddressLocation, size_t size, char const * fileName, unsigned int fileLine) {
+	if (memoryAddressLocation == abNull || *memoryAddressLocation == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc", "Tried to reallocate null memory at %s:%u.", fileName, fileLine);
 	}
 
+	void * memory = *memoryAddressLocation;
 	abMemory_Allocation * allocation = abMemory_GetAllocation(memory);
 	if (allocation == abNull) {
 		abFeedback_Crash("abMemory_DoRealloc",
@@ -142,7 +143,7 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 	size_t oldSize = allocation->size;
 	size_t alignedSize = abAlign(size, (size_t) 16u); // Same padding as in DoAlloc.
 	if (alignedSize == abAlign(oldSize, (size_t) 16u)) {
-		return memory; // Not resizing.
+		return; // Not resizing.
 	}
 
 	abMemory_Tag * tag = allocation->tag;
@@ -188,7 +189,7 @@ void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, uns
 		}
 	}
 	#endif
-	return data;
+	*memoryAddressLocation = data;
 }
 
 void abMemory_Free(void * memory) {

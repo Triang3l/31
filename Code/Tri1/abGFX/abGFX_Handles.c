@@ -194,7 +194,7 @@ unsigned int abGFXm_Handles_Alloc(unsigned int count) {
 
 	unsigned int requestedLevel = (abGFXi_Handles_LevelCount - 1u) - ((unsigned int) abBit_HighestOne32(
 			abAlign(count, abGFXi_Handles_MinBlockSize)) - abGFXi_Handles_MinBlockSizePower);
-	if (count > abGFXi_Handles_MinBlockSize && (count & (count - 1u)) != 0u) {
+	if (count > abGFXi_Handles_MinBlockSize && !abBit_IsPO2U32(count)) {
 		--requestedLevel;
 	}
 

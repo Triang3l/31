@@ -141,6 +141,9 @@
     <ClInclude Include="abData\abHash.h">
       <Filter>Header Files\abData</Filter>
     </ClInclude>
+    <ClInclude Include="abData\abArray2L.h">
+      <Filter>Header Files\abData</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="abGPU\abGPUi_D3D\abGPUi_D3D.c">
@@ -232,6 +235,9 @@
     </ClCompile>
     <ClCompile Include="abFile\abFilei_Loader.c">
       <Filter>Source Files\abFile</Filter>
+    </ClCompile>
+    <ClCompile Include="abData\abArray2L.c">
+      <Filter>Source Files\abData</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

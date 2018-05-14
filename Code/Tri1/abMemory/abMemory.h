@@ -52,8 +52,8 @@ extern abMemory_Tag * abMemory_TagList_First, * abMemory_TagList_Last;
 void * abMemory_DoAlloc(abMemory_Tag * tag, size_t size, abBool align16, char const * fileName, unsigned int fileLine);
 #define abMemory_Alloc(tag, size, align16) abMemory_DoAlloc((tag), (size), (align16), __FILE__, __LINE__)
 abMemory_Allocation * abMemory_GetAllocation(void * memory); // So information like tag and size can be obtained.
-void * abMemory_DoRealloc(void * memory, size_t size, char const * fileName, unsigned int fileLine);
-#define abMemory_Realloc(memory, size) abMemory_DoRealloc((memory), (size), __FILE__, __LINE__)
+void abMemory_DoRealloc(void * * memoryAddressLocation, size_t size, char const * fileName, unsigned int fileLine);
+#define abMemory_Realloc(memoryAddressLocation, size) abMemory_DoRealloc((memoryAddressLocation), (size), __FILE__, __LINE__)
 void abMemory_Free(void * memory);
 
 void abMemory_Shutdown();

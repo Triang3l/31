@@ -65,6 +65,11 @@ abForceInline unsigned int abBit_OneCount64(uint64_t value) {
 	#endif
 }
 
+abForceInline abBool abBit_IsPO2U32(uint32_t value) { return (value & (value - 1u)) == 0u; }
+abForceInline abBool abBit_IsPO2U64(uint64_t value) { return (value & (value - 1u)) == 0u; }
+
+// Returns 0 for zero, since there's no way to express zero with an defined 1u << shift.
+
 abForceInline unsigned int abBit_NextPO2SaturatedShiftU32(uint32_t value) {
 	if (value == 0u) { return 0u; }
 	unsigned int shift = (unsigned int) abBit_HighestOne32(value);
@@ -79,7 +84,7 @@ abForceInline unsigned int abBit_NextPO2SaturatedShiftU64(uint64_t value) {
 	return shift;
 }
 
-// These are different than 1u << NextPO2SaturatedShift for zero!
+// This is different than 1u << NextPO2SaturatedShift for zero - actually returns 0!
 
 abForceInline uint32_t abBit_ToNextPO2SaturatedU32(uint32_t value) {
 	if ((value & (value - 1u)) == 0u) { return value; }
