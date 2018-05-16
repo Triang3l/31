@@ -1,9 +1,9 @@
 #include "abArray2L.h"
 #include "../abFeedback/abFeedback.h"
 
-void abArray2L_Resize(abArray2L * array2L, unsigned int newElementCount) {
-	unsigned int pagesRequired = (newElementCount >> array2L->pageIndexShift) +
-			((newElementCount & array2L->pageElementIndexMask) != 0u);
+void abArray2L_Reserve(abArray2L * array2L, unsigned int newMinimumElementCount) {
+	unsigned int pagesRequired = (newMinimumElementCount >> array2L->pageIndexShift) +
+			((newMinimumElementCount & array2L->pageElementIndexMask) != 0u);
 	if (array2L->i_currentPageListCapacity < pagesRequired) {
 		unsigned int newPageListCapacity = abBit_ToNextPO2SaturatedU32(pagesRequired);
 		if (array2L->i_currentPageListCapacity <= abArrayLength(array2L->i_initialPages)) {
@@ -22,7 +22,6 @@ void abArray2L_Resize(abArray2L * array2L, unsigned int newElementCount) {
 			array2L->pages[array2L->i_currentPageCount++] = abMemory_Alloc(array2L->i_memoryTag, pageSize, abTrue);
 		}
 	}
-	array2L->elementCount = newElementCount;
 }
 
 void abArray2L_RemoveMovingLast(abArray2L * array2L, unsigned int elementIndex) {

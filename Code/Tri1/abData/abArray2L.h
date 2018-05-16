@@ -42,7 +42,15 @@ abForceInline void * abArray2L_Get(abArray2L const * array2L, unsigned int eleme
 			((elementIndex & array2L->pageElementIndexMask) * array2L->elementSize);
 }
 
-void abArray2L_Resize(abArray2L * array2L, unsigned int newSize);
+void abArray2L_Reserve(abArray2L * array2L, unsigned int newMinimumElementCount);
+abForceInline void abArray2L_Resize(abArray2L * array2L, unsigned int newElementCount) {
+	abArray2L_Reserve(array2L, newElementCount);
+	array2L->elementCount = newElementCount;
+}
+abForceInline void * abArray2L_AddElement(abArray2L * array2L) {
+	abArray2L_Resize(array2L, array2L->elementCount + 1u);
+	return abArray2L_Get(array2L, array2L->elementCount - 1u);
+}
 
 void abArray2L_RemoveMovingLast(abArray2L * array2L, unsigned int elementIndex);
 
