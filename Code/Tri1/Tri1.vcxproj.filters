@@ -239,5 +239,8 @@
     <ClCompile Include="abData\abArray2L.c">
       <Filter>Source Files\abData</Filter>
     </ClCompile>
+    <ClCompile Include="abFile\abFilei_Group.c">
+      <Filter>Source Files\abFile</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
