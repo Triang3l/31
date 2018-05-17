@@ -22,11 +22,14 @@ typedef enum abFilei_Asset_State {
 } abFilei_Asset_State;
 
 typedef struct abFilei_Asset {
+	// Pointers.
 	void * data; // abFile_Mesh, etc., depending on asset type.
-	abFilei_Asset_State state; // The type and the name is the key in the global asset map!
+	struct abFilei_Watch * watchNewest; // Beginning of the linked list of watch references.
 
-	abFile_GroupHandle groupNewest; // Beginning of the linked list of group references.
-	unsigned int groupNewestAssetIndex; // Index of the GroupAsset in groupNewest.
+	// Integers.
+	abFilei_Asset_State state; // The type and the name is the key in the global asset map!
+	unsigned int watchPassiveCount, watchActiveCount;
+	unsigned int watchNewestAssetIndex; // Index of the WatchAsset in watchNewest.
 } abFilei_Asset;
 
 extern abHashMap abFilei_Asset_Map; // Prefixed path pointer (NOT path itself) -> asset structure.
@@ -47,39 +50,20 @@ abForceInline abFile_AssetHandle abFilei_Asset_GetHandle(abFilei_Asset const * a
 void abFilei_Asset_InitSystem();
 void abFilei_Asset_ShutdownSystem();
 
-/*********
- * Groups
- *********/
+/**********
+ * Watches
+ **********/
 
-typedef enum abFilei_Group_State {
-	abFilei_Group_State_Inactive,
-	abFilei_Group_State_Activating,
-	abFilei_Group_State_Active // Ready for use (though some assets may be missing).
-} abFilei_Group_State;
-
-typedef struct abFilei_Group {
-	abFile_GroupAsset * assets; // Allocated externally, but must be persistent as long as the group is registered!
+typedef struct abFilei_Watch {
+	abFile_WatchAsset * assets; // Allocated externally, but must be persistent as long as the watch exists!
 	unsigned int assetCount;
 
-	abFile_GroupHandle handle; // Back reference to the handle.
-
-	abFilei_Group_State state;
-	unsigned int assetFailedCount; // If Active or Activating, that's the number of assets that have failed to load.
-
-	union {
-		abFile_GroupHandle freeNext; // Next handle in the free list (or an invalid handle).
-	} special;
-} abFilei_Group;
-
-extern abArray2L abFilei_Group_Array;
-
-abForceInline abFilei_Group * abFilei_Group_Get(abFile_GroupHandle handle) {
-	return (abFilei_Group *) abArray2L_Get(&abFilei_Group_Array, handle);
-}
+	// Put callbacks here and make the implementation actually store WatchAssets.
+} abFilei_Watch;
 
 // To be called by tracking functions - very low-level, basically resetting the structure and linking to assets.
-abFile_GroupHandle abFilei_Group_Register(abFile_GroupAsset * assets, unsigned int assetCount);
-void abFilei_Group_Unregister(abFile_GroupHandle handle);
+void abFilei_Watch_Link(abFilei_Watch * watch);
+void abFilei_Watch_Unlink(abFilei_Watch * watch);
 
 /*****************
  * Loader threads

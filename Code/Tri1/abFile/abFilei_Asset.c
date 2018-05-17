@@ -144,6 +144,8 @@ abFile_AssetHandle abFile_Asset_Register(abFile_Asset_Type type, char const * pa
 	abFilei_Asset * asset = abHashMap_GetValue(&abFilei_Asset_Map, handle);
 	asset->state = abFilei_Asset_State_Unloaded;
 	asset->data = abNull;
+	asset->watchPassiveCount = asset->watchActiveCount = 0u;
+	asset->watchNewest = abNull;
 
 	return handle;
 }
